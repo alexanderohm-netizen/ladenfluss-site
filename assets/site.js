@@ -4,7 +4,7 @@ const $$ = (s, scope=document) => [...scope.querySelectorAll(s)];
 
 function euro(n){ return new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(Number.isFinite(n)?n:0); }
 function de(n,d=1){ return new Intl.NumberFormat('de-DE',{maximumFractionDigits:d}).format(Number.isFinite(n)?n:0); }
-function pct(n){ return \`\${de(n,1)} %\`; }
+function pct(n){ return `${de(n,1)} %`; }
 function val(id){ return Number(document.getElementById(id)?.value || 0); }
 function error(id,text=''){ const el=document.getElementById(id); if(el) el.textContent=text; }
 
@@ -12,7 +12,7 @@ async function copyResult(el,button){
   const rows=[...el.querySelectorAll('.metric,.kpi')].map(row=>{
     const label=row.querySelector('span,small')?.textContent?.trim()||'';
     const value=row.querySelector('strong,b')?.textContent?.trim()||'';
-    return label&&value?\`\${label}: \${value}\`:'';
+    return label&&value?`${label}: ${value}`:'';
   }).filter(Boolean);
   if(!rows.length) return;
   try{
@@ -36,7 +36,7 @@ function addResultMeta(el,insight=''){
 }
 function renderRows(id,rows,insight=''){
   const el=document.getElementById(id); if(!el) return;
-  el.innerHTML=rows.map(([label,value])=>\`<div class="metric"><span>\${label}</span><strong>\${value}</strong></div>\`).join('');
+  el.innerHTML=rows.map(([label,value])=>`<div class="metric"><span>${label}</span><strong>${value}</strong></div>`).join('');
   el.hidden=false; addResultMeta(el,insight);
 }
 
@@ -54,9 +54,9 @@ function calcPersonnel(){
   if(revenue<0||productivity<=0||open<=0||extra<0){ error('p_error','Bitte prüfe deine Eingaben. Stundenleistung und Öffnungsdauer müssen größer als 0 sein.'); return; }
   const salesHours=revenue/productivity, extraHours=extra/60, total=salesHours+extraHours, concurrent=total/open;
   renderRows('p_result',[
-    ['Personalstunden für den Umsatz',\`\${de(salesHours)} h\`],['Zusatzaufwand',\`\${de(extraHours)} h\`],
-    ['Gesamter Orientierungsbedarf',\`\${de(total)} h\`],['Ø gleichzeitige Besetzung',\`\${de(concurrent)} Personen\`]
-  ],\`<strong>Einordnung:</strong> Bei diesen Annahmen ergeben sich rund \${de(total)} Personalstunden. Pausen, Mindestbesetzung, Qualifikation und Stoßzeiten solltest du zusätzlich einplanen.\`);
+    ['Personalstunden für den Umsatz',`${de(salesHours)} h`],['Zusatzaufwand',`${de(extraHours)} h`],
+    ['Gesamter Orientierungsbedarf',`${de(total)} h`],['Ø gleichzeitige Besetzung',`${de(concurrent)} Personen`]
+  ],`<strong>Einordnung:</strong> Bei diesen Annahmen ergeben sich rund ${de(total)} Personalstunden. Pausen, Mindestbesetzung, Qualifikation und Stoßzeiten solltest du zusätzlich einplanen.`);
 }
 function calcMargin(){
   error('m_error');
@@ -65,7 +65,7 @@ function calcMargin(){
   const net=cost/(1-margin/100), gross=net*(1+vat/100), profit=net-cost, markup=cost>0?profit/cost*100:0;
   renderRows('m_result',[
     ['Verkaufspreis netto',euro(net)],['Verkaufspreis brutto',euro(gross)],['Rohertrag pro Stück',euro(profit)],['Aufschlag auf den EK',pct(markup)]
-  ],\`<strong>Einordnung:</strong> Für eine Ziel-Handelsspanne von \${pct(margin)} brauchst du rechnerisch einen Brutto-VK von \${euro(gross)}.\`);
+  ],`<strong>Einordnung:</strong> Für eine Ziel-Handelsspanne von ${pct(margin)} brauchst du rechnerisch einen Brutto-VK von ${euro(gross)}.`);
 }
 function calcDiscount(){
   error('d_error');
@@ -75,7 +75,7 @@ function calcDiscount(){
   renderRows('d_result',[
     ['Neuer Verkaufspreis brutto',euro(newGross)],['Neuer Verkaufspreis netto',euro(newNet)],['Rohertrag nach Rabatt',euro(newProfit)],
     ['Handelsspanne nach Rabatt',pct(margin)],['Rohertragsverlust je Stück',euro(loss)]
-  ],newProfit<0?\`<strong>Achtung:</strong> Nach dem Rabatt liegt der Rohertrag rechnerisch bei \${euro(newProfit)} je Stück. Der Artikel wird auf dieser Basis unter Einstand verkauft.\`:\`<strong>Einordnung:</strong> Der Rabatt kostet \${euro(loss)} Rohertrag je Stück; die verbleibende Handelsspanne beträgt \${pct(margin)}.\`);
+  ],newProfit<0?`<strong>Achtung:</strong> Nach dem Rabatt liegt der Rohertrag rechnerisch bei ${euro(newProfit)} je Stück. Der Artikel wird auf dieser Basis unter Einstand verkauft.`:`<strong>Einordnung:</strong> Der Rabatt kostet ${euro(loss)} Rohertrag je Stück; die verbleibende Handelsspanne beträgt ${pct(margin)}.`);
 }
 function calcBreakEven(){
   error('b_error');
@@ -84,18 +84,18 @@ function calcBreakEven(){
   const monthly=fixed/(rate/100), daily=monthly/days;
   renderRows('b_result',[
     ['Break-even-Umsatz pro Monat',euro(monthly)],['Break-even-Umsatz je Öffnungstag',euro(daily)],['Deckungsbeitrag am Break-even',euro(fixed)]
-  ],\`<strong>Einordnung:</strong> Bei unveränderter Deckungsbeitragsquote brauchst du im Schnitt \${euro(daily)} Umsatz je Öffnungstag, um die angegebenen Fixkosten zu decken.\`);
+  ],`<strong>Einordnung:</strong> Bei unveränderter Deckungsbeitragsquote brauchst du im Schnitt ${euro(daily)} Umsatz je Öffnungstag, um die angegebenen Fixkosten zu decken.`);
 }
 function calcKpi(){
   error('k_error');
   const revenue=val('k_revenue'), hours=val('k_hours'), labor=val('k_labor'), tx=val('k_tx'), visitors=val('k_visitors'), waste=val('k_waste');
   if([revenue,hours,labor,tx,visitors,waste].some(n=>n<0)){ error('k_error','Bitte keine negativen Werte eingeben.'); return; }
   const values=[
-    ['Stundenleistung',hours?\`\${euro(revenue/hours)}/h\`:'–'],['Ø Bon',tx?euro(revenue/tx):'–'],['Conversion',visitors?pct(tx/visitors*100):'–'],
+    ['Stundenleistung',hours?`${euro(revenue/hours)}/h`:'–'],['Ø Bon',tx?euro(revenue/tx):'–'],['Conversion',visitors?pct(tx/visitors*100):'–'],
     ['Personalkostenquote',revenue?pct(labor/revenue*100):'–'],['Abschriftenquote',revenue?pct(waste/revenue*100):'–'],['Umsatz je Besucher',visitors?euro(revenue/visitors):'–']
   ];
   const el=document.getElementById('k_result'); if(!el) return;
-  el.innerHTML=values.map(([label,value])=>\`<div class="kpi"><small>\${label}</small><strong>\${value}</strong></div>\`).join('');
+  el.innerHTML=values.map(([label,value])=>`<div class="kpi"><small>${label}</small><strong>${value}</strong></div>`).join('');
   el.hidden=false; addResultMeta(el,'<strong>Einordnung:</strong> Einzelne KPIs sind selten allein aussagekräftig. Vergleiche sie mit Zielwert, Vorperiode und Vorjahr – genau daraus soll später Zahlenfluss entstehen.');
 }
 function calcLaborBudget(){
@@ -104,8 +104,8 @@ function calcLaborBudget(){
   if(revenue<0||ratio<=0||ratio>100||hourly<=0||days<=0){ error('lb_error','Bitte gültige Werte eingeben.'); return; }
   const budget=revenue*ratio/100, hours=budget/hourly, perDay=hours/days, productivity=hours?revenue/hours:0;
   renderRows('lb_result',[
-    ['Max. Personalkostenbudget',euro(budget)],['Finanzierbare Personalstunden',\`\${de(hours)} h\`],['Ø Stunden je Öffnungstag',\`\${de(perDay)} h\`],['Notwendige Stundenleistung',\`\${euro(productivity)}/h\`]
-  ],\`<strong>Einordnung:</strong> Bei einer Ziel-Personalkostenquote von \${pct(ratio)} stehen rechnerisch \${euro(budget)} für Personal zur Verfügung. Bei \${euro(hourly)} Kosten je Stunde entspricht das rund \${de(hours)} Stunden.\`);
+    ['Max. Personalkostenbudget',euro(budget)],['Finanzierbare Personalstunden',`${de(hours)} h`],['Ø Stunden je Öffnungstag',`${de(perDay)} h`],['Notwendige Stundenleistung',`${euro(productivity)}/h`]
+  ],`<strong>Einordnung:</strong> Bei einer Ziel-Personalkostenquote von ${pct(ratio)} stehen rechnerisch ${euro(budget)} für Personal zur Verfügung. Bei ${euro(hourly)} Kosten je Stunde entspricht das rund ${de(hours)} Stunden.`);
 }
 function calcGrossProfit(){
   error('gp_error');
@@ -113,8 +113,8 @@ function calcGrossProfit(){
   if(revenue<=0||cogs<0){ error('gp_error','Umsatz muss größer als 0 sein; Wareneinsatz darf nicht negativ sein.'); return; }
   const grossProfit=revenue-cogs, margin=grossProfit/revenue*100, cogsRatio=cogs/revenue*100, factor=cogs>0?revenue/cogs:0;
   renderRows('gp_result',[
-    ['Rohertrag',euro(grossProfit)],['Rohertragsquote',pct(margin)],['Wareneinsatzquote',pct(cogsRatio)],['Umsatz / Wareneinsatz',factor?\`\${de(factor,2)} ×\`:'–']
-  ],grossProfit<0?'<strong>Achtung:</strong> Der Wareneinsatz liegt über dem Umsatz. Prüfe Zeitraum, Netto-/Bruttowerte und Datengrundlage.':\`<strong>Einordnung:</strong> Von \${euro(revenue)} Umsatz bleiben vor Personal-, Raum- und weiteren Kosten \${euro(grossProfit)} Rohertrag.\`);
+    ['Rohertrag',euro(grossProfit)],['Rohertragsquote',pct(margin)],['Wareneinsatzquote',pct(cogsRatio)],['Umsatz / Wareneinsatz',factor?`${de(factor,2)} ×`:'–']
+  ],grossProfit<0?'<strong>Achtung:</strong> Der Wareneinsatz liegt über dem Umsatz. Prüfe Zeitraum, Netto-/Bruttowerte und Datengrundlage.':`<strong>Einordnung:</strong> Von ${euro(revenue)} Umsatz bleiben vor Personal-, Raum- und weiteren Kosten ${euro(grossProfit)} Rohertrag.`);
 }
 function calcStockTurn(){
   error('st_error');
@@ -122,8 +122,8 @@ function calcStockTurn(){
   if(cogs<0||avgStock<=0||period<=0){ error('st_error','Durchschnittsbestand und Zeitraum müssen größer als 0 sein.'); return; }
   const turns=cogs/avgStock, days=turns?period/turns:0, avgDaily=cogs/period, coverage=avgDaily?avgStock/avgDaily:0;
   renderRows('st_result',[
-    ['Lagerumschlag im Zeitraum',\`\${de(turns,2)} ×\`],['Ø Lagerdauer',\`\${de(days)} Tage\`],['Bestandsreichweite',\`\${de(coverage)} Tage\`],['Ø Wareneinsatz je Tag',euro(avgDaily)]
-  ],\`<strong>Einordnung:</strong> Dein durchschnittlicher Bestand schlägt sich im gewählten Zeitraum etwa \${de(turns,2)}-mal um. Höher ist nicht automatisch besser: Verfügbarkeit, Lieferzeit und Saison müssen dazu passen.\`);
+    ['Lagerumschlag im Zeitraum',`${de(turns,2)} ×`],['Ø Lagerdauer',`${de(days)} Tage`],['Bestandsreichweite',`${de(coverage)} Tage`],['Ø Wareneinsatz je Tag',euro(avgDaily)]
+  ],`<strong>Einordnung:</strong> Dein durchschnittlicher Bestand schlägt sich im gewählten Zeitraum etwa ${de(turns,2)}-mal um. Höher ist nicht automatisch besser: Verfügbarkeit, Lieferzeit und Saison müssen dazu passen.`);
 }
 
 Object.assign(window,{calcPersonnel,calcMargin,calcDiscount,calcBreakEven,calcKpi,calcLaborBudget,calcGrossProfit,calcStockTurn});
