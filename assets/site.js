@@ -94,7 +94,7 @@ function calcKpi(){
     ['Umsatz je Besucher',visitors?euro(revenue/visitors):'–']
   ];
   const el=document.getElementById('k_result'); if(!el) return;
-  el.innerHTML=values.map(([label,value])=>`<div class="kpi-box"><small>${label}</small><strong>${value}</strong></div>`).join('');
+  el.innerHTML=values.map(([label,value])=>`<div class="kpi"><small>${label}</small><strong>${value}</strong></div>`).join('');
   el.hidden=false;
 }
 
