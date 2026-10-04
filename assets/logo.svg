@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Ladenfluss">
+<rect width="64" height="64" fill="#6d2434"/>
+<path d="M16 14v34h29" fill="none" stroke="#f7efe7" stroke-width="6" stroke-linecap="square"/>
+<path d="M27 17h21M27 29h15M27 41h21" fill="none" stroke="#cfae97" stroke-width="4" stroke-linecap="square"/>
+</svg>
