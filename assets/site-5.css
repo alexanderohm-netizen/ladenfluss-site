@@ -12,3 +12,10 @@
 @media(max-width:620px){
   .result-toolbar,.library-note{align-items:flex-start;grid-template-columns:1fr;display:grid}
 }
+
+/* v1.2 */
+.advanced{margin-top:20px;border-top:1px solid var(--line)}
+.advanced summary{cursor:pointer;padding:15px 0;font-weight:800;font-size:13px;color:var(--wine)}
+.field-hint{display:block;color:var(--muted);font-size:11px;margin-top:5px;line-height:1.45}
+.quick-start{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:22px}
+.preset-btn{border:1px solid var(--line-dark);background:var(--paper-soft);padding:8px 10px;font-size:11px;font-weight:750;cursor:pointer}
