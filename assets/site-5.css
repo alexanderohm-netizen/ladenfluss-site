@@ -1,0 +1,14 @@
+
+/* v1.1 — Ergebnisführung und neue Tool-Bibliothek */
+.result-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0 0}
+.result-copy{border:1px solid var(--line-dark);background:transparent;padding:9px 12px;font-size:12px;font-weight:750;cursor:pointer}
+.result-copy:hover{border-color:var(--wine);color:var(--wine)}
+.result-insight{margin-top:14px;padding:15px 16px;background:#f2e8e0;border-left:3px solid var(--wine);font-size:13px;line-height:1.62;color:#574a43}
+.result-insight strong{color:var(--ink)}
+.new-flag{display:inline-flex;align-items:center;border:1px solid var(--wine);color:var(--wine);padding:3px 6px;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-left:auto}
+.tool-card .meta>span:last-child{color:var(--muted);font-size:11px}
+.library-note{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:28px;color:var(--muted);font-size:13px}
+.library-note strong{color:var(--ink)}
+@media(max-width:620px){
+  .result-toolbar,.library-note{align-items:flex-start;grid-template-columns:1fr;display:grid}
+}
