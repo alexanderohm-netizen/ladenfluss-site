@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#6d2434">
+<title>Mitarbeiter | Ladenfluss</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/staff.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Zum Inhalt</a>
+<header class="site-header"><div class="container header-row"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span>Ladenfluss</span></a><nav class="desktop-nav"><a href="/mein-laden">Mein Laden</a><a href="/mitarbeiter" aria-current="page">Mitarbeiter</a><a href="/pep">Personalplanung</a><a href="/tools">Tools</a></nav><button class="menu-toggle" aria-expanded="false" aria-controls="mobile-nav">Menü</button></div><nav id="mobile-nav" class="mobile-nav"><a href="/mein-laden">Mein Laden</a><a href="/mitarbeiter">Mitarbeiter</a><a href="/pep">Personalplanung</a><a href="/tools">Tools</a></nav></header>
+
+<main id="main" class="staff-shell">
+<section class="staff-head"><div><span class="eyebrow">Personal · v1.4</span><h1>Dein Team. Ohne Personalakten-Chaos.</h1><p>Nur die Daten, die du im Alltag wirklich brauchst. Der Dienstplan greift später direkt auf dieses Team zu.</p></div><button class="btn btn-primary" id="addEmployee" type="button">+ Mitarbeiter</button></section>
+
+<section class="staff-summary"><div><small>Aktiv</small><strong id="activeEmployees">0</strong><span>Mitarbeiter</span></div><div><small>Sollstunden</small><strong id="targetHours">0 h</strong><span>pro Woche gesamt</span></div><div><small>Offene Unterlagen</small><strong id="missingDocs">0</strong><span>prüfen</span></div></section>
+
+<section class="staff-focus"><span>Ladenfluss Hinweis</span><div><strong id="staffFocusTitle">Alles vollständig.</strong><p id="staffFocusText">Für dein Team liegen aktuell keine Demo-Hinweise vor.</p></div></section>
+
+<section class="staff-list-wrap">
+<div class="staff-toolbar"><div><span class="eyebrow">Mitarbeiter</span><h2>Teamübersicht</h2></div><a class="btn btn-secondary" href="/pep">Zum Dienstplan →</a></div>
+<div class="staff-list" id="staffList"></div>
+</section>
+</main>
+
+<dialog id="employeeDialog" class="employee-dialog"><form id="employeeForm" method="dialog">
+<div class="dialog-head"><div><span class="eyebrow">Mitarbeiter</span><h2>Person hinzufügen</h2></div><button value="cancel" class="dialog-close" aria-label="Schließen">×</button></div>
+<label>Name<input id="employeeName" required placeholder="Vor- und Nachname"></label>
+<div class="dialog-two"><label>Rolle<select id="employeeRole"><option>Verkauf</option><option>Filialleitung</option><option>Aushilfe</option><option>Lager</option><option>Service</option><option>Küche</option></select></label><label>Sollstunden / Woche<input id="employeeHours" type="number" min="0" max="60" step=".5" value="20"></label></div>
+<label>Einsatzort<select id="employeeBranch"><option>Hauptfiliale</option></select></label>
+<label class="check-row"><input id="employeeDocs" type="checkbox"><span>Grundlegende Unterlagen vollständig</span></label>
+<div class="dialog-actions"><button value="cancel" class="btn btn-secondary">Abbrechen</button><button class="btn btn-primary" type="submit">Mitarbeiter übernehmen</button></div>
+</form></dialog>
+
+<script src="/assets/site.js" defer></script><script src="/assets/staff.js" defer></script>
+</body></html>
