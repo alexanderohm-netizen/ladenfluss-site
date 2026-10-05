@@ -67,9 +67,9 @@ function calcPersonnel(save=true){
   const salesHours=revenue/productivity, extraHours=(extra+breakMin)/60, base=salesHours+extraHours, minimumHours=open*minStaff, total=Math.max(base,minimumHours)*(1+buffer/100), concurrent=total/open;
   if(save) lfSaveHistory('Personalbedarf',de(total)+' h Personalbedarf',{revenue,total,productivity});
   renderRows('p_result',[
-    ['Personalstunden für den Umsatz',`${de(salesHours)} h`],['Zusatzaufwand inkl. Pausen',`${de(extraHours)} h`],
-    ['Mindestbesetzung erfordert',`${de(minimumHours)} h`],['Gesamter Orientierungsbedarf',`${de(total)} h`],['Ø gleichzeitige Besetzung',`${de(concurrent)} Personen`]
-  ],`<strong>Einordnung:</strong> Bei diesen Annahmen ergeben sich rund ${de(total)} Personalstunden. Pausen, Mindestbesetzung, Qualifikation und Stoßzeiten solltest du zusätzlich einplanen.`);
+    ['Meine Empfehlung',`${de(total)} Personalstunden`],['Im Schnitt gleichzeitig',`${de(concurrent)} Personen`],
+    ['Davon für den geplanten Umsatz',`${de(salesHours)} h`],['Für Zusatzaufgaben & Pausen',`${de(extraHours)} h`],['Minimum durch deine Besetzung',`${de(minimumHours)} h`]
+  ],`<strong>Dein nächster Schritt:</strong> Plane zunächst mit rund ${de(total)} Stunden. Prüfe danach nur noch, wann deine Stoßzeiten liegen und welche Qualifikationen du zu diesen Zeiten brauchst.`);
 }
 function calcMargin(save=true){
   error('m_error');
@@ -78,8 +78,8 @@ function calcMargin(save=true){
   const effectiveCost=cost*(1+waste/100), net=effectiveCost/(1-margin/100); let gross=net*(1+vat/100); if(rounding!=='none'){ const cents=Number(rounding)/100; gross=Math.floor(gross)+cents; if(gross+1e-9<net*(1+vat/100)) gross+=1; } const roundedNet=gross/(1+vat/100), profit=roundedNet-effectiveCost, markup=effectiveCost>0?profit/effectiveCost*100:0, actualMargin=roundedNet>0?profit/roundedNet*100:0;
   if(save) lfSaveHistory('Marge & Verkaufspreis',euro(gross)+' Brutto-VK',{cost,gross,actualMargin});
   renderRows('m_result',[
-    ['Verkaufspreis netto',euro(roundedNet)],['Verkaufspreis brutto',euro(gross)],['Rohertrag pro Stück',euro(profit)],['Erreichte Handelsspanne',pct(actualMargin)],['Aufschlag auf den EK',pct(markup)]
-  ],`<strong>Einordnung:</strong> Für eine Ziel-Handelsspanne von ${pct(margin)} brauchst du rechnerisch einen Brutto-VK von ${euro(gross)}.`);
+    ['Preisvorschlag für deine Kunden',euro(gross)],['Davon bleiben vor weiteren Kosten',euro(profit)],['Preis ohne Umsatzsteuer',euro(roundedNet)],['Anteil, der nach dem Einkauf bleibt',pct(actualMargin)],['Aufschlag auf deinen Einkaufspreis',pct(markup)]
+  ],`<strong>Dein nächster Schritt:</strong> Prüfe, ob ${euro(gross)} zu Markt, Kundschaft und Preisbild passt. Die Detailwerte darunter erklären dir, wie der Vorschlag zustande kommt.`);
 }
 function calcDiscount(){
   error('d_error');
@@ -87,9 +87,9 @@ function calcDiscount(){
   if(gross<0||cost<0||discount<0||discount>100||vat<0){ error('d_error','Bitte gültige Werte eingeben. Der Rabatt muss zwischen 0 und 100 % liegen.'); return; }
   const newGross=gross*(1-discount/100), oldNet=gross/(1+vat/100), newNet=newGross/(1+vat/100), oldProfit=oldNet-cost, newProfit=newNet-cost, margin=newNet?newProfit/newNet*100:0, loss=oldProfit-newProfit;
   renderRows('d_result',[
-    ['Neuer Verkaufspreis brutto',euro(newGross)],['Neuer Verkaufspreis netto',euro(newNet)],['Rohertrag nach Rabatt',euro(newProfit)],
-    ['Handelsspanne nach Rabatt',pct(margin)],['Rohertragsverlust je Stück',euro(loss)]
-  ],newProfit<0?`<strong>Achtung:</strong> Nach dem Rabatt liegt der Rohertrag rechnerisch bei ${euro(newProfit)} je Stück. Der Artikel wird auf dieser Basis unter Einstand verkauft.`:`<strong>Einordnung:</strong> Der Rabatt kostet ${euro(loss)} Rohertrag je Stück; die verbleibende Handelsspanne beträgt ${pct(margin)}.`);
+    ['Neuer Preis für deine Kunden',euro(newGross)],['Dir bleiben nach dem Wareneinkauf',euro(newProfit)],['So viel kostet dich der Rabatt je Stück',euro(loss)],
+    ['Anteil, der dir danach bleibt',pct(margin)],['Preis ohne Umsatzsteuer',euro(newNet)]
+  ],newProfit<0?`<strong>Achtung:</strong> Mit diesem Rabatt verkaufst du rechnerisch unter deinem Einkaufspreis. Ändere Rabatt oder Verkaufspreis, bevor du die Aktion startest.`:`<strong>Dein nächster Schritt:</strong> Nach dem Rabatt bleiben ${euro(newProfit)} je Stück vor weiteren Kosten. Entscheide, ob dir das für die Aktion reicht.`);
 }
 function calcBreakEven(save=true){
   error('b_error');
@@ -98,8 +98,8 @@ function calcBreakEven(save=true){
   const baseMonthly=fixed/(rate/100), targetMonthly=(fixed+targetProfit)/(rate/100), monthly=targetMonthly*(1+buffer/100), daily=monthly/days;
   if(save) lfSaveHistory('Break-even',euro(monthly)+' Zielumsatz',{fixed,monthly,daily});
   renderRows('b_result',[
-    ['Reiner Break-even-Umsatz',euro(baseMonthly)],['Zielumsatz inkl. Gewinn/Puffer',euro(monthly)],['Break-even-Umsatz je Öffnungstag',euro(daily)],['Deckungsbeitrag am Break-even',euro(fixed)]
-  ],`<strong>Einordnung:</strong> Der reine Break-even liegt bei ${euro(baseMonthly)}. Mit deinem Gewinnziel und Sicherheitspuffer solltest du auf rund ${euro(daily)} Umsatz je Öffnungstag zielen.`);
+    ['Das solltest du pro Öffnungstag erreichen',euro(daily)],['Dein Ziel für den Monat',euro(monthly)],['Nur um die laufenden Kosten zu decken',euro(baseMonthly)],['Laufende Kosten in deiner Rechnung',euro(fixed)]
+  ],`<strong>Dein nächster Schritt:</strong> Nutze ${euro(daily)} als einfache Tagesmarke. Liegt dein Umsatz öfter darunter, lohnt sich ein Blick auf Kosten, Preise und Warenmix.`);
 }
 function calcKpi(){
   error('k_error');
@@ -119,8 +119,8 @@ function calcLaborBudget(){
   if(revenue<0||ratio<=0||ratio>100||hourly<=0||days<=0){ error('lb_error','Bitte gültige Werte eingeben.'); return; }
   const budget=revenue*ratio/100, hours=budget/hourly, perDay=hours/days, productivity=hours?revenue/hours:0;
   renderRows('lb_result',[
-    ['Max. Personalkostenbudget',euro(budget)],['Finanzierbare Personalstunden',`${de(hours)} h`],['Ø Stunden je Öffnungstag',`${de(perDay)} h`],['Notwendige Stundenleistung',`${euro(productivity)}/h`]
-  ],`<strong>Einordnung:</strong> Bei einer Ziel-Personalkostenquote von ${pct(ratio)} stehen rechnerisch ${euro(budget)} für Personal zur Verfügung. Bei ${euro(hourly)} Kosten je Stunde entspricht das rund ${de(hours)} Stunden.`);
+    ['Dieses Budget hast du für dein Team',euro(budget)],['Damit kannst du ungefähr planen',`${de(hours)} Stunden`],['Im Schnitt pro Öffnungstag',`${de(perDay)} Stunden`],['Dafür brauchst du je Arbeitsstunde',`${euro(productivity)} Umsatz`]
+  ],`<strong>Dein nächster Schritt:</strong> Verteile die rund ${de(hours)} Stunden zuerst auf Öffnung, Mindestbesetzung und Stoßzeiten. Danach planst du Aufgaben wie Lieferung und Warenpflege ein.`);
 }
 function calcGrossProfit(){
   error('gp_error');
@@ -128,8 +128,8 @@ function calcGrossProfit(){
   if(revenue<=0||cogs<0){ error('gp_error','Umsatz muss größer als 0 sein; Wareneinsatz darf nicht negativ sein.'); return; }
   const grossProfit=revenue-cogs, margin=grossProfit/revenue*100, cogsRatio=cogs/revenue*100, factor=cogs>0?revenue/cogs:0;
   renderRows('gp_result',[
-    ['Rohertrag',euro(grossProfit)],['Rohertragsquote',pct(margin)],['Wareneinsatzquote',pct(cogsRatio)],['Umsatz / Wareneinsatz',factor?`${de(factor,2)} ×`:'–']
-  ],grossProfit<0?'<strong>Achtung:</strong> Der Wareneinsatz liegt über dem Umsatz. Prüfe Zeitraum, Netto-/Bruttowerte und Datengrundlage.':`<strong>Einordnung:</strong> Von ${euro(revenue)} Umsatz bleiben vor Personal-, Raum- und weiteren Kosten ${euro(grossProfit)} Rohertrag.`);
+    ['Das bleibt nach dem Wareneinkauf',euro(grossProfit)],['Anteil, der übrig bleibt',pct(margin)],['Anteil deines Umsatzes für Ware',pct(cogsRatio)],['Umsatz je 1 € Warenkosten',factor?`${de(factor,2)} €`:'–']
+  ],grossProfit<0?'<strong>Achtung:</strong> Deine Warenkosten liegen über deinem Umsatz. Prüfe Zeitraum und Eingaben.':`<strong>Dein nächster Schritt:</strong> Von ${euro(revenue)} Umsatz bleiben ${euro(grossProfit)} für Personal, Miete und alle weiteren Kosten. Vergleiche diesen Wert regelmäßig mit früheren Zeiträumen.`);
 }
 function calcStockTurn(save=true){
   error('st_error');
@@ -138,8 +138,8 @@ function calcStockTurn(save=true){
   const turns=cogs/avgStock, days=turns?period/turns:0, avgDaily=cogs/period, coverage=avgDaily?avgStock/avgDaily:0, reorderNeed=avgDaily*lead+safety, coverageGap=coverage-lead;
   if(save) lfSaveHistory('Lagerumschlag',de(coverage)+' Tage Reichweite',{cogs,avgStock,coverage,coverageGap});
   renderRows('st_result',[
-    ['Lagerumschlag im Zeitraum',`${de(turns,2)} ×`],['Ø Lagerdauer',`${de(days)} Tage`],['Bestandsreichweite',`${de(coverage)} Tage`],['Ø Wareneinsatz je Tag',euro(avgDaily)],['Bedarf bis nächste Lieferung + Sicherheit',euro(reorderNeed)],['Reichweite nach Lieferzeit',`${de(coverageGap)} Tage`]
-  ],coverageGap<0?`<strong>Handlungsbedarf:</strong> Deine rechnerische Bestandsreichweite ist rund ${de(Math.abs(coverageGap))} Tage kürzer als die Lieferzeit. Prüfe Nachbestellung und Sicherheitsbestand.`:`<strong>Einordnung:</strong> Nach Abzug der Lieferzeit bleiben rechnerisch ${de(coverageGap)} Tage Reichweite. Der Bedarf bis zur nächsten Lieferung inklusive Sicherheit liegt bei ${euro(reorderNeed)}.`);
+    ['Dein Bestand reicht rechnerisch',`${de(coverage)} Tage`],['Nach der Lieferzeit bleiben',`${de(coverageGap)} Tage`],['Warenwert pro Tag',euro(avgDaily)],['Bedarf bis zur nächsten Lieferung inkl. Reserve',euro(reorderNeed)],['So oft bewegt sich dein Bestand im Zeitraum',`${de(turns,2)} ×`]
+  ],coverageGap<0?`<strong>Handlungsbedarf:</strong> Dein Bestand reicht rechnerisch nicht bis zur nächsten Lieferung. Prüfe jetzt Nachbestellung, Liefertermin und Reserve.`:`<strong>Dein nächster Schritt:</strong> Nach der Lieferzeit bleiben rechnerisch ${de(coverageGap)} Tage Reserve. Beobachte besonders Artikel, die deutlich schneller laufen als dieser Durchschnitt.`);
 }
 
 Object.assign(window,{calcPersonnel,calcMargin,calcDiscount,calcBreakEven,calcKpi,calcLaborBudget,calcGrossProfit,calcStockTurn});
