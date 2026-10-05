@@ -1,7 +1,12 @@
 document.addEventListener('DOMContentLoaded',()=> {
   const store=window.LadenflussTeamStore;
   const team=store.getTeam();
-  const shifts=store.ensureEmployeeShiftRows(team,store.getShifts());
+  let weekStart=new Date();
+  const day=weekStart.getDay()||7;
+  weekStart.setDate(weekStart.getDate()-day+1);
+  weekStart.setHours(12,0,0,0);
+  let weekKey=store.mondayKey(weekStart);
+  let shifts=store.ensureEmployeeShiftRows(team,store.getShifts(weekKey));
 
   const employees=team.map(p=>({
     id:p.id,
@@ -17,7 +22,7 @@ document.addEventListener('DOMContentLoaded',()=> {
   const publishBtn=document.getElementById('publishPlan');
   const planStatus=document.getElementById('planStatus');
   let editing=null;
-  let published=false;
+  let published=store.getPlanStatus(weekKey)==='published';
 
   const mins=t=>{const [h,m]=t.split(':').map(Number);return h*60+m};
   const hours=s=>!s?0:Math.max(0,(mins(s[1])-mins(s[0])-Number(s[2]||0))/60);
@@ -25,7 +30,7 @@ document.addEventListener('DOMContentLoaded',()=> {
   function persist(){
     const next={};
     employees.forEach(e=>next[e.id]=e.shifts);
-    store.saveShifts(next);
+    store.saveShifts(next,weekKey);
   }
 
   function getIssues(){
@@ -42,9 +47,13 @@ document.addEventListener('DOMContentLoaded',()=> {
     planStatus.classList.remove('published');
     planStatus.innerHTML='<i></i> Entwurf';
     publishBtn.textContent='Plan veröffentlichen';
+    store.savePlanStatus('draft',weekKey);
   }
 
   function render(){
+    renderWeekHeader();
+    renderDayCheck();
+    renderPlanState();
     body.innerHTML=employees.map(e=>{
       const total=e.shifts.reduce((a,s)=>a+hours(s),0);
       const cells=e.shifts.map((s,i)=>s
@@ -71,6 +80,40 @@ document.addEventListener('DOMContentLoaded',()=> {
         : 'Keine auffälligen Wochenstunden in diesem Plan.';
 
     bindCells();
+  }
+
+  function renderPlanState(){
+    published=store.getPlanStatus(weekKey)==='published';
+    planStatus.classList.toggle('published',published);
+    planStatus.innerHTML=published?'<i></i> Veröffentlicht':'<i></i> Entwurf';
+    publishBtn.textContent=published?'Zurück auf Entwurf':'Plan veröffentlichen';
+  }
+
+  function renderWeekHeader(){
+    const days=['Mo','Di','Mi','Do','Fr','Sa','So'];
+    const dates=Array.from({length:7},(_,i)=>{const d=new Date(weekStart);d.setDate(d.getDate()+i);return d});
+    const fmt=d=>d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+    document.getElementById('weekTitle').textContent=fmt(dates[0])+'–'+fmt(dates[6]);
+    document.getElementById('pepDays').innerHTML='<th>Mitarbeiter</th>'+dates.map((d,i)=>'<th>'+days[i]+' '+String(d.getDate()).padStart(2,'0')+'.</th>').join('')+'<th>Summe</th>';
+  }
+
+  function renderDayCheck(){
+    const names=['Mo','Di','Mi','Do','Fr','Sa','So'];
+    const html=names.map((name,i)=>{
+      const working=employees.filter(e=>e.shifts[i]).length;
+      const state=working===0?'empty':working===1?'thin':'ok';
+      const label=working===0?'Niemand geplant':working===1?'Nur 1 Person':working+' Personen';
+      return '<div class="'+state+'"><small>'+name+'</small><strong>'+label+'</strong></div>';
+    }).join('');
+    document.getElementById('dayCheck').innerHTML='<span>Besetzung</span>'+html;
+  }
+
+  function changeWeek(offset){
+    weekStart.setDate(weekStart.getDate()+offset*7);
+    weekKey=store.mondayKey(weekStart);
+    shifts=store.ensureEmployeeShiftRows(team,store.getShifts(weekKey));
+    employees.forEach(e=>e.shifts=shifts[e.id]);
+    render();
   }
 
   function resetDialog(){
@@ -119,9 +162,21 @@ document.addEventListener('DOMContentLoaded',()=> {
 
   publishBtn.onclick=()=>{
     published=!published;
-    planStatus.classList.toggle('published',published);
-    planStatus.innerHTML=published?'<i></i> Veröffentlicht':'<i></i> Entwurf';
-    publishBtn.textContent=published?'Zurück auf Entwurf':'Plan veröffentlichen';
+    store.savePlanStatus(published?'published':'draft',weekKey);
+    renderPlanState();
+  };
+
+  document.getElementById('prevWeek').onclick=()=>changeWeek(-1);
+  document.getElementById('nextWeek').onclick=()=>changeWeek(1);
+  document.getElementById('todayWeek').onclick=()=>{
+    weekStart=new Date();
+    const d=weekStart.getDay()||7;
+    weekStart.setDate(weekStart.getDate()-d+1);
+    weekStart.setHours(12,0,0,0);
+    weekKey=store.mondayKey(weekStart);
+    shifts=store.ensureEmployeeShiftRows(team,store.getShifts(weekKey));
+    employees.forEach(e=>e.shifts=shifts[e.id]);
+    render();
   };
 
   delBtn.onclick=()=>{
