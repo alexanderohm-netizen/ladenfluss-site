@@ -18,7 +18,7 @@
 <div class="pep-actions"><span class="plan-status" id="planStatus"><i></i> Entwurf</span><button class="btn btn-secondary" type="button" id="printPlan">Drucken / PDF</button><button class="btn btn-secondary" type="button" id="publishPlan">Plan veröffentlichen</button><button class="btn btn-primary" type="button" id="addShift">+ Schicht</button></div>
 </section>
 
-<section class="pep-summary" aria-label="Wochenübersicht">
+<section class="pep-daycheck" id="dayCheck" aria-label="Besetzungscheck"></section><section class="pep-summary" aria-label="Wochenübersicht">
 <div><small>Geplante Stunden</small><strong id="plannedHours">0 h</strong><span>Diese Woche</span></div>
 <div><small>Mitarbeiter</small><strong id="employeeCount">0</strong><span>Im Plan</span></div>
 <div><small>Offene Hinweise</small><strong id="issueCount">0</strong><span id="issueText">Alles ruhig</span></div>
@@ -31,7 +31,7 @@
 </section>
 
 <section class="pep-board">
-<div class="pep-board-head"><div><span class="eyebrow">Wochenplan</span><h2>05.–11. Oktober</h2></div><div class="week-nav"><button type="button" aria-label="Vorherige Woche">←</button><button type="button">Heute</button><button type="button" aria-label="Nächste Woche">→</button></div></div>
+<div class="pep-board-head"><div><span class="eyebrow">Wochenplan</span><h2 id="weekTitle">Diese Woche</h2></div><div class="week-nav"><button id="prevWeek" type="button" aria-label="Vorherige Woche">←</button><button id="todayWeek" type="button">Heute</button><button id="nextWeek" type="button" aria-label="Nächste Woche">→</button></div></div>
 <div class="pep-table-wrap">
 <table class="pep-table">
 <thead><tr><th>Mitarbeiter</th><th>Mo 05.</th><th>Di 06.</th><th>Mi 07.</th><th>Do 08.</th><th>Fr 09.</th><th>Sa 10.</th><th>So 11.</th><th>Summe</th></tr></thead>
