@@ -15,7 +15,7 @@
 <main id="main" class="pep-shell">
 <section class="pep-head">
 <div><span class="eyebrow">Personal & PEP · Prototyp</span><h1>Deine Woche auf einen Blick.</h1><p>Schichten planen, Stunden sehen, Probleme früh erkennen. Keine Tabellenwand.</p></div>
-<div class="pep-actions"><span class="plan-status" id="planStatus"><i></i> Entwurf</span><button class="btn btn-secondary" type="button" id="printPlan">Drucken / PDF</button><button class="btn btn-secondary" type="button" id="publishPlan">Plan veröffentlichen</button><button class="btn btn-primary" type="button" id="addShift">+ Schicht</button></div>
+<div class="pep-actions"><span class="plan-status" id="planStatus"><i></i> Entwurf</span><button class="btn btn-secondary" type="button" id="printPlan">Drucken / PDF</button><button class="btn btn-secondary" type="button" id="publishPlan">Plan veröffentlichen</button><button class="btn btn-secondary" type="button" id="addAbsence">Abwesenheit</button><button class="btn btn-primary" type="button" id="addShift">+ Schicht</button></div>
 </section>
 
 <section class="pep-daycheck" id="dayCheck" aria-label="Besetzungscheck"></section><section class="pep-summary" aria-label="Wochenübersicht">
@@ -58,5 +58,13 @@
 </form>
 </dialog>
 
+<dialog id="absenceDialog" class="shift-dialog">
+<form method="dialog" id="absenceForm">
+<div class="dialog-head"><div><span class="eyebrow">Abwesenheit</span><h2>Abwesenheit eintragen</h2></div><button value="cancel" class="dialog-close" aria-label="Schließen">×</button></div>
+<label>Mitarbeiter<select id="absenceEmployee"></select></label>
+<label>Tag<select id="absenceDay"><option value="0">Montag</option><option value="1">Dienstag</option><option value="2">Mittwoch</option><option value="3">Donnerstag</option><option value="4">Freitag</option><option value="5">Samstag</option><option value="6">Sonntag</option></select></label>
+<label>Grund<select id="absenceType"><option>Urlaub</option><option>Krank</option><option>Frei</option><option>Schule / Seminar</option><option>Sonstige Abwesenheit</option></select></label>
+<div class="dialog-actions"><button value="cancel" class="btn btn-secondary">Abbrechen</button><button type="submit" class="btn btn-primary">Eintragen</button></div>
+</form></dialog>
 <script src="/assets/site.js" defer></script><script src="/assets/de-holidays.js" defer></script><script src="/assets/team-store.js" defer></script><script src="/assets/pep.js" defer></script>
 </body></html>
