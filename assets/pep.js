@@ -93,8 +93,9 @@ document.addEventListener('DOMContentLoaded',()=> {
     const days=['Mo','Di','Mi','Do','Fr','Sa','So'];
     const dates=Array.from({length:7},(_,i)=>{const d=new Date(weekStart);d.setDate(d.getDate()+i);return d});
     const fmt=d=>d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+    const state='HE';
     document.getElementById('weekTitle').textContent=fmt(dates[0])+'–'+fmt(dates[6]);
-    document.getElementById('pepDays').innerHTML='<th>Mitarbeiter</th>'+dates.map((d,i)=>'<th>'+days[i]+' '+String(d.getDate()).padStart(2,'0')+'.</th>').join('')+'<th>Summe</th>';
+    document.getElementById('pepDays').innerHTML='<th>Mitarbeiter</th>'+dates.map((d,i)=>{const holiday=window.LadenflussHolidays?.getHoliday(d,state);return '<th class="'+(holiday?'holiday':'')+'">'+days[i]+' '+String(d.getDate()).padStart(2,'0')+'.'+(holiday?'<small>'+holiday+'</small>':'')+'</th>'}).join('')+'<th>Summe</th>';
   }
 
   function renderDayCheck(){
