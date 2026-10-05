@@ -1,6 +1,8 @@
 (function(){
   const TEAM_KEY='ladenfluss.team.v1';
-  const SHIFTS_KEY='ladenfluss.pep.shifts.v1';
+  const SHIFTS_KEY='ladenfluss.pep.weeks.v2';
+  const LEGACY_SHIFTS_KEY='ladenfluss.pep.shifts.v1';
+  const PLAN_KEY='ladenfluss.pep.plan-status.v1';
 
   const defaultTeam=[
     {id:'e1',name:'Anna Müller',role:'Verkauf',hours:30,branch:'Hauptfiliale',docs:true},
@@ -15,39 +17,50 @@
   };
 
   function read(key,fallback){
-    try{
-      const parsed=JSON.parse(localStorage.getItem(key)||'null');
-      return parsed ?? fallback;
-    }catch{return fallback}
+    try{const parsed=JSON.parse(localStorage.getItem(key)||'null');return parsed??fallback}catch{return fallback}
   }
-
+  function clone(v){return JSON.parse(JSON.stringify(v))}
   function getTeam(){
     const team=read(TEAM_KEY,null);
-    if(Array.isArray(team)&&team.length) return team;
+    if(Array.isArray(team)&&team.length)return team;
     localStorage.setItem(TEAM_KEY,JSON.stringify(defaultTeam));
-    return defaultTeam.map(x=>({...x}));
+    return clone(defaultTeam);
   }
-
-  function saveTeam(team){
-    localStorage.setItem(TEAM_KEY,JSON.stringify(team));
+  function saveTeam(team){localStorage.setItem(TEAM_KEY,JSON.stringify(team))}
+  function mondayKey(date=new Date()){
+    const d=new Date(date);d.setHours(12,0,0,0);
+    const day=d.getDay()||7;d.setDate(d.getDate()-day+1);
+    return d.toISOString().slice(0,10);
   }
-
-  function getShifts(){
-    const shifts=read(SHIFTS_KEY,null);
-    if(shifts&&typeof shifts==='object') return shifts;
-    localStorage.setItem(SHIFTS_KEY,JSON.stringify(defaultShifts));
-    return JSON.parse(JSON.stringify(defaultShifts));
+  function getAllWeeks(){
+    let weeks=read(SHIFTS_KEY,null);
+    if(weeks&&typeof weeks==='object')return weeks;
+    weeks={};
+    const legacy=read(LEGACY_SHIFTS_KEY,null);
+    weeks[mondayKey()]=legacy&&typeof legacy==='object'?legacy:clone(defaultShifts);
+    localStorage.setItem(SHIFTS_KEY,JSON.stringify(weeks));
+    return weeks;
   }
-
-  function saveShifts(shifts){
-    localStorage.setItem(SHIFTS_KEY,JSON.stringify(shifts));
+  function getShifts(week=mondayKey()){
+    const weeks=getAllWeeks();
+    return clone(weeks[week]||{});
   }
-
+  function saveShifts(shifts,week=mondayKey()){
+    const weeks=getAllWeeks();weeks[week]=shifts;
+    localStorage.setItem(SHIFTS_KEY,JSON.stringify(weeks));
+  }
+  function getPlanStatus(week=mondayKey()){
+    const states=read(PLAN_KEY,{});
+    return states[week]||'draft';
+  }
+  function savePlanStatus(status,week=mondayKey()){
+    const states=read(PLAN_KEY,{});states[week]=status;
+    localStorage.setItem(PLAN_KEY,JSON.stringify(states));
+  }
   function ensureEmployeeShiftRows(team,shifts){
-    team.forEach(p=>{if(!Array.isArray(shifts[p.id])) shifts[p.id]=[null,null,null,null,null,null,null]});
-    Object.keys(shifts).forEach(id=>{if(!team.some(p=>p.id===id)) delete shifts[id]});
+    team.forEach(p=>{if(!Array.isArray(shifts[p.id]))shifts[p.id]=[null,null,null,null,null,null,null]});
+    Object.keys(shifts).forEach(id=>{if(!team.some(p=>p.id===id))delete shifts[id]});
     return shifts;
   }
-
-  window.LadenflussTeamStore={getTeam,saveTeam,getShifts,saveShifts,ensureEmployeeShiftRows};
+  window.LadenflussTeamStore={getTeam,saveTeam,getShifts,saveShifts,getPlanStatus,savePlanStatus,ensureEmployeeShiftRows,mondayKey};
 })();
