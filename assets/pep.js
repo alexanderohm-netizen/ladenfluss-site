@@ -1,9 +1,15 @@
 document.addEventListener('DOMContentLoaded',()=> {
-  const employees=[
-    {id:'e1',name:'Anna',role:'Verkauf',target:30,shifts:[['08:00','14:00',30],['08:00','14:00',30],null,['12:00','18:00',30],['08:00','14:00',30],null,null]},
-    {id:'e2',name:'Ben',role:'Verkauf',target:35,shifts:[['11:00','19:00',30],null,['11:00','19:00',30],['11:00','19:00',30],null,['09:00','17:00',30],null]},
-    {id:'e3',name:'Mira',role:'Aushilfe',target:20,shifts:[null,['14:00','19:00',15],null,null,['14:00','19:00',15],['10:00','16:00',30],null]}
-  ];
+  const store=window.LadenflussTeamStore;
+  const team=store.getTeam();
+  const shifts=store.ensureEmployeeShiftRows(team,store.getShifts());
+
+  const employees=team.map(p=>({
+    id:p.id,
+    name:p.name,
+    role:p.role,
+    target:Number(p.hours||0),
+    shifts:shifts[p.id]
+  }));
 
   const body=document.getElementById('pepBody');
   const dlg=document.getElementById('shiftDialog');
@@ -15,6 +21,12 @@ document.addEventListener('DOMContentLoaded',()=> {
 
   const mins=t=>{const [h,m]=t.split(':').map(Number);return h*60+m};
   const hours=s=>!s?0:Math.max(0,(mins(s[1])-mins(s[0])-Number(s[2]||0))/60);
+
+  function persist(){
+    const next={};
+    employees.forEach(e=>next[e.id]=e.shifts);
+    store.saveShifts(next);
+  }
 
   function getIssues(){
     return employees.map(e=>{
@@ -44,6 +56,7 @@ document.addEventListener('DOMContentLoaded',()=> {
 
     const total=employees.reduce((a,e)=>a+e.shifts.reduce((x,s)=>x+hours(s),0),0);
     const issues=getIssues();
+
     document.getElementById('plannedHours').textContent=total.toLocaleString('de-DE',{maximumFractionDigits:1})+' h';
     document.getElementById('employeeCount').textContent=employees.length;
     document.getElementById('issueCount').textContent=issues.length;
@@ -60,16 +73,28 @@ document.addEventListener('DOMContentLoaded',()=> {
     bindCells();
   }
 
+  function resetDialog(){
+    document.getElementById('shiftDialogEyebrow').textContent='Neue Schicht';
+    document.getElementById('shiftDialogTitle').textContent='Schicht eintragen';
+    document.getElementById('shiftDay').value='0';
+    document.getElementById('shiftStart').value='09:00';
+    document.getElementById('shiftEnd').value='17:00';
+    document.getElementById('shiftBreak').value='30';
+    delBtn.hidden=true;
+  }
+
   function openDialog(eid=null,day=null){
     const sel=document.getElementById('shiftEmployee');
     sel.innerHTML=employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
     editing=null;
+    resetDialog();
 
     if(eid!==null && day!==null){
       sel.value=eid;
       document.getElementById('shiftDay').value=String(day);
       const emp=employees.find(x=>x.id===eid);
       const shift=emp?.shifts[day];
+
       if(shift){
         editing={eid,day};
         document.getElementById('shiftStart').value=shift[0];
@@ -78,22 +103,7 @@ document.addEventListener('DOMContentLoaded',()=> {
         document.getElementById('shiftDialogEyebrow').textContent='Schicht bearbeiten';
         document.getElementById('shiftDialogTitle').textContent=emp.name+' · Schicht';
         delBtn.hidden=false;
-      }else{
-        document.getElementById('shiftDialogEyebrow').textContent='Neue Schicht';
-        document.getElementById('shiftDialogTitle').textContent='Schicht eintragen';
-        document.getElementById('shiftStart').value='09:00';
-        document.getElementById('shiftEnd').value='17:00';
-        document.getElementById('shiftBreak').value='30';
-        delBtn.hidden=true;
       }
-    }else{
-      document.getElementById('shiftDialogEyebrow').textContent='Neue Schicht';
-      document.getElementById('shiftDialogTitle').textContent='Schicht eintragen';
-      document.getElementById('shiftDay').value='0';
-      document.getElementById('shiftStart').value='09:00';
-      document.getElementById('shiftEnd').value='17:00';
-      document.getElementById('shiftBreak').value='30';
-      delBtn.hidden=true;
     }
     dlg.showModal();
   }
@@ -118,6 +128,7 @@ document.addEventListener('DOMContentLoaded',()=> {
     if(!editing) return;
     const emp=employees.find(x=>x.id===editing.eid);
     if(emp) emp.shifts[editing.day]=null;
+    persist();
     markDraft();
     dlg.close();
     render();
@@ -125,17 +136,27 @@ document.addEventListener('DOMContentLoaded',()=> {
 
   document.getElementById('shiftForm').addEventListener('submit',e=>{
     e.preventDefault();
+
     const emp=employees.find(x=>x.id===document.getElementById('shiftEmployee').value);
     const day=Number(document.getElementById('shiftDay').value);
     const start=document.getElementById('shiftStart').value;
     const end=document.getElementById('shiftEnd').value;
     const br=Number(document.getElementById('shiftBreak').value||0);
+
     if(!emp||!start||!end||mins(end)<=mins(start)) return;
+
+    if(editing && (editing.eid!==emp.id || editing.day!==day)){
+      const oldEmp=employees.find(x=>x.id===editing.eid);
+      if(oldEmp) oldEmp.shifts[editing.day]=null;
+    }
+
     emp.shifts[day]=[start,end,br];
+    persist();
     markDraft();
     dlg.close();
     render();
   });
 
+  persist();
   render();
 });
