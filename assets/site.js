@@ -40,6 +40,18 @@ function renderRows(id,rows,insight=''){
   el.hidden=false; addResultMeta(el,insight);
 }
 
+
+const LF_STORE_KEY='ladenfluss.store.v1', LF_HISTORY_KEY='ladenfluss.history.v1';
+function lfStore(){ try{return JSON.parse(localStorage.getItem(LF_STORE_KEY)||'{}')}catch{return{}} }
+function lfSetIf(id,value){ const el=document.getElementById(id); if(el&&value!==undefined&&value!==null&&value!=='') el.value=value; }
+function lfApplyStoreDefaults(){ const s=lfStore(); if(!Object.keys(s).length)return;
+  lfSetIf('p_productivity',s.productivity); lfSetIf('p_open',s.hours); lfSetIf('p_buffer',s.buffer);
+  lfSetIf('m_margin',s.margin); lfSetIf('b_buffer',s.buffer); lfSetIf('st_lead',s.lead);
+  lfSetIf('lb_ratio',s.labor); lfSetIf('lb_hourly',s.hourly); lfSetIf('lb_days',s.days?Math.round(s.days*4.33):undefined);
+  const calc=document.querySelector('.calculator'); if(calc&&!document.querySelector('.store-default-note')){const n=document.createElement('div');n.className='store-default-note';n.innerHTML='<strong>Mein Laden aktiv</strong><span>Gespeicherte Zielwerte wurden für diesen Rechner übernommen.</span><a href="/mein-laden">Werte ändern</a>';calc.prepend(n);}
+}
+function lfSaveHistory(tool,summary,data){ try{const h=JSON.parse(localStorage.getItem(LF_HISTORY_KEY)||'[]');h.unshift({id:Date.now(),tool,summary,data,at:new Date().toISOString()});localStorage.setItem(LF_HISTORY_KEY,JSON.stringify(h.slice(0,12)));}catch{} }
+
 const menuBtn=$('.menu-toggle'), mobileNav=$('.mobile-nav');
 if(menuBtn&&mobileNav) menuBtn.addEventListener('click',()=>{ const o=mobileNav.classList.toggle('open'); menuBtn.setAttribute('aria-expanded',String(o)); });
 
@@ -48,21 +60,23 @@ $$('[data-filter]').forEach(btn=>btn.addEventListener('click',()=>{
   const f=btn.dataset.filter; $$('.tool-card').forEach(card=>card.hidden=f!=='all'&&card.dataset.category!==f);
 }));
 
-function calcPersonnel(){
+function calcPersonnel(save=true){
   error('p_error');
   const revenue=val('p_revenue'), productivity=val('p_productivity'), open=val('p_open'), extra=val('p_extra'), minStaff=val('p_min')||1, breakMin=val('p_break'), buffer=val('p_buffer');
   if(revenue<0||productivity<=0||open<=0||extra<0||minStaff<1||breakMin<0||buffer<0||buffer>100){ error('p_error','Bitte prüfe deine Eingaben. Stundenleistung und Öffnungsdauer müssen größer als 0 sein.'); return; }
   const salesHours=revenue/productivity, extraHours=(extra+breakMin)/60, base=salesHours+extraHours, minimumHours=open*minStaff, total=Math.max(base,minimumHours)*(1+buffer/100), concurrent=total/open;
+  if(save) lfSaveHistory('Personalbedarf',de(total)+' h Personalbedarf',{revenue,total,productivity});
   renderRows('p_result',[
     ['Personalstunden für den Umsatz',`${de(salesHours)} h`],['Zusatzaufwand inkl. Pausen',`${de(extraHours)} h`],
     ['Mindestbesetzung erfordert',`${de(minimumHours)} h`],['Gesamter Orientierungsbedarf',`${de(total)} h`],['Ø gleichzeitige Besetzung',`${de(concurrent)} Personen`]
   ],`<strong>Einordnung:</strong> Bei diesen Annahmen ergeben sich rund ${de(total)} Personalstunden. Pausen, Mindestbesetzung, Qualifikation und Stoßzeiten solltest du zusätzlich einplanen.`);
 }
-function calcMargin(){
+function calcMargin(save=true){
   error('m_error');
   const cost=val('m_cost'), margin=val('m_margin'), vat=val('m_vat'), waste=val('m_waste'); const rounding=document.getElementById('m_round')?.value||'none';
   if(cost<0||margin<0||margin>=100||vat<0||waste<0||waste>=100){ error('m_error','Bitte gültige Werte eingeben. Die Ziel-Handelsspanne muss unter 100 % liegen.'); return; }
   const effectiveCost=cost*(1+waste/100), net=effectiveCost/(1-margin/100); let gross=net*(1+vat/100); if(rounding!=='none'){ const cents=Number(rounding)/100; gross=Math.floor(gross)+cents; if(gross+1e-9<net*(1+vat/100)) gross+=1; } const roundedNet=gross/(1+vat/100), profit=roundedNet-effectiveCost, markup=effectiveCost>0?profit/effectiveCost*100:0, actualMargin=roundedNet>0?profit/roundedNet*100:0;
+  if(save) lfSaveHistory('Marge & Verkaufspreis',euro(gross)+' Brutto-VK',{cost,gross,actualMargin});
   renderRows('m_result',[
     ['Verkaufspreis netto',euro(roundedNet)],['Verkaufspreis brutto',euro(gross)],['Rohertrag pro Stück',euro(profit)],['Erreichte Handelsspanne',pct(actualMargin)],['Aufschlag auf den EK',pct(markup)]
   ],`<strong>Einordnung:</strong> Für eine Ziel-Handelsspanne von ${pct(margin)} brauchst du rechnerisch einen Brutto-VK von ${euro(gross)}.`);
@@ -77,11 +91,12 @@ function calcDiscount(){
     ['Handelsspanne nach Rabatt',pct(margin)],['Rohertragsverlust je Stück',euro(loss)]
   ],newProfit<0?`<strong>Achtung:</strong> Nach dem Rabatt liegt der Rohertrag rechnerisch bei ${euro(newProfit)} je Stück. Der Artikel wird auf dieser Basis unter Einstand verkauft.`:`<strong>Einordnung:</strong> Der Rabatt kostet ${euro(loss)} Rohertrag je Stück; die verbleibende Handelsspanne beträgt ${pct(margin)}.`);
 }
-function calcBreakEven(){
+function calcBreakEven(save=true){
   error('b_error');
   const fixed=val('b_fixed'), rate=val('b_rate'), days=val('b_days'), targetProfit=val('b_profit'), buffer=val('b_buffer');
   if(fixed<0||rate<=0||rate>100||days<=0||targetProfit<0||buffer<0||buffer>100){ error('b_error','Bitte gültige Werte eingeben.'); return; }
   const baseMonthly=fixed/(rate/100), targetMonthly=(fixed+targetProfit)/(rate/100), monthly=targetMonthly*(1+buffer/100), daily=monthly/days;
+  if(save) lfSaveHistory('Break-even',euro(monthly)+' Zielumsatz',{fixed,monthly,daily});
   renderRows('b_result',[
     ['Reiner Break-even-Umsatz',euro(baseMonthly)],['Zielumsatz inkl. Gewinn/Puffer',euro(monthly)],['Break-even-Umsatz je Öffnungstag',euro(daily)],['Deckungsbeitrag am Break-even',euro(fixed)]
   ],`<strong>Einordnung:</strong> Der reine Break-even liegt bei ${euro(baseMonthly)}. Mit deinem Gewinnziel und Sicherheitspuffer solltest du auf rund ${euro(daily)} Umsatz je Öffnungstag zielen.`);
@@ -116,11 +131,12 @@ function calcGrossProfit(){
     ['Rohertrag',euro(grossProfit)],['Rohertragsquote',pct(margin)],['Wareneinsatzquote',pct(cogsRatio)],['Umsatz / Wareneinsatz',factor?`${de(factor,2)} ×`:'–']
   ],grossProfit<0?'<strong>Achtung:</strong> Der Wareneinsatz liegt über dem Umsatz. Prüfe Zeitraum, Netto-/Bruttowerte und Datengrundlage.':`<strong>Einordnung:</strong> Von ${euro(revenue)} Umsatz bleiben vor Personal-, Raum- und weiteren Kosten ${euro(grossProfit)} Rohertrag.`);
 }
-function calcStockTurn(){
+function calcStockTurn(save=true){
   error('st_error');
   const cogs=val('st_cogs'), avgStock=val('st_stock'), period=val('st_period'), lead=val('st_lead'), safety=val('st_safety');
   if(cogs<0||avgStock<=0||period<=0||lead<0||safety<0){ error('st_error','Durchschnittsbestand und Zeitraum müssen größer als 0 sein.'); return; }
   const turns=cogs/avgStock, days=turns?period/turns:0, avgDaily=cogs/period, coverage=avgDaily?avgStock/avgDaily:0, reorderNeed=avgDaily*lead+safety, coverageGap=coverage-lead;
+  if(save) lfSaveHistory('Lagerumschlag',de(coverage)+' Tage Reichweite',{cogs,avgStock,coverage,coverageGap});
   renderRows('st_result',[
     ['Lagerumschlag im Zeitraum',`${de(turns,2)} ×`],['Ø Lagerdauer',`${de(days)} Tage`],['Bestandsreichweite',`${de(coverage)} Tage`],['Ø Wareneinsatz je Tag',euro(avgDaily)],['Bedarf bis nächste Lieferung + Sicherheit',euro(reorderNeed)],['Reichweite nach Lieferzeit',`${de(coverageGap)} Tage`]
   ],coverageGap<0?`<strong>Handlungsbedarf:</strong> Deine rechnerische Bestandsreichweite ist rund ${de(Math.abs(coverageGap))} Tage kürzer als die Lieferzeit. Prüfe Nachbestellung und Sicherheitsbestand.`:`<strong>Einordnung:</strong> Nach Abzug der Lieferzeit bleiben rechnerisch ${de(coverageGap)} Tage Reichweite. Der Bedarf bis zur nächsten Lieferung inklusive Sicherheit liegt bei ${euro(reorderNeed)}.`);
@@ -128,6 +144,7 @@ function calcStockTurn(){
 
 Object.assign(window,{calcPersonnel,calcMargin,calcDiscount,calcBreakEven,calcKpi,calcLaborBudget,calcGrossProfit,calcStockTurn});
 document.addEventListener('DOMContentLoaded',()=>{
-  if($('#p_result')) calcPersonnel(); if($('#m_result')) calcMargin(); if($('#d_result')) calcDiscount(); if($('#b_result')) calcBreakEven();
-  if($('#k_result')) calcKpi(); if($('#lb_result')) calcLaborBudget(); if($('#gp_result')) calcGrossProfit(); if($('#st_result')) calcStockTurn();
+  lfApplyStoreDefaults();
+  if($('#p_result')) calcPersonnel(false); if($('#m_result')) calcMargin(false); if($('#d_result')) calcDiscount(); if($('#b_result')) calcBreakEven(false);
+  if($('#k_result')) calcKpi(); if($('#lb_result')) calcLaborBudget(); if($('#gp_result')) calcGrossProfit(); if($('#st_result')) calcStockTurn(false);
 });
