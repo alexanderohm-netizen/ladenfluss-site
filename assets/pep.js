@@ -31,8 +31,8 @@ document.addEventListener('DOMContentLoaded',()=> {
 
   const mins=t=>{const [h,m]=t.split(':').map(Number);return h*60+m};
   const hours=s=>!s?0:Math.max(0,(mins(s[1])-mins(s[0])-Number(s[2]||0))/60);
-  const shop=(()=>{try{return Object.assign({open:'09:00',close:'18:00',minStaff:2},JSON.parse(localStorage.getItem('ladenfluss.store.v1')||'{}'))}catch{return{open:'09:00',close:'18:00',minStaff:2}}})();
-  function coverageIssues(){const out=[],names=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'],start=mins(shop.open),end=mins(shop.close),need=Number(shop.minStaff||2);for(let d=0;d<7;d++){const date=new Date(weekStart);date.setDate(date.getDate()+d);if(window.LadenflussHolidays?.getHoliday(date,'HE'))continue;let gap=null;for(let t=start;t<end;t+=30){const count=employees.filter(e=>{const s=e.shifts[d];return s&&!e.absences[d]&&mins(s[0])<=t&&mins(s[1])>t}).length;if(count<need){if(!gap)gap={from:t,to:t+30,min:count};else{gap.to=t+30;gap.min=Math.min(gap.min,count)}}else if(gap){out.push({priority:'critical',text:names[d]+' '+String(Math.floor(gap.from/60)).padStart(2,'0')+':'+String(gap.from%60).padStart(2,'0')+'–'+String(Math.floor(gap.to/60)).padStart(2,'0')+':'+String(gap.to%60).padStart(2,'0')+' nur '+gap.min+' von '+need+' Personen verfügbar.',detail:'Schicht verlängern oder Ersatz einplanen.'});gap=null}}if(gap)out.push({priority:'critical',text:names[d]+' bis Ladenschluss nur '+gap.min+' von '+need+' Personen verfügbar.',detail:'Schicht verlängern oder Ersatz einplanen.'})}return out}
+  const shop=(()=>{try{return Object.assign({open:'09:00',close:'18:00',minStaff:2,days:6,state:'HE'},JSON.parse(localStorage.getItem('ladenfluss.store.v1')||'{}'))}catch{return{open:'09:00',close:'18:00',minStaff:2,days:6,state:'HE'}}})();
+  function coverageIssues(){const out=[],names=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'],start=mins(shop.open),end=mins(shop.close),need=Number(shop.minStaff||2);for(let d=0;d<7;d++){if(d>=Number(shop.days||6))continue;const date=new Date(weekStart);date.setDate(date.getDate()+d);if(window.LadenflussHolidays?.getHoliday(date,shop.state||'HE'))continue;let gap=null;for(let t=start;t<end;t+=30){const count=employees.filter(e=>{const s=e.shifts[d];return s&&!e.absences[d]&&mins(s[0])<=t&&mins(s[1])>t}).length;if(count<need){if(!gap)gap={from:t,to:t+30,min:count};else{gap.to=t+30;gap.min=Math.min(gap.min,count)}}else if(gap){out.push({priority:'critical',text:names[d]+' '+String(Math.floor(gap.from/60)).padStart(2,'0')+':'+String(gap.from%60).padStart(2,'0')+'–'+String(Math.floor(gap.to/60)).padStart(2,'0')+':'+String(gap.to%60).padStart(2,'0')+' nur '+gap.min+' von '+need+' Personen verfügbar.',detail:'Schicht verlängern oder Ersatz einplanen.'});gap=null}}if(gap)out.push({priority:'critical',text:names[d]+' bis Ladenschluss nur '+gap.min+' von '+need+' Personen verfügbar.',detail:'Schicht verlängern oder Ersatz einplanen.'})}return out}
 
   function persist(){
     const next={};
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded',()=> {
 
     const focus=document.getElementById('pepFocus');
     focus.querySelector('strong').textContent=issues.length?issues[0].text:'Der Plan sieht gut aus.';
-    focus.querySelector('p').textContent=issues[0]?.detail||issues.length>1
+    focus.querySelector('p').textContent=issues[0]?.detail ? issues[0].detail : issues.length>1
       ? `Zusätzlich gibt es ${issues.length-1} weitere Auffälligkeit${issues.length-1===1?'':'en'}. Prüfe die markierten Wochensummen.`
       : issues.length===1
         ? 'Die markierte Wochensumme weicht deutlich vom hinterlegten Soll ab.'
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded',()=> {
     const days=['Mo','Di','Mi','Do','Fr','Sa','So'];
     const dates=Array.from({length:7},(_,i)=>{const d=new Date(weekStart);d.setDate(d.getDate()+i);return d});
     const fmt=d=>d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
-    const state='HE';
+    const state=shop.state||'HE';
     document.getElementById('weekTitle').textContent=fmt(dates[0])+'–'+fmt(dates[6]);
     document.getElementById('pepDays').innerHTML='<th>Mitarbeiter</th>'+dates.map((d,i)=>{const holiday=window.LadenflussHolidays?.getHoliday(d,state);return '<th class="'+(holiday?'holiday':'')+'">'+days[i]+' '+String(d.getDate()).padStart(2,'0')+'.'+(holiday?'<small>'+holiday+'</small>':'')+'</th>'}).join('')+'<th>Summe</th>';
   }
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded',()=> {
     const names=['Mo','Di','Mi','Do','Fr','Sa','So'];
     const html=names.map((name,i)=>{
       const date=new Date(weekStart);date.setDate(date.getDate()+i);
-      const holiday=window.LadenflussHolidays?.getHoliday(date,'HE');
+      const holiday=window.LadenflussHolidays?.getHoliday(date,shop.state||'HE');
       const working=employees.filter(e=>e.shifts[i]&&!e.absences[i]).length;
       if(holiday) return '<div class="holiday-check"><small>'+name+' · Feiertag</small><strong>'+holiday+'</strong></div>'; 
       const state=working===0?'empty':working===1?'thin':'ok';
