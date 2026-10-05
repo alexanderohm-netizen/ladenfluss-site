@@ -31,6 +31,8 @@ document.addEventListener('DOMContentLoaded',()=> {
 
   const mins=t=>{const [h,m]=t.split(':').map(Number);return h*60+m};
   const hours=s=>!s?0:Math.max(0,(mins(s[1])-mins(s[0])-Number(s[2]||0))/60);
+  const shop=(()=>{try{return Object.assign({open:'09:00',close:'18:00',minStaff:2},JSON.parse(localStorage.getItem('ladenfluss.store.v1')||'{}'))}catch{return{open:'09:00',close:'18:00',minStaff:2}}})();
+  function coverageIssues(){const out=[],names=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'],start=mins(shop.open),end=mins(shop.close),need=Number(shop.minStaff||2);for(let d=0;d<7;d++){const date=new Date(weekStart);date.setDate(date.getDate()+d);if(window.LadenflussHolidays?.getHoliday(date,'HE'))continue;let gap=null;for(let t=start;t<end;t+=30){const count=employees.filter(e=>{const s=e.shifts[d];return s&&!e.absences[d]&&mins(s[0])<=t&&mins(s[1])>t}).length;if(count<need){if(!gap)gap={from:t,to:t+30,min:count};else{gap.to=t+30;gap.min=Math.min(gap.min,count)}}else if(gap){out.push({priority:'critical',text:names[d]+' '+String(Math.floor(gap.from/60)).padStart(2,'0')+':'+String(gap.from%60).padStart(2,'0')+'–'+String(Math.floor(gap.to/60)).padStart(2,'0')+':'+String(gap.to%60).padStart(2,'0')+' nur '+gap.min+' von '+need+' Personen verfügbar.',detail:'Schicht verlängern oder Ersatz einplanen.'});gap=null}}if(gap)out.push({priority:'critical',text:names[d]+' bis Ladenschluss nur '+gap.min+' von '+need+' Personen verfügbar.',detail:'Schicht verlängern oder Ersatz einplanen.'})}return out}
 
   function persist(){
     const next={};
@@ -47,7 +49,7 @@ document.addEventListener('DOMContentLoaded',()=> {
       if(total<Math.max(0,e.target-8)) return {name:e.name,type:'low',priority:'info',module:'Personal',title:'Weniger Stunden geplant',text:`${e.name} liegt deutlich unter den Sollstunden.`};
       return null;
     }).filter(Boolean);
-    return conflicts.concat(hourIssues).sort((a,b)=>({critical:0,important:1,info:2}[a.priority]??9)-({critical:0,important:1,info:2}[b.priority]??9));
+    return conflicts.concat(coverageIssues(),hourIssues).sort((a,b)=>({critical:0,important:1,info:2}[a.priority]??9)-({critical:0,important:1,info:2}[b.priority]??9));
   }
 
   function persistAbsences(){
