@@ -1,5 +1,6 @@
 -- Ladenfluss v1.4 — initiales Supabase-Schema
--- Vor Produktion prüfen/testen. Keine Secret Keys in diesem Repository speichern.
+-- Vor Produktion mit Supabase CLI/Tests prüfen.
+-- Keine Secret- oder Service-Role-Keys in Browser oder Repository speichern.
 
 create extension if not exists pgcrypto;
 
@@ -70,6 +71,26 @@ create table if not exists public.module_access (
   primary key (company_id,module_key)
 );
 
+-- Erstellt für ein neu angelegtes Unternehmen automatisch die Owner-Mitgliedschaft.
+create or replace function public.handle_new_company_owner()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.company_members(company_id,user_id,role,status)
+  values(new.id,new.created_by,'owner','active')
+  on conflict (company_id,user_id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_company_created_owner on public.companies;
+create trigger on_company_created_owner
+after insert on public.companies
+for each row execute function public.handle_new_company_owner();
+
 create or replace function public.is_company_member(target_company uuid)
 returns boolean
 language sql
@@ -86,8 +107,27 @@ as $$
   );
 $$;
 
+create or replace function public.has_company_role(target_company uuid, allowed_roles text[])
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.company_members cm
+    where cm.company_id = target_company
+      and cm.user_id = auth.uid()
+      and cm.status = 'active'
+      and cm.role = any(allowed_roles)
+  );
+$$;
+
 revoke all on function public.is_company_member(uuid) from public;
+revoke all on function public.has_company_role(uuid,text[]) from public;
 grant execute on function public.is_company_member(uuid) to authenticated;
+grant execute on function public.has_company_role(uuid,text[]) to authenticated;
 
 alter table public.companies enable row level security;
 alter table public.company_members enable row level security;
@@ -96,59 +136,87 @@ alter table public.employees enable row level security;
 alter table public.shifts enable row level security;
 alter table public.module_access enable row level security;
 
+-- Keine Geschäftsdaten für nicht angemeldete Nutzer.
+revoke all on table public.companies from anon;
+revoke all on table public.company_members from anon;
+revoke all on table public.branches from anon;
+revoke all on table public.employees from anon;
+revoke all on table public.shifts from anon;
+revoke all on table public.module_access from anon;
+
+-- Least privilege für angemeldete Nutzer; RLS begrenzt zusätzlich die sichtbaren Zeilen.
+revoke all on table public.companies from authenticated;
+revoke all on table public.company_members from authenticated;
+revoke all on table public.branches from authenticated;
+revoke all on table public.employees from authenticated;
+revoke all on table public.shifts from authenticated;
+revoke all on table public.module_access from authenticated;
+
+grant select,insert,update on table public.companies to authenticated;
+grant select on table public.company_members to authenticated;
+grant select,insert,update,delete on table public.branches to authenticated;
+grant select,insert,update,delete on table public.employees to authenticated;
+grant select,insert,update,delete on table public.shifts to authenticated;
+grant select on table public.module_access to authenticated;
+
 create policy "members read companies"
 on public.companies for select
 to authenticated
 using (public.is_company_member(id));
 
-create policy "creator creates company"
+create policy "user creates own company"
 on public.companies for insert
 to authenticated
 with check (created_by = auth.uid());
 
+create policy "owners and admins update company"
+on public.companies for update
+to authenticated
+using (public.has_company_role(id,array['owner','admin']))
+with check (public.has_company_role(id,array['owner','admin']));
+
 create policy "members read memberships"
 on public.company_members for select
 to authenticated
-using (user_id = auth.uid() or public.is_company_member(company_id));
+using (public.is_company_member(company_id));
 
 create policy "members read branches"
 on public.branches for select
 to authenticated
 using (public.is_company_member(company_id));
 
-create policy "admins manage branches"
+create policy "management manages branches"
 on public.branches for all
 to authenticated
-using (public.is_company_member(company_id))
-with check (public.is_company_member(company_id));
+using (public.has_company_role(company_id,array['owner','admin','manager']))
+with check (public.has_company_role(company_id,array['owner','admin','manager']));
 
 create policy "members read employees"
 on public.employees for select
 to authenticated
 using (public.is_company_member(company_id));
 
-create policy "members manage employees"
+create policy "management manages employees"
 on public.employees for all
 to authenticated
-using (public.is_company_member(company_id))
-with check (public.is_company_member(company_id));
+using (public.has_company_role(company_id,array['owner','admin','manager']))
+with check (public.has_company_role(company_id,array['owner','admin','manager']));
 
 create policy "members read shifts"
 on public.shifts for select
 to authenticated
 using (public.is_company_member(company_id));
 
-create policy "members manage shifts"
+create policy "management manages shifts"
 on public.shifts for all
 to authenticated
-using (public.is_company_member(company_id))
-with check (public.is_company_member(company_id));
+using (public.has_company_role(company_id,array['owner','admin','manager']))
+with check (public.has_company_role(company_id,array['owner','admin','manager']));
 
 create policy "members read module access"
 on public.module_access for select
 to authenticated
 using (public.is_company_member(company_id));
 
--- Hinweis:
--- Die finalen Admin-/Owner-Rechte werden vor Produktivstart feiner getrennt.
--- Für v1.4 ist das Schema bewusst klein und auf den ersten echten Workflow fokussiert.
+-- module_access wird später serverseitig durch Billing/Admin-Funktionen verwaltet.
+-- Mitarbeiter-Einladungen und feinere Rollenrechte folgen nach dem ersten Auth-Flow.
