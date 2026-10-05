@@ -40,14 +40,14 @@ document.addEventListener('DOMContentLoaded',()=> {
 
   function getIssues(){
     const conflicts=[];
-    employees.forEach(e=>e.shifts.forEach((s,i)=>{if(s&&e.absences[i]) conflicts.push({name:e.name,type:'conflict',text:e.name+' ist '+e.absences[i]+' und gleichzeitig eingeplant.',detail:'Schicht entfernen oder Ersatz einplanen.'})}));
+    employees.forEach(e=>e.shifts.forEach((s,i)=>{if(s&&e.absences[i]) conflicts.push({name:e.name,type:'conflict',priority:'critical',module:'Personal',title:'Planungskonflikt',text:e.name+' ist '+e.absences[i]+' und gleichzeitig eingeplant.',detail:'Schicht entfernen oder Ersatz einplanen.'})}));
     const hourIssues=employees.map(e=>{
       const total=e.shifts.reduce((a,s)=>a+hours(s),0);
-      if(total>e.target+5) return {name:e.name,type:'high',text:`${e.name} liegt deutlich über den Sollstunden.`};
-      if(total<Math.max(0,e.target-8)) return {name:e.name,type:'low',text:`${e.name} liegt deutlich unter den Sollstunden.`};
+      if(total>e.target+5) return {name:e.name,type:'high',priority:'important',module:'Personal',title:'Sollstunden überschritten',text:`${e.name} liegt deutlich über den Sollstunden.`};
+      if(total<Math.max(0,e.target-8)) return {name:e.name,type:'low',priority:'info',module:'Personal',title:'Weniger Stunden geplant',text:`${e.name} liegt deutlich unter den Sollstunden.`};
       return null;
     }).filter(Boolean);
-    return conflicts.concat(hourIssues);
+    return conflicts.concat(hourIssues).sort((a,b)=>({critical:0,important:1,info:2}[a.priority]??9)-({critical:0,important:1,info:2}[b.priority]??9));
   }
 
   function persistAbsences(){
