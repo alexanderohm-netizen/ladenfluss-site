@@ -26,7 +26,7 @@ Output Directory: leer lassen
 - kostenloses Mein-Laden-Cockpit mit lokalen Stammdaten/Richtwerten
 - Rechner als kostenlose Einstiegsprodukte
 - geplante Module sichtbar, aber eindeutig als noch nicht verfügbar gekennzeichnet
-- ABBD/MHD als späteren WWS-Baustein architektonisch reservieren
+- Ladenfluss MHD als späteren WWS-Baustein architektonisch reservieren
 
 ### v1.4 — Konto + modularer Kundenbereich
 - echtes Laden-/Unternehmenskonto statt nur Browserdaten
@@ -51,4 +51,4 @@ Output Directory: leer lassen
 5. Kostenloser Einstieg bleibt dauerhaft sinnvoll.
 6. Kein Feature nur deshalb bauen, weil klassische ERP-Systeme es besitzen.
 7. Kritische Bestands-, Preis-, Kassen- und Personaländerungen müssen nachvollziehbar sein.
-8. Spätere ABBD-Funktionen verwenden den zentralen Ladenfluss-Artikelstamm.
+8. Spätere MHD-Funktionen verwenden den zentralen Ladenfluss-Artikelstamm.
