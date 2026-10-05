@@ -111,7 +111,10 @@ document.addEventListener('DOMContentLoaded',()=> {
   function renderDayCheck(){
     const names=['Mo','Di','Mi','Do','Fr','Sa','So'];
     const html=names.map((name,i)=>{
+      const date=new Date(weekStart);date.setDate(date.getDate()+i);
+      const holiday=window.LadenflussHolidays?.getHoliday(date,'HE');
       const working=employees.filter(e=>e.shifts[i]).length;
+      if(holiday) return '<div class="holiday-check"><small>'+name+' · Feiertag</small><strong>'+holiday+'</strong></div>'; 
       const state=working===0?'empty':working===1?'thin':'ok';
       const label=working===0?'Niemand geplant':working===1?'Nur 1 Person':working+' Personen';
       return '<div class="'+state+'"><small>'+name+'</small><strong>'+label+'</strong></div>';
