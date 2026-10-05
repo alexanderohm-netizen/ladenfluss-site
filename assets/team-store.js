@@ -3,6 +3,7 @@
   const SHIFTS_KEY='ladenfluss.pep.weeks.v2';
   const LEGACY_SHIFTS_KEY='ladenfluss.pep.shifts.v1';
   const PLAN_KEY='ladenfluss.pep.plan-status.v1';
+  const ABSENCE_KEY='ladenfluss.pep.absences.v1';
 
   const defaultTeam=[
     {id:'e1',name:'Anna Müller',role:'Verkauf',hours:30,branch:'Hauptfiliale',docs:true},
@@ -57,10 +58,24 @@
     const states=read(PLAN_KEY,{});states[week]=status;
     localStorage.setItem(PLAN_KEY,JSON.stringify(states));
   }
+  function getAbsences(week=mondayKey()){
+    const weeks=read(ABSENCE_KEY,{});
+    return clone(weeks[week]||{});
+  }
+  function saveAbsences(absences,week=mondayKey()){
+    const weeks=read(ABSENCE_KEY,{});
+    weeks[week]=absences;
+    localStorage.setItem(ABSENCE_KEY,JSON.stringify(weeks));
+  }
+  function ensureEmployeeAbsenceRows(team,absences){
+    team.forEach(p=>{if(!Array.isArray(absences[p.id]))absences[p.id]=[null,null,null,null,null,null,null]});
+    Object.keys(absences).forEach(id=>{if(!team.some(p=>p.id===id))delete absences[id]});
+    return absences;
+  }
   function ensureEmployeeShiftRows(team,shifts){
     team.forEach(p=>{if(!Array.isArray(shifts[p.id]))shifts[p.id]=[null,null,null,null,null,null,null]});
     Object.keys(shifts).forEach(id=>{if(!team.some(p=>p.id===id))delete shifts[id]});
     return shifts;
   }
-  window.LadenflussTeamStore={getTeam,saveTeam,getShifts,saveShifts,getPlanStatus,savePlanStatus,ensureEmployeeShiftRows,mondayKey};
+  window.LadenflussTeamStore={getTeam,saveTeam,getShifts,saveShifts,getPlanStatus,savePlanStatus,getAbsences,saveAbsences,ensureEmployeeAbsenceRows,ensureEmployeeShiftRows,mondayKey};
 })();
