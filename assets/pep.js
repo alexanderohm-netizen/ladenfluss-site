@@ -25,6 +25,8 @@ document.addEventListener('DOMContentLoaded',()=> {
   const publishBtn=document.getElementById('publishPlan');
   const planStatus=document.getElementById('planStatus');
   let editing=null;
+  let editingAbsence=null;
+  const deleteAbsence=document.getElementById('deleteAbsence');
   let published=store.getPlanStatus(weekKey)==='published';
 
   const mins=t=>{const [h,m]=t.split(':').map(Number);return h*60+m};
@@ -113,7 +115,7 @@ document.addEventListener('DOMContentLoaded',()=> {
     const html=names.map((name,i)=>{
       const date=new Date(weekStart);date.setDate(date.getDate()+i);
       const holiday=window.LadenflussHolidays?.getHoliday(date,'HE');
-      const working=employees.filter(e=>e.shifts[i]).length;
+      const working=employees.filter(e=>e.shifts[i]&&!e.absences[i]).length;
       if(holiday) return '<div class="holiday-check"><small>'+name+' · Feiertag</small><strong>'+holiday+'</strong></div>'; 
       const state=working===0?'empty':working===1?'thin':'ok';
       const label=working===0?'Niemand geplant':working===1?'Nur 1 Person':working+' Personen';
@@ -166,14 +168,19 @@ document.addEventListener('DOMContentLoaded',()=> {
     dlg.showModal();
   }
 
+  function openAbsence(eid=null,day=0){
+    const sel=document.getElementById('absenceEmployee');sel.innerHTML=employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');editingAbsence=null;deleteAbsence.hidden=true;
+    if(eid){sel.value=eid;document.getElementById('absenceDay').value=String(day);const emp=employees.find(x=>x.id===eid);if(emp?.absences[day]){document.getElementById('absenceType').value=emp.absences[day];editingAbsence={eid,day};deleteAbsence.hidden=false;}}
+    absenceDlg.showModal();
+  }
+
   function bindCells(){
-    document.querySelectorAll('.empty-shift,.shift-chip').forEach(b=>{
-      b.onclick=()=>openDialog(b.dataset.e,Number(b.dataset.d));
-    });
+    document.querySelectorAll('.empty-shift,.shift-chip').forEach(b=>{b.onclick=()=>openDialog(b.dataset.e,Number(b.dataset.d));});
+    document.querySelectorAll('.absence-chip').forEach(b=>{b.onclick=()=>openAbsence(b.dataset.ae,Number(b.dataset.ad));});
   }
 
   document.getElementById('addShift').onclick=()=>openDialog();
-  document.getElementById('addAbsence').onclick=()=>{document.getElementById('absenceEmployee').innerHTML=employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');absenceDlg.showModal()};
+  document.getElementById('addAbsence').onclick=()=>openAbsence();
   document.getElementById('printPlan').onclick=()=>window.print();
 
   publishBtn.onclick=()=>{
@@ -191,7 +198,8 @@ document.addEventListener('DOMContentLoaded',()=> {
     weekStart.setHours(12,0,0,0);
     weekKey=store.mondayKey(weekStart);
     shifts=store.ensureEmployeeShiftRows(team,store.getShifts(weekKey));
-    employees.forEach(e=>e.shifts=shifts[e.id]);
+    absences=store.ensureEmployeeAbsenceRows(team,store.getAbsences(weekKey));
+    employees.forEach(e=>{e.shifts=shifts[e.id];e.absences=absences[e.id]});
     render();
   };
 
@@ -204,6 +212,8 @@ document.addEventListener('DOMContentLoaded',()=> {
     dlg.close();
     render();
   };
+
+  deleteAbsence.onclick=()=>{if(!editingAbsence)return;const emp=employees.find(x=>x.id===editingAbsence.eid);if(emp)emp.absences[editingAbsence.day]=null;persistAbsences();markDraft();absenceDlg.close();render();};
 
   document.getElementById('absenceForm').addEventListener('submit',e=>{
     e.preventDefault();const emp=employees.find(x=>x.id===document.getElementById('absenceEmployee').value);const day=Number(document.getElementById('absenceDay').value);if(!emp)return;emp.absences[day]=document.getElementById('absenceType').value;persistAbsences();markDraft();absenceDlg.close();render();
