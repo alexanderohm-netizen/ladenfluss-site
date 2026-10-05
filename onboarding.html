@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#6d2434">
+<title>Unternehmen einrichten | Ladenfluss</title>
+<meta name="description" content="Richte dein Unternehmen und deine erste Filiale in Ladenfluss ein.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/account.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Zum Inhalt</a>
+<header class="site-header"><div class="container header-row">
+<a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span>Ladenfluss</span></a>
+<nav class="desktop-nav"><a href="/tools">Tools</a><a href="/mein-laden">Mein Laden</a><a href="/konto">Konto</a></nav>
+<button class="menu-toggle" aria-expanded="false" aria-controls="mobile-nav">Menü</button>
+</div><nav id="mobile-nav" class="mobile-nav"><a href="/tools">Tools</a><a href="/mein-laden">Mein Laden</a><a href="/konto">Konto</a></nav></header>
+
+<main id="main" class="account-shell onboarding-shell">
+<section class="account-intro">
+<span class="eyebrow">Ladenfluss v1.4</span>
+<h1>Erzähl uns kurz von deinem Laden.</h1>
+<p>Nur das Nötigste. Keine Formulare voller Fachbegriffe. Diese Angaben bilden später die Grundlage für Dienstpläne, Zahlenfluss, Warenfluss und deine persönlichen Hinweise.</p>
+<div class="account-flow"><span>✓ Konto</span><span class="active-step">2 · Unternehmen</span><span>3 · Filiale</span><span>4 · Dashboard</span></div>
+<div class="onboarding-promise">
+<strong>Warum wir das fragen</strong>
+<span>Ladenfluss soll deine Daten später automatisch vorausfüllen, statt dich dieselben Angaben immer wieder eingeben zu lassen.</span>
+</div>
+</section>
+
+<section class="account-card onboarding-card">
+<span class="eyebrow">Schritt 2</span>
+<h2>Dein Unternehmen</h2>
+<form class="account-form onboarding-form" id="companyOnboarding">
+<label>Wie heißt dein Unternehmen?
+<input id="company_name" autocomplete="organization" required placeholder="z. B. Musterladen GmbH">
+<span class="field-hint">Der Name, unter dem dein Geschäft geführt wird.</span></label>
+
+<label>Was verkaufst du hauptsächlich?
+<select id="company_type" required>
+<option value="">Bitte auswählen</option>
+<option>Lebensmittel</option>
+<option>Mode & Textil</option>
+<option>Drogerie & Beauty</option>
+<option>Geschenke & Deko</option>
+<option>Elektronik</option>
+<option>Baumarkt & Heimwerken</option>
+<option>Sonstiger Einzelhandel</option>
+</select>
+</label>
+
+<label>Wie viele Standorte hast du aktuell?
+<select id="company_locations" required>
+<option value="1">1 Standort</option>
+<option value="2-5">2–5 Standorte</option>
+<option value="6-20">6–20 Standorte</option>
+<option value="20+">Mehr als 20 Standorte</option>
+</select>
+</label>
+
+<div class="onboarding-divider"><span>Erste Filiale</span></div>
+
+<label>Wie heißt dein Standort?
+<input id="branch_name" required placeholder="z. B. Innenstadt oder Bad Homburg">
+<span class="field-hint">Ein einfacher Name reicht. Adresse und weitere Daten können später ergänzt werden.</span></label>
+
+<div class="onboarding-two">
+<label>Öffnungstage pro Woche
+<input id="branch_days" type="number" min="1" max="7" value="6" required></label>
+<label>Öffnungsstunden pro Tag
+<input id="branch_hours" type="number" min="1" max="24" step=".5" value="9" required></label>
+</div>
+
+<button class="btn btn-primary" type="submit">Unternehmen einrichten →</button>
+</form>
+<div class="auth-status" id="onboardingStatus"><strong>v1.4 Entwicklung</strong><span>Die Oberfläche ist vorbereitet. Dauerhaft gespeichert werden Unternehmensdaten erst, sobald die sichere Kontodatenbank angebunden ist.</span></div>
+</section>
+</main>
+
+<footer class="site-footer"><div class="container"><div class="footer-bottom"><span>© 2026 Ladenfluss · betrieben durch AO-Shop</span><span>v1.4 · Kundenbereich</span></div></div></footer>
+<script src="/assets/site.js" defer></script><script src="/assets/onboarding.js" defer></script>
+</body></html>

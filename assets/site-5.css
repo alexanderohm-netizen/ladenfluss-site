@@ -60,3 +60,21 @@
 /* v1.3 — öffentliche Produktnavigation */
 .product-entry{padding:62px 0;background:var(--paper-soft);border-bottom:1px solid var(--line)}.product-entry-grid,.product-catalog{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);border-left:1px solid var(--line)}.product-entry-grid a,.product-catalog>a{display:grid;gap:8px;padding:22px;text-decoration:none;background:var(--white);border-right:1px solid var(--line);border-bottom:1px solid var(--line);min-height:130px}.product-entry-grid a:hover,.product-catalog>a:hover{background:var(--paper-soft)}.product-entry-grid strong{font-size:17px}.product-entry-grid span,.product-catalog>a>span{font-size:11px;color:var(--muted)}.product-catalog h2{font-family:Georgia,"Times New Roman",serif;font-size:26px;font-weight:500;margin:12px 0 2px}.product-catalog p{font-size:12px;line-height:1.55;color:var(--muted)}.product-detail-hero{padding:72px 0 58px;background:var(--paper-soft);border-bottom:1px solid var(--line)}.product-detail-hero .container{max-width:920px}.product-detail-hero h1{font-size:clamp(44px,6vw,72px);max-width:850px}.back-link{display:inline-block;margin-bottom:38px;font-size:12px;font-weight:800;color:var(--wine);text-decoration:none}.product-status{display:inline-flex;margin-top:22px;padding:8px 11px;border:1px solid var(--line-dark);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
 @media(max-width:850px){.product-entry-grid,.product-catalog{grid-template-columns:1fr 1fr}}@media(max-width:620px){.product-entry-grid,.product-catalog{grid-template-columns:1fr}.product-detail-hero{padding:45px 0}.product-detail-hero h1{font-size:42px}}
+
+
+/* v1.4 — geführte Rechner */
+.simple-step{display:inline-flex;margin-bottom:10px;padding:5px 9px;border:1px solid var(--line);background:var(--paper-soft);color:var(--wine);font-size:9px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
+.tool-page .calculator-layout{grid-template-columns:minmax(0,760px) minmax(250px,1fr);gap:46px}
+.tool-page .calculator{border-top-width:3px;border-radius:12px;box-shadow:0 10px 28px #e8ddd4;padding:34px}
+.tool-page .field label{text-transform:none;letter-spacing:0;font-size:13px;line-height:1.4}
+.tool-page .field input,.tool-page .field select{border-radius:8px;background:#fff;min-height:50px;font-size:16px}
+.tool-page .advanced-options{border-radius:10px;overflow:hidden}
+.tool-page .calc-actions .btn{min-height:48px;border-radius:8px;padding-left:20px;padding-right:20px}
+.tool-page .result{border:1px solid var(--line);border-radius:12px;padding:8px 18px;background:#fff}
+.tool-page .result .metric:first-child{margin:0 -18px 5px;padding:18px;background:var(--paper-soft);border-bottom:1px solid var(--line)}
+.tool-page .result .metric:first-child span{color:var(--ink);font-weight:800}
+.tool-page .result .metric:first-child strong{font-size:22px;color:var(--wine)}
+.tool-page .result .metric:last-child{border-bottom:0}
+.tool-page .result-insight{border-radius:10px}
+@media(max-width:900px){.tool-page .calculator-layout{grid-template-columns:1fr}.tool-page .side-stack{display:none}}
+@media(max-width:620px){.tool-page .calculator{padding:23px 18px}.tool-page .fields{gap:16px}}

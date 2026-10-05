@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#6d2434">
+<title>Personalplanung | Ladenfluss</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/pep.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Zum Inhalt</a>
+<header class="site-header"><div class="container header-row"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span>Ladenfluss</span></a><nav class="desktop-nav"><a href="/mein-laden">Mein Laden</a><a href="/mitarbeiter">Mitarbeiter</a><a href="/pep" aria-current="page">Personalplanung</a><a href="/tools">Tools</a><a href="/konto">Konto</a></nav><button class="menu-toggle" aria-expanded="false" aria-controls="mobile-nav">Menü</button></div><nav id="mobile-nav" class="mobile-nav"><a href="/mein-laden">Mein Laden</a><a href="/mitarbeiter">Mitarbeiter</a><a href="/pep">Personalplanung</a><a href="/tools">Tools</a></nav></header>
+
+<main id="main" class="pep-shell">
+<section class="pep-head">
+<div><span class="eyebrow">Personal & PEP · Prototyp</span><h1>Deine Woche auf einen Blick.</h1><p>Schichten planen, Stunden sehen, Probleme früh erkennen. Keine Tabellenwand.</p></div>
+<div class="pep-actions"><span class="plan-status" id="planStatus"><i></i> Entwurf</span><button class="btn btn-secondary" type="button" id="printPlan">Drucken / PDF</button><button class="btn btn-secondary" type="button" id="publishPlan">Plan veröffentlichen</button><button class="btn btn-secondary" type="button" id="addAbsence">Abwesenheit</button><button class="btn btn-primary" type="button" id="addShift">+ Schicht</button></div>
+</section>
+
+<section class="pep-daycheck" id="dayCheck" aria-label="Besetzungscheck"></section><section class="pep-summary" aria-label="Wochenübersicht">
+<div><small>Geplante Stunden</small><strong id="plannedHours">0 h</strong><span>Diese Woche</span></div>
+<div><small>Mitarbeiter</small><strong id="employeeCount">0</strong><span>Im Plan</span></div>
+<div><small>Offene Hinweise</small><strong id="issueCount">0</strong><span id="issueText">Alles ruhig</span></div>
+</section>
+
+<section class="pep-focus" id="pepFocus">
+<span>Diese Woche</span>
+<strong>Der Plan sieht gut aus.</strong>
+<p>Ladenfluss weist dich hier später zuerst auf Unterbesetzung, Überschneidungen oder auffällige Stunden hin.</p>
+</section>
+
+<section class="pep-board">
+<div class="pep-board-head"><div><span class="eyebrow">Wochenplan</span><h2 id="weekTitle">Diese Woche</h2></div><div class="week-nav"><button id="prevWeek" type="button" aria-label="Vorherige Woche">←</button><button id="todayWeek" type="button">Heute</button><button id="copyWeek" type="button">Vorwoche kopieren</button><button id="nextWeek" type="button" aria-label="Nächste Woche">→</button></div></div>
+<div class="pep-table-wrap">
+<table class="pep-table">
+<thead><tr id="pepDays"><th>Mitarbeiter</th></tr></thead>
+<tbody id="pepBody"></tbody>
+</table>
+</div>
+</section>
+
+<section class="pep-help">
+<article><span>1</span><div><strong>Mitarbeiter wählen</strong><p>Jeder Mitarbeiter bekommt eine klare Wochenzeile.</p></div></article>
+<article><span>2</span><div><strong>Schicht setzen</strong><p>Start, Ende und Pause. Den Rest rechnet Ladenfluss.</p></div></article>
+<article><span>3</span><div><strong>Probleme sofort sehen</strong><p>Später warnen wir bei Überstunden, fehlender Besetzung und Konflikten.</p></div></article>
+</section>
+</main>
+
+<dialog id="shiftDialog" class="shift-dialog">
+<form method="dialog" id="shiftForm">
+<div class="dialog-head"><div><span class="eyebrow" id="shiftDialogEyebrow">Neue Schicht</span><h2 id="shiftDialogTitle">Schicht eintragen</h2></div><button value="cancel" class="dialog-close" aria-label="Schließen">×</button></div>
+<label>Mitarbeiter<select id="shiftEmployee"></select></label>
+<label>Tag<select id="shiftDay"><option value="0">Montag</option><option value="1">Dienstag</option><option value="2">Mittwoch</option><option value="3">Donnerstag</option><option value="4">Freitag</option><option value="5">Samstag</option><option value="6">Sonntag</option></select></label>
+<div class="dialog-two"><label>Von<input id="shiftStart" type="time" value="09:00"></label><label>Bis<input id="shiftEnd" type="time" value="17:00"></label></div>
+<label>Pause in Minuten<input id="shiftBreak" type="number" min="0" step="5" value="30"></label>
+<div class="dialog-actions"><button type="button" class="danger-button" id="deleteShift" hidden>Schicht löschen</button><span class="dialog-spacer"></span><button value="cancel" class="btn btn-secondary">Abbrechen</button><button type="submit" class="btn btn-primary">Schicht übernehmen</button></div>
+</form>
+</dialog>
+
+<dialog id="absenceDialog" class="shift-dialog">
+<form method="dialog" id="absenceForm">
+<div class="dialog-head"><div><span class="eyebrow">Abwesenheit</span><h2>Abwesenheit eintragen</h2></div><button value="cancel" class="dialog-close" aria-label="Schließen">×</button></div>
+<label>Mitarbeiter<select id="absenceEmployee"></select></label>
+<label>Tag<select id="absenceDay"><option value="0">Montag</option><option value="1">Dienstag</option><option value="2">Mittwoch</option><option value="3">Donnerstag</option><option value="4">Freitag</option><option value="5">Samstag</option><option value="6">Sonntag</option></select></label>
+<label>Grund<select id="absenceType"><option>Urlaub</option><option>Krank</option><option>Frei</option><option>Schule / Seminar</option><option>Sonstige Abwesenheit</option></select></label>
+<div class="dialog-actions"><button type="button" class="danger-button" id="deleteAbsence" hidden>Abwesenheit entfernen</button><span class="dialog-spacer"></span><button value="cancel" class="btn btn-secondary">Abbrechen</button><button type="submit" class="btn btn-primary">Übernehmen</button></div>
+</form></dialog>
+<script src="/assets/site.js" defer></script><script src="/assets/de-holidays.js" defer></script><script src="/assets/signals.js" defer></script><script src="/assets/team-store.js" defer></script><script src="/assets/pep.js" defer></script>
+</body></html>
