@@ -50,21 +50,21 @@ $$('[data-filter]').forEach(btn=>btn.addEventListener('click',()=>{
 
 function calcPersonnel(){
   error('p_error');
-  const revenue=val('p_revenue'), productivity=val('p_productivity'), open=val('p_open'), extra=val('p_extra');
-  if(revenue<0||productivity<=0||open<=0||extra<0){ error('p_error','Bitte prüfe deine Eingaben. Stundenleistung und Öffnungsdauer müssen größer als 0 sein.'); return; }
-  const salesHours=revenue/productivity, extraHours=extra/60, total=salesHours+extraHours, concurrent=total/open;
+  const revenue=val('p_revenue'), productivity=val('p_productivity'), open=val('p_open'), extra=val('p_extra'), minStaff=val('p_min')||1, breakMin=val('p_break'), buffer=val('p_buffer');
+  if(revenue<0||productivity<=0||open<=0||extra<0||minStaff<1||breakMin<0||buffer<0){ error('p_error','Bitte prüfe deine Eingaben. Stundenleistung und Öffnungsdauer müssen größer als 0 sein.'); return; }
+  const salesHours=revenue/productivity, extraHours=(extra+breakMin)/60, base=salesHours+extraHours, minimumHours=open*minStaff, total=Math.max(base,minimumHours)*(1+buffer/100), concurrent=total/open;
   renderRows('p_result',[
     ['Personalstunden für den Umsatz',`${de(salesHours)} h`],['Zusatzaufwand',`${de(extraHours)} h`],
-    ['Gesamter Orientierungsbedarf',`${de(total)} h`],['Ø gleichzeitige Besetzung',`${de(concurrent)} Personen`]
+    ['Mindestbesetzung erfordert',`${de(minimumHours)} h`],['Gesamter Orientierungsbedarf',`${de(total)} h`],['Ø gleichzeitige Besetzung',`${de(concurrent)} Personen`]
   ],`<strong>Einordnung:</strong> Bei diesen Annahmen ergeben sich rund ${de(total)} Personalstunden. Pausen, Mindestbesetzung, Qualifikation und Stoßzeiten solltest du zusätzlich einplanen.`);
 }
 function calcMargin(){
   error('m_error');
-  const cost=val('m_cost'), margin=val('m_margin'), vat=val('m_vat');
+  const cost=val('m_cost'), margin=val('m_margin'), vat=val('m_vat'), waste=val('m_waste'); const rounding=document.getElementById('m_round')?.value||'none';
   if(cost<0||margin<0||margin>=100||vat<0){ error('m_error','Bitte gültige Werte eingeben. Die Ziel-Handelsspanne muss unter 100 % liegen.'); return; }
-  const net=cost/(1-margin/100), gross=net*(1+vat/100), profit=net-cost, markup=cost>0?profit/cost*100:0;
+  const effectiveCost=cost*(1+waste/100), net=effectiveCost/(1-margin/100); let gross=net*(1+vat/100); if(rounding!=='none'){ const cents=Number(rounding)/100; gross=Math.floor(gross)+cents; if(gross<net*(1+vat/100)) gross+=1; } const roundedNet=gross/(1+vat/100), profit=roundedNet-effectiveCost, markup=effectiveCost>0?profit/effectiveCost*100:0;
   renderRows('m_result',[
-    ['Verkaufspreis netto',euro(net)],['Verkaufspreis brutto',euro(gross)],['Rohertrag pro Stück',euro(profit)],['Aufschlag auf den EK',pct(markup)]
+    ['Verkaufspreis netto',euro(roundedNet)],['Verkaufspreis brutto',euro(gross)],['Rohertrag pro Stück',euro(profit)],['Aufschlag auf den EK',pct(markup)]
   ],`<strong>Einordnung:</strong> Für eine Ziel-Handelsspanne von ${pct(margin)} brauchst du rechnerisch einen Brutto-VK von ${euro(gross)}.`);
 }
 function calcDiscount(){
@@ -79,11 +79,11 @@ function calcDiscount(){
 }
 function calcBreakEven(){
   error('b_error');
-  const fixed=val('b_fixed'), rate=val('b_rate'), days=val('b_days');
+  const fixed=val('b_fixed'), rate=val('b_rate'), days=val('b_days'), targetProfit=val('b_profit'), buffer=val('b_buffer');
   if(fixed<0||rate<=0||rate>100||days<=0){ error('b_error','Bitte gültige Werte eingeben.'); return; }
-  const monthly=fixed/(rate/100), daily=monthly/days;
+  const baseMonthly=fixed/(rate/100), targetMonthly=(fixed+targetProfit)/(rate/100), monthly=targetMonthly*(1+buffer/100), daily=monthly/days;
   renderRows('b_result',[
-    ['Break-even-Umsatz pro Monat',euro(monthly)],['Break-even-Umsatz je Öffnungstag',euro(daily)],['Deckungsbeitrag am Break-even',euro(fixed)]
+    ['Reiner Break-even-Umsatz',euro(baseMonthly)],['Zielumsatz inkl. Gewinn/Puffer',euro(monthly)],['Break-even-Umsatz je Öffnungstag',euro(daily)],['Deckungsbeitrag am Break-even',euro(fixed)]
   ],`<strong>Einordnung:</strong> Bei unveränderter Deckungsbeitragsquote brauchst du im Schnitt ${euro(daily)} Umsatz je Öffnungstag, um die angegebenen Fixkosten zu decken.`);
 }
 function calcKpi(){
@@ -118,11 +118,11 @@ function calcGrossProfit(){
 }
 function calcStockTurn(){
   error('st_error');
-  const cogs=val('st_cogs'), avgStock=val('st_stock'), period=val('st_period');
+  const cogs=val('st_cogs'), avgStock=val('st_stock'), period=val('st_period'), lead=val('st_lead'), safety=val('st_safety');
   if(cogs<0||avgStock<=0||period<=0){ error('st_error','Durchschnittsbestand und Zeitraum müssen größer als 0 sein.'); return; }
-  const turns=cogs/avgStock, days=turns?period/turns:0, avgDaily=cogs/period, coverage=avgDaily?avgStock/avgDaily:0;
+  const turns=cogs/avgStock, days=turns?period/turns:0, avgDaily=cogs/period, coverage=avgDaily?avgStock/avgDaily:0, reorderNeed=avgDaily*lead+safety, coverageGap=coverage-lead;
   renderRows('st_result',[
-    ['Lagerumschlag im Zeitraum',`${de(turns,2)} ×`],['Ø Lagerdauer',`${de(days)} Tage`],['Bestandsreichweite',`${de(coverage)} Tage`],['Ø Wareneinsatz je Tag',euro(avgDaily)]
+    ['Lagerumschlag im Zeitraum',`${de(turns,2)} ×`],['Ø Lagerdauer',`${de(days)} Tage`],['Bestandsreichweite',`${de(coverage)} Tage`],['Ø Wareneinsatz je Tag',euro(avgDaily)],['Bedarf bis nächste Lieferung + Sicherheit',euro(reorderNeed)],['Reichweite nach Lieferzeit',`${de(coverageGap)} Tage`]
   ],`<strong>Einordnung:</strong> Dein durchschnittlicher Bestand schlägt sich im gewählten Zeitraum etwa ${de(turns,2)}-mal um. Höher ist nicht automatisch besser: Verfügbarkeit, Lieferzeit und Saison müssen dazu passen.`);
 }
 
