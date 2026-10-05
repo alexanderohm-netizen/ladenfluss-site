@@ -189,6 +189,15 @@ document.addEventListener('DOMContentLoaded',()=> {
     renderPlanState();
   };
 
+  document.getElementById('copyWeek').onclick=()=>{
+    const previous=new Date(weekStart);previous.setDate(previous.getDate()-7);
+    const previousKey=store.mondayKey(previous),source=store.ensureEmployeeShiftRows(team,store.getShifts(previousKey));
+    const hasAny=employees.some(e=>e.shifts.some(Boolean));
+    if(hasAny&&!window.confirm('In dieser Woche sind bereits Schichten geplant. Mit der Vorwoche ersetzen?'))return;
+    employees.forEach(e=>e.shifts=JSON.parse(JSON.stringify(source[e.id]||[null,null,null,null,null,null,null])));
+    persist();markDraft();render();
+  };
+
   document.getElementById('prevWeek').onclick=()=>changeWeek(-1);
   document.getElementById('nextWeek').onclick=()=>changeWeek(1);
   document.getElementById('todayWeek').onclick=()=>{
