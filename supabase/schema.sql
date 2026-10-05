@@ -31,6 +31,8 @@ create table if not exists public.branches (
   opening_days smallint check (opening_days between 1 and 7),
   opening_hours numeric(4,1) check (opening_hours > 0 and opening_hours <= 24),
   timezone text not null default 'Europe/Berlin',
+  federal_state text check (federal_state in ('BW','BY','BE','BB','HB','HH','HE','MV','NI','NW','RP','SL','SN','ST','SH','TH')),
+  holiday_work_allowed boolean not null default false,
   created_at timestamptz not null default now()
 );
 
