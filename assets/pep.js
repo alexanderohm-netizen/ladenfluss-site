@@ -7,17 +7,20 @@ document.addEventListener('DOMContentLoaded',()=> {
   weekStart.setHours(12,0,0,0);
   let weekKey=store.mondayKey(weekStart);
   let shifts=store.ensureEmployeeShiftRows(team,store.getShifts(weekKey));
+  let absences=store.ensureEmployeeAbsenceRows(team,store.getAbsences(weekKey));
 
   const employees=team.map(p=>({
     id:p.id,
     name:p.name,
     role:p.role,
     target:Number(p.hours||0),
-    shifts:shifts[p.id]
+    shifts:shifts[p.id],
+    absences:absences[p.id]
   }));
 
   const body=document.getElementById('pepBody');
   const dlg=document.getElementById('shiftDialog');
+  const absenceDlg=document.getElementById('absenceDialog');
   const delBtn=document.getElementById('deleteShift');
   const publishBtn=document.getElementById('publishPlan');
   const planStatus=document.getElementById('planStatus');
@@ -34,12 +37,19 @@ document.addEventListener('DOMContentLoaded',()=> {
   }
 
   function getIssues(){
-    return employees.map(e=>{
+    const conflicts=[];
+    employees.forEach(e=>e.shifts.forEach((s,i)=>{if(s&&e.absences[i]) conflicts.push({name:e.name,type:'conflict',text:e.name+' ist '+e.absences[i]+' und gleichzeitig eingeplant.',detail:'Schicht entfernen oder Ersatz einplanen.'})}));
+    const hourIssues=employees.map(e=>{
       const total=e.shifts.reduce((a,s)=>a+hours(s),0);
       if(total>e.target+5) return {name:e.name,type:'high',text:`${e.name} liegt deutlich über den Sollstunden.`};
       if(total<Math.max(0,e.target-8)) return {name:e.name,type:'low',text:`${e.name} liegt deutlich unter den Sollstunden.`};
       return null;
     }).filter(Boolean);
+    return conflicts.concat(hourIssues);
+  }
+
+  function persistAbsences(){
+    const next={};employees.forEach(e=>next[e.id]=e.absences);store.saveAbsences(next,weekKey);
   }
 
   function markDraft(){
@@ -56,9 +66,9 @@ document.addEventListener('DOMContentLoaded',()=> {
     renderPlanState();
     body.innerHTML=employees.map(e=>{
       const total=e.shifts.reduce((a,s)=>a+hours(s),0);
-      const cells=e.shifts.map((s,i)=>s
-        ? `<td><button class="shift-chip" data-e="${e.id}" data-d="${i}" title="Schicht bearbeiten"><strong>${s[0]}–${s[1]}</strong><span>${hours(s).toLocaleString('de-DE',{maximumFractionDigits:1})} h · ${s[2]} Min Pause</span></button></td>`
-        : `<td><button class="empty-shift" data-e="${e.id}" data-d="${i}" aria-label="Schicht hinzufügen">+</button></td>`).join('');
+      const cells=e.shifts.map((s,i)=>{const a=e.absences[i];return s
+        ? `<td class="${a?'has-conflict':''}"><button class="shift-chip" data-e="${e.id}" data-d="${i}" title="Schicht bearbeiten"><strong>${s[0]}–${s[1]}</strong><span>${hours(s).toLocaleString('de-DE',{maximumFractionDigits:1})} h · ${s[2]} Min Pause</span></button></td>`
+        : a ? `<td><button class="absence-chip" data-ae="${e.id}" data-ad="${i}"><strong>${a}</strong><span>Abwesend</span></button></td>` : `<td><button class="empty-shift" data-e="${e.id}" data-d="${i}" aria-label="Schicht hinzufügen">+</button></td>`}).join('');
       const state=total>e.target+5?'high':total<Math.max(0,e.target-8)?'low':'ok';
       return `<tr><th><strong>${e.name}</strong><span>${e.role} · Ziel ${e.target} h</span></th>${cells}<td class="week-total ${state}"><strong>${total.toLocaleString('de-DE',{maximumFractionDigits:1})} h</strong><span>${state==='ok'?'passt':state==='high'?'zu hoch':'zu niedrig'}</span></td></tr>`;
     }).join('');
@@ -73,7 +83,7 @@ document.addEventListener('DOMContentLoaded',()=> {
 
     const focus=document.getElementById('pepFocus');
     focus.querySelector('strong').textContent=issues.length?issues[0].text:'Der Plan sieht gut aus.';
-    focus.querySelector('p').textContent=issues.length>1
+    focus.querySelector('p').textContent=issues[0]?.detail||issues.length>1
       ? `Zusätzlich gibt es ${issues.length-1} weitere Auffälligkeit${issues.length-1===1?'':'en'}. Prüfe die markierten Wochensummen.`
       : issues.length===1
         ? 'Die markierte Wochensumme weicht deutlich vom hinterlegten Soll ab.'
@@ -113,7 +123,8 @@ document.addEventListener('DOMContentLoaded',()=> {
     weekStart.setDate(weekStart.getDate()+offset*7);
     weekKey=store.mondayKey(weekStart);
     shifts=store.ensureEmployeeShiftRows(team,store.getShifts(weekKey));
-    employees.forEach(e=>e.shifts=shifts[e.id]);
+    absences=store.ensureEmployeeAbsenceRows(team,store.getAbsences(weekKey));
+    employees.forEach(e=>{e.shifts=shifts[e.id];e.absences=absences[e.id]});
     render();
   }
 
@@ -159,6 +170,7 @@ document.addEventListener('DOMContentLoaded',()=> {
   }
 
   document.getElementById('addShift').onclick=()=>openDialog();
+  document.getElementById('addAbsence').onclick=()=>{document.getElementById('absenceEmployee').innerHTML=employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');absenceDlg.showModal()};
   document.getElementById('printPlan').onclick=()=>window.print();
 
   publishBtn.onclick=()=>{
@@ -189,6 +201,10 @@ document.addEventListener('DOMContentLoaded',()=> {
     dlg.close();
     render();
   };
+
+  document.getElementById('absenceForm').addEventListener('submit',e=>{
+    e.preventDefault();const emp=employees.find(x=>x.id===document.getElementById('absenceEmployee').value);const day=Number(document.getElementById('absenceDay').value);if(!emp)return;emp.absences[day]=document.getElementById('absenceType').value;persistAbsences();markDraft();absenceDlg.close();render();
+  });
 
   document.getElementById('shiftForm').addEventListener('submit',e=>{
     e.preventDefault();
