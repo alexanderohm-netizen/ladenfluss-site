@@ -1,0 +1,12 @@
+document.addEventListener('DOMContentLoaded',()=>{const people=[
+{id:'p1',name:'Anna Müller',role:'Verkauf',hours:30,branch:'Hauptfiliale',docs:true},
+{id:'p2',name:'Ben Weber',role:'Verkauf',hours:35,branch:'Hauptfiliale',docs:true},
+{id:'p3',name:'Mira Klein',role:'Aushilfe',hours:20,branch:'Hauptfiliale',docs:false}
+],list=document.getElementById('staffList'),dlg=document.getElementById('employeeDialog');
+function render(){list.innerHTML=people.map(p=>`<article class="staff-card"><div class="staff-avatar">${p.name.split(' ').map(x=>x[0]).slice(0,2).join('')}</div><div class="staff-main"><strong>${p.name}</strong><span>${p.role} · ${p.branch}</span></div><div class="staff-hours"><small>Soll</small><strong>${p.hours.toLocaleString('de-DE')} h</strong></div><div class="staff-docs ${p.docs?'ok':'open'}"><small>Unterlagen</small><strong>${p.docs?'Vollständig':'Prüfen'}</strong></div><button class="staff-more" type="button" aria-label="Mitarbeiterdetails">→</button></article>`).join('');
+const total=people.reduce((a,p)=>a+p.hours,0), missing=people.filter(p=>!p.docs).length;
+document.getElementById('activeEmployees').textContent=people.length;document.getElementById('targetHours').textContent=total.toLocaleString('de-DE')+' h';document.getElementById('missingDocs').textContent=missing;
+document.getElementById('staffFocusTitle').textContent=missing?missing+' Mitarbeiter-Unterlage'+(missing>1?'n':'')+' prüfen':'Alles vollständig.';
+document.getElementById('staffFocusText').textContent=missing?'Mindestens bei einer Person fehlt in diesem Prototyp noch die Kennzeichnung „Unterlagen vollständig“.':'Für dein Team liegen aktuell keine Demo-Hinweise vor.'}
+document.getElementById('addEmployee').onclick=()=>dlg.showModal();
+document.getElementById('employeeForm').addEventListener('submit',e=>{e.preventDefault();const name=document.getElementById('employeeName').value.trim();if(!name)return;people.push({id:'p'+Date.now(),name,role:document.getElementById('employeeRole').value,hours:Number(document.getElementById('employeeHours').value||0),branch:document.getElementById('employeeBranch').value,docs:document.getElementById('employeeDocs').checked});e.target.reset();dlg.close();render()});render()});
