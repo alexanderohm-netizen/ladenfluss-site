@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'models/product.dart';
+import 'demo_catalog.dart';
 
 class ProductsPage extends StatefulWidget {
-  const ProductsPage({super.key});
+  const ProductsPage({super.key, required this.catalog});
+  final DemoCatalog catalog;
   @override
   State<ProductsPage> createState() => _ProductsPageState();
 }
 
 class _ProductsPageState extends State<ProductsPage> {
-  final products = <Product>[
-    const Product(id: 'demo1', sku: '10001', name: 'Haferdrink 1 L', unit: 'Stück', purchasePriceCents: 109, salePriceCents: 199, reorderPoint: 12),
-    const Product(id: 'demo2', sku: '10002', name: 'Kaffee 500 g', unit: 'Stück', purchasePriceCents: 349, salePriceCents: 599, reorderPoint: 8),
-  ];
   String search = '';
   String price(int cents) => '${(cents / 100).toStringAsFixed(2).replaceAll('.', ',')} €';
   int? cents(String input) {
@@ -31,7 +29,7 @@ class _ProductsPageState extends State<ProductsPage> {
       content: SizedBox(width: 420, child: Form(key: form, child: SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           TextFormField(controller: sku, decoration: const InputDecoration(labelText: 'Artikelnummer'),
-            validator: (v) => v == null || v.trim().isEmpty ? 'Bitte Nummer eingeben' : products.any((p) => p.sku == v.trim()) ? 'Nummer schon vorhanden' : null),
+            validator: (v) => v == null || v.trim().isEmpty ? 'Bitte Nummer eingeben' : widget.catalog.products.any((p) => p.sku == v.trim()) ? 'Nummer schon vorhanden' : null),
           TextFormField(controller: name, decoration: const InputDecoration(labelText: 'Artikelname'),
             validator: (v) => v == null || v.trim().isEmpty ? 'Bitte Namen eingeben' : null),
           TextFormField(controller: buy, decoration: const InputDecoration(labelText: 'Einkaufspreis (€)'),
@@ -47,18 +45,18 @@ class _ProductsPageState extends State<ProductsPage> {
         FilledButton(onPressed: () { if (form.currentState!.validate()) Navigator.pop(dialog, true); }, child: const Text('Speichern')),
       ],
     ));
-    if (saved == true && mounted) setState(() => products.add(Product(
+    if (saved == true && mounted) widget.catalog.addProduct(Product(
       id: DateTime.now().microsecondsSinceEpoch.toString(), sku: sku.text.trim(),
       name: name.text.trim(), unit: 'Stück', purchasePriceCents: cents(buy.text)!,
       salePriceCents: cents(sell.text)!, reorderPoint: int.parse(threshold.text),
-    )));
+    ));
     for (final field in [sku, name, buy, sell, threshold]) { field.dispose(); }
   }
 
   @override
   Widget build(BuildContext context) {
-    final visible = products.where((p) => p.name.toLowerCase().contains(search) || p.sku.toLowerCase().contains(search)).toList();
-    return Expanded(child: Column(children: [
+    final visible = widget.catalog.products.where((p) => p.name.toLowerCase().contains(search) || p.sku.toLowerCase().contains(search)).toList();
+    return Expanded(child: AnimatedBuilder(animation: widget.catalog, builder: (context, _) => Column(children: [
       Row(children: [
         Expanded(child: TextField(decoration: const InputDecoration(
           border: OutlineInputBorder(), prefixIcon: Icon(Icons.search), hintText: 'Artikel suchen'),
@@ -74,6 +72,6 @@ class _ProductsPageState extends State<ProductsPage> {
         if (visible.isEmpty) const ListTile(title: Text('Keine passenden Artikel gefunden')),
       ]))),
       const Text('Demo: Neue Artikel werden noch nicht dauerhaft gespeichert.'),
-    ]));
+    ])));
   }
 }
