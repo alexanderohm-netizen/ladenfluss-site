@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'products_page.dart';
 import 'inventory_page.dart';
 import 'restock_page.dart';
+import 'vacation_page.dart';
+import 'vacation_plan.dart';
 import 'demo_catalog.dart';
 
 void main() => runApp(const LadenflussApp());
@@ -34,12 +36,13 @@ class Workspace extends StatefulWidget {
 class _WorkspaceState extends State<Workspace> {
   int selected = 0;
   final catalog = DemoCatalog();
+  final vacations = VacationPlan();
   @override
-  void initState() { super.initState(); catalog.load(); }
+  void initState() { super.initState(); catalog.load(); vacations.load(); }
   @override
-  void dispose() { catalog.dispose(); super.dispose(); }
-  final pages = const ['Heute', 'Artikel', 'Bestand', 'Einkauf', 'Wareneingang', 'Inventur', 'Auswertungen', 'Einstellungen'];
-  final icons = const [Icons.home_outlined, Icons.inventory_2_outlined, Icons.warehouse_outlined, Icons.shopping_cart_outlined, Icons.local_shipping_outlined, Icons.fact_check_outlined, Icons.bar_chart_outlined, Icons.settings_outlined];
+  void dispose() { catalog.dispose(); vacations.dispose(); super.dispose(); }
+  final pages = const ['Heute', 'Artikel', 'Bestand', 'Einkauf', 'Wareneingang', 'Inventur', 'Auswertungen', 'Urlaub', 'Einstellungen'];
+  final icons = const [Icons.home_outlined, Icons.inventory_2_outlined, Icons.warehouse_outlined, Icons.shopping_cart_outlined, Icons.local_shipping_outlined, Icons.fact_check_outlined, Icons.bar_chart_outlined, Icons.beach_access_outlined, Icons.settings_outlined];
 
   @override
   Widget build(BuildContext context) {
@@ -126,6 +129,8 @@ class _WorkspaceState extends State<Workspace> {
                     InventoryPage(catalog: catalog)
                   else if (selected == 3)
                     RestockPage(catalog: catalog, openInventory: () => setState(() => selected = 2))
+                  else if (selected == 7)
+                    VacationPage(plan: vacations)
                   else
                     Card(
                       child: Padding(
