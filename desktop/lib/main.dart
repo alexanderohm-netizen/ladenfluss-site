@@ -34,6 +34,8 @@ class _WorkspaceState extends State<Workspace> {
   int selected = 0;
   final catalog = DemoCatalog();
   @override
+  void initState() { super.initState(); catalog.load(); }
+  @override
   void dispose() { catalog.dispose(); super.dispose(); }
   final pages = const ['Heute', 'Artikel', 'Bestand', 'Einkauf', 'Wareneingang', 'Inventur', 'Auswertungen', 'Einstellungen'];
   final icons = const [Icons.home_outlined, Icons.inventory_2_outlined, Icons.warehouse_outlined, Icons.shopping_cart_outlined, Icons.local_shipping_outlined, Icons.fact_check_outlined, Icons.bar_chart_outlined, Icons.settings_outlined];
@@ -66,7 +68,12 @@ class _WorkspaceState extends State<Workspace> {
                 children: [
                   Text(pages[selected], style: Theme.of(context).textTheme.headlineMedium),
                   const SizedBox(height: 8),
-                  const Text('Ladenfluss WWS · Desktop-Prototyp · Beispieldaten, noch nicht verbunden'),
+                  AnimatedBuilder(animation: catalog, builder: (context, _) => Text(
+                    !catalog.loaded ? 'Lokale Daten werden geladen …' :
+                    catalog.storageError != null ? catalog.storageError! :
+                    'Ladenfluss WWS · Lokale Datenspeicherung (Prototyp, ohne Cloud-Synchronisierung)',
+                    style: TextStyle(color: catalog.storageError == null ? null : Colors.red),
+                  )),
                   const SizedBox(height: 28),
                   if (selected == 0) ...[
                     Text('Was braucht heute deine Aufmerksamkeit?', style: Theme.of(context).textTheme.titleLarge),
