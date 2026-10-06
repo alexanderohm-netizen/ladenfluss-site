@@ -83,7 +83,7 @@ class _ProductsPageState extends State<ProductsPage> {
             clipBehavior: Clip.antiAlias,
             child: ListView.separated(
               itemCount: visible.isEmpty ? 1 : visible.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
+              separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 if (visible.isEmpty) {
                   return const ListTile(title: Text('Keine Artikel gefunden'));
