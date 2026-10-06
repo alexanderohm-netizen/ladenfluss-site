@@ -7,7 +7,6 @@ import 'models/inventory.dart';
 /// Storage contract enables isolated tests and alternative backends.
 abstract class CatalogStore {
   Future<Map<String, dynamic>?> read();
-  @override
   Future<void> write({
     required List<Product> products,
     required List<InventoryMovement> movements,
@@ -44,6 +43,7 @@ class LocalCatalogStore implements CatalogStore {
     return decoded;
   }
 
+  @override
   Future<void> write({
     required List<Product> products,
     required List<InventoryMovement> movements,
