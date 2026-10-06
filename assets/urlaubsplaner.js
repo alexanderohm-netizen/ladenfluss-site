@@ -182,6 +182,25 @@
           (clashes.length ? ' · Achtung: an ' + clashes.length + ' Arbeitstagen fehlen zu viele Personen.' : '');
       } catch (e) { target.textContent = e.message; }
     }
+    $('vacImportPep').addEventListener('click', () => {
+      if (!window.LadenflussTeamStore?.getTeam) {
+        return fail('Die Personalplanung konnte nicht geladen werden.');
+      }
+      if (!confirm('Mitarbeiter aus der Personalplanung auf diesem Browser übernehmen? Wenn noch kein Team gespeichert ist, werden die Demo-Mitarbeiter übernommen.')) return;
+      const source = window.LadenflussTeamStore.getTeam();
+      let added = 0;
+      for (const member of source) {
+        if (!member.id || !member.name ||
+            data.employees.some(e => e.id === member.id ||
+              e.name.trim().toLowerCase() === member.name.trim().toLowerCase())) continue;
+        data.employees.push({id: member.id, name: member.name.trim(), allowance: 30});
+        added++;
+      }
+      if (persist()) {
+        render();
+        if (!added) fail('Keine neuen Mitarbeiter übernommen. Bestehende Namen wurden nicht doppelt angelegt.');
+      }
+    });
     $('vacEmployeeForm').addEventListener('submit', event => {
       event.preventDefault();
       const name = $('vacEmployeeName').value.trim();
