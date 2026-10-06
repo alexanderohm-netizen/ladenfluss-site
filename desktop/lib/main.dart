@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'products_page.dart';
+import 'inventory_page.dart';
+import 'demo_catalog.dart';
 
 void main() => runApp(const LadenflussApp());
 
@@ -30,6 +32,9 @@ class Workspace extends StatefulWidget {
 
 class _WorkspaceState extends State<Workspace> {
   int selected = 0;
+  final catalog = DemoCatalog();
+  @override
+  void dispose() { catalog.dispose(); super.dispose(); }
   final pages = const ['Heute', 'Artikel', 'Bestand', 'Einkauf', 'Wareneingang', 'Inventur', 'Auswertungen', 'Einstellungen'];
   final icons = const [Icons.home_outlined, Icons.inventory_2_outlined, Icons.warehouse_outlined, Icons.shopping_cart_outlined, Icons.local_shipping_outlined, Icons.fact_check_outlined, Icons.bar_chart_outlined, Icons.settings_outlined];
 
@@ -66,7 +71,7 @@ class _WorkspaceState extends State<Workspace> {
                   if (selected == 0) ...[
                     Text('Was braucht heute deine Aufmerksamkeit?', style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 16),
-                    const Wrap(
+                    AnimatedBuilder(animation: catalog, builder: (context, _) => Wrap(
                       spacing: 16,
                       runSpacing: 16,
                       children: [
@@ -74,9 +79,11 @@ class _WorkspaceState extends State<Workspace> {
                         _SignalCard(icon: Icons.local_shipping_outlined, title: 'Lieferung prüfen', body: 'Beispiel: Eine erwartete Lieferung ist überfällig.'),
                         _SignalCard(icon: Icons.sell_outlined, title: 'Preis prüfen', body: 'Beispiel: Ein Einkaufspreis ist gestiegen.'),
                       ],
-                    ),
+                    )),
                   ] else if (selected == 1)
-                    const ProductsPage()
+                    ProductsPage(catalog: catalog)
+                  else if (selected == 2)
+                    InventoryPage(catalog: catalog)
                   else
                     Card(
                       child: Padding(
