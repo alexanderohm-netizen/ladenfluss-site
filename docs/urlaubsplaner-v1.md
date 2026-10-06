@@ -22,7 +22,7 @@ Der Urlaubsplaner ist **kostenlos**:
 ## Funktionsumfang Desktop
 - Eigenes Flutter-Modul und Dateispeicherung `vacations-v1.json` im lokalen Anwendungsordner.
 - Mitarbeiter, Jahresbudgets, monatlicher Kalender, geplante/bestätigte Einträge, Zeitraumbearbeitung und Warnungen.
-- Mo–Fr oder Mo–Sa; **Feiertage werden im Desktop-Modul noch nicht automatisch abgezogen**.
+- Mo–Fr oder Mo–Sa; Feiertage nach Bundesland werden automatisch abgezogen; einzelne kommunale Ausnahmen sind noch nicht abgebildet.
 - Versionsprüfung und Sicherungsdatei, Warnung bei Lese-/Schreibproblemen.
 - Nicht mit Website, Login, PEP oder einer Cloud verbunden.
 
