@@ -175,7 +175,7 @@ class DemoCatalog extends ChangeNotifier {
   }
 
   List<Product> get lowStock => products.where((p) =>
-      p.active && stock(p.id) <= p.reorderPoint).toList();
+      p.active && p.reorderPoint > 0 && stock(p.id) <= p.reorderPoint).toList();
 
   @override
   void dispose() {
