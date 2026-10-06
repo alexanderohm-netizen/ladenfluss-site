@@ -78,15 +78,47 @@ class _WorkspaceState extends State<Workspace> {
                   if (selected == 0) ...[
                     Text('Was braucht heute deine Aufmerksamkeit?', style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 16),
-                    AnimatedBuilder(animation: catalog, builder: (context, _) => Wrap(
-                      spacing: 16,
-                      runSpacing: 16,
-                      children: [
-                        _SignalCard(icon: Icons.warning_amber, title: 'Bestand prüfen', body: 'Beispiel: Ein Artikel könnte bald ausverkauft sein.'),
-                        _SignalCard(icon: Icons.local_shipping_outlined, title: 'Lieferung prüfen', body: 'Beispiel: Eine erwartete Lieferung ist überfällig.'),
-                        _SignalCard(icon: Icons.sell_outlined, title: 'Preis prüfen', body: 'Beispiel: Ein Einkaufspreis ist gestiegen.'),
-                      ],
-                    )),
+                    AnimatedBuilder(
+                      animation: catalog,
+                      builder: (context, _) {
+                        final low = catalog.lowStock;
+                        final belowCost = catalog.products.where((p) =>
+                            p.active && p.salePriceCents < p.purchasePriceCents).toList();
+                        final recent = catalog.movements.isEmpty ? null : catalog.movements.first;
+                        return Wrap(
+                          spacing: 16,
+                          runSpacing: 16,
+                          children: [
+                            _SignalCard(
+                              icon: low.isEmpty ? Icons.check_circle_outline : Icons.warning_amber,
+                              title: low.isEmpty ? 'Bestände im grünen Bereich' : '${low.length} Artikel nachbestellen',
+                              body: low.isEmpty
+                                ? 'Kein Artikel liegt am oder unter dem Meldebestand.'
+                                : low.take(2).map((p) => p.name).join(', '),
+                              onTap: () => setState(() => selected = 2),
+                            ),
+                            _SignalCard(
+                              icon: belowCost.isEmpty ? Icons.sell_outlined : Icons.warning_amber,
+                              title: belowCost.isEmpty ? 'Keine auffälligen Preise' : '${belowCost.length} Preise prüfen',
+                              body: belowCost.isEmpty
+                                ? 'Aktuell kein Verkaufspreis unter dem Einkaufspreis.'
+                                : belowCost.take(2).map((p) => p.name).join(', '),
+                              onTap: () => setState(() => selected = 1),
+                            ),
+                            _SignalCard(
+                              icon: Icons.history,
+                              title: 'Letzte Bestandsbewegung',
+                              body: recent == null
+                                ? 'Noch keine Buchung vorhanden.'
+                                : '${recent.quantityDelta > 0 ? '+' : ''}${recent.quantityDelta} Stück · ${recent.reason ?? 'ohne Notiz'}',
+                              onTap: () => setState(() => selected = 2),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('Hinweise basieren auf lokalen Demodaten. Absatzprognosen, Liefertermine und echte Filialdaten folgen später.'),
                   ] else if (selected == 1)
                     ProductsPage(catalog: catalog)
                   else if (selected == 2)
@@ -109,17 +141,21 @@ class _WorkspaceState extends State<Workspace> {
 }
 
 class _SignalCard extends StatelessWidget {
-  const _SignalCard({required this.icon, required this.title, required this.body});
+  const _SignalCard({required this.icon, required this.title, required this.body, required this.onTap});
   final IconData icon;
   final String title;
   final String body;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 280,
       child: Card(
-        child: Padding(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,6 +167,7 @@ class _SignalCard extends StatelessWidget {
               Text(body),
             ],
           ),
+        ),
         ),
       ),
     );
