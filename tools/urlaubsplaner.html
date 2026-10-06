@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#6d2434">
+<title>Kostenloser Urlaubsplaner für kleine Teams | Ladenfluss</title>
+<meta name="description" content="Urlaub im Einzelhandel einfach planen: Mitarbeiter, Urlaubstage, Jahresübersicht und Überschneidungen. Kostenlos, ohne Konto und lokal im Browser.">
+<link rel="canonical" href="https://ladenfluss.de/tools/urlaubsplaner">
+<link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/urlaubsplaner.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Zum Inhalt</a>
+<header class="site-header"><div class="container header-row">
+<a class="brand" href="/" aria-label="Ladenfluss Startseite"><span class="brand-mark" aria-hidden="true"></span><span>Ladenfluss</span></a>
+<nav class="desktop-nav" aria-label="Hauptnavigation"><a href="/produkte">Produkte</a><a href="/tools" aria-current="page">Kostenlose Tools</a><a href="/pep">Personalplanung</a><a href="/mein-laden" class="nav-cta">Mein Laden</a></nav>
+<button class="menu-toggle" aria-expanded="false" aria-controls="mobile-nav">Menü</button>
+</div><nav id="mobile-nav" class="mobile-nav" aria-label="Mobile Navigation"><a href="/produkte">Produkte</a><a href="/tools">Kostenlose Tools</a><a href="/pep">Personalplanung</a><a href="/mein-laden">Mein Laden</a></nav></header>
+<main id="main">
+<section class="page-hero"><div class="container">
+<div class="breadcrumbs"><a href="/">Start</a> / <a href="/tools">Tools</a> / Urlaubsplaner</div>
+<span class="eyebrow">100 % kostenlos · ohne Anmeldung</span>
+<h1>Wer hat wann Urlaub?</h1>
+<p class="page-lead">Plane freie Tage im Team, erkenne Überschneidungen und behalte das Jahresbudget im Blick. Verständlich, ohne Excel-Wirrwarr.</p>
+</div></section>
+<section class="vac-app container" aria-label="Urlaubsplaner">
+<div class="vac-notice" role="note"><strong>Deine Daten bleiben auf diesem Gerät.</strong> Der Plan wird nur in deinem Browser gespeichert – nicht online übertragen und nicht mit dem WWS synchronisiert. Auf gemeinsam genutzten Geräten keine vertraulichen Personaldaten eintragen. Browserdaten löschen entfernt auch den Plan.</div>
+<div id="vacError" class="vac-error" role="alert" hidden></div>
+<div class="vac-overview" aria-live="polite">
+<div class="vac-metric"><small>Team</small><strong id="vacTeamCount">0</strong><span>Mitarbeiter</span></div>
+<div class="vac-metric"><small>Einträge</small><strong id="vacEntryCount">0</strong><span>im gewählten Jahr</span></div>
+<div class="vac-metric"><small>Prüfen</small><strong id="vacConflictCount">0</strong><span>Zeiträume mit Konflikten</span></div>
+</div>
+<div class="vac-layout">
+<div class="vac-main">
+<section class="vac-panel">
+<div class="vac-panel-head"><div><span class="eyebrow">Jahreskalender</span><h2>Urlaub auf einen Blick</h2></div>
+<div class="vac-controls"><button type="button" id="vacPrevMonth" aria-label="Vorheriger Monat">←</button><strong id="vacMonthLabel"></strong><button type="button" id="vacNextMonth" aria-label="Nächster Monat">→</button><button type="button" id="vacToday">Heute</button></div></div>
+<div class="vac-legend"><span><i class="vac-key planned"></i> Geplant</span><span><i class="vac-key approved"></i> Bestätigt</span><span><i class="vac-key collision"></i> Viele gleichzeitig</span></div>
+<div id="vacCalendar" class="vac-calendar" aria-label="Urlaubskalender"></div>
+<div class="vac-calendar-bottom">Feiertage werden nach Bundesland berücksichtigt, regionale Sonderregelungen können fehlen. Arbeitstage richten sich nach der eingestellten 5- oder 6-Tage-Woche.</div>
+</section>
+<section class="vac-panel">
+<div class="vac-panel-head"><div><span class="eyebrow">Urlaubsübersicht</span><h2 id="vacYearTitle">Alle Anträge</h2></div><button type="button" class="btn btn-secondary" id="vacPrint">Drucken / PDF</button></div>
+<div id="vacEntries" class="vac-entries"></div>
+</section>
+</div>
+<aside class="vac-sidebar">
+<section class="vac-panel">
+<span class="eyebrow">1 · Team</span><h2>Mitarbeiter anlegen</h2>
+<form id="vacEmployeeForm" class="vac-form">
+<label for="vacEmployeeName">Name</label><input id="vacEmployeeName" name="name" required maxlength="80" placeholder="z. B. Anna Müller" autocomplete="off">
+<label for="vacAllowance">Urlaubstage pro Jahr</label><input id="vacAllowance" name="allowance" type="number" min="0" max="366" value="30" required>
+<button class="btn btn-primary" type="submit">+ Mitarbeiter hinzufügen</button>
+</form>
+<button type="button" class="btn btn-secondary" id="vacImportPep" style="margin-top:12px;width:100%">Team aus Personalplanung übernehmen</button>
+<div id="vacEmployees" class="vac-employees" aria-live="polite"></div>
+</section>
+<section class="vac-panel">
+<span class="eyebrow">2 · Urlaub</span><h2 id="vacEntryTitle">Urlaub eintragen</h2>
+<form id="vacEntryForm" class="vac-form">
+<label for="vacPerson">Mitarbeiter</label><select id="vacPerson" required><option value="">Bitte wählen</option></select>
+<div class="vac-field-pair"><div><label for="vacFrom">Von</label><input id="vacFrom" type="date" required></div><div><label for="vacTo">Bis (einschließlich)</label><input id="vacTo" type="date" required></div></div>
+<label for="vacStatus">Status</label><select id="vacStatus"><option value="planned">Geplant</option><option value="approved">Bestätigt</option></select>
+<label for="vacNote">Notiz (optional)</label><input id="vacNote" maxlength="120" placeholder="z. B. Sommerurlaub">
+<div id="vacPreview" class="vac-preview" aria-live="polite">Zeitraum auswählen, um Urlaubstage zu berechnen.</div>
+<button type="submit" class="btn btn-primary" id="vacSaveEntry">Urlaub eintragen</button>
+<button type="button" class="btn btn-secondary" id="vacCancelEdit" hidden>Bearbeitung abbrechen</button>
+</form>
+</section>
+<section class="vac-panel">
+<span class="eyebrow">3 · Einstellungen</span><h2>So wird gerechnet</h2>
+<div class="vac-form">
+<label for="vacState">Bundesland</label><select id="vacState"></select>
+<label for="vacWorkweek">Regelmäßige Arbeitstage</label><select id="vacWorkweek"><option value="5">Montag–Freitag (5 Tage)</option><option value="6">Montag–Samstag (6 Tage)</option></select>
+<label for="vacMaxAbsent">Maximal gleichzeitig im Urlaub</label><input id="vacMaxAbsent" type="number" min="1" max="100" value="1">
+<small>Ein Hinweis erscheint, wenn mehr Menschen gleichzeitig fehlen. Die Grenze ist eine Planungshilfe, keine automatische Urlaubssperre.</small>
+</div>
+</section>
+<section class="vac-panel">
+<span class="eyebrow">Jahresstand</span><h2>Verfügbare Urlaubstage</h2>
+<div id="vacBalances" class="vac-balances"></div>
+<small>Geplante und bestätigte Urlaubstage werden in dieser Vorschau zusammengerechnet. Kein rechtsverbindlicher Urlaubsanspruch, keine Genehmigung oder Lohnabrechnung.</small>
+</section>
+</aside></div>
+</section></main>
+<footer class="site-footer"><div class="container"><div class="footer-bottom"><span>© 2026 Ladenfluss · betrieben durch AO-Shop</span><span>Urlaubsplaner kostenlos · Speicherung nur lokal im Browser</span></div></div></footer>
+<script src="/assets/site.js" defer></script>
+<script src="/assets/de-holidays.js" defer></script>
+<script src="/assets/team-store.js" defer></script>
+<script src="/assets/urlaubsplaner-store.js" defer></script>
+<script src="/assets/urlaubsplaner.js" defer></script>
+</body></html>
