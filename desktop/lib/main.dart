@@ -1,0 +1,121 @@
+import 'package:flutter/material.dart';
+
+void main() => runApp(const LadenflussApp());
+
+class LadenflussApp extends StatelessWidget {
+  const LadenflussApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Ladenfluss WWS',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF752D43)),
+        scaffoldBackgroundColor: const Color(0xFFF8F7F5),
+      ),
+      home: const Workspace(),
+    );
+  }
+}
+
+class Workspace extends StatefulWidget {
+  const Workspace({super.key});
+
+  @override
+  State<Workspace> createState() => _WorkspaceState();
+}
+
+class _WorkspaceState extends State<Workspace> {
+  int selected = 0;
+  final pages = const ['Heute', 'Artikel', 'Bestand', 'Einkauf', 'Wareneingang', 'Inventur', 'Auswertungen', 'Einstellungen'];
+  final icons = const [Icons.home_outlined, Icons.inventory_2_outlined, Icons.warehouse_outlined, Icons.shopping_cart_outlined, Icons.local_shipping_outlined, Icons.fact_check_outlined, Icons.bar_chart_outlined, Icons.settings_outlined];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Row(
+        children: [
+          NavigationRail(
+            extended: MediaQuery.sizeOf(context).width > 1050,
+            backgroundColor: Colors.white,
+            selectedIndex: selected,
+            onDestinationSelected: (value) => setState(() => selected = value),
+            leading: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 22),
+              child: Text('Ladenfluss', style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold)),
+            ),
+            destinations: [
+              for (var i = 0; i < pages.length; i++)
+                NavigationRailDestination(icon: Icon(icons[i]), label: Text(pages[i])),
+            ],
+          ),
+          const VerticalDivider(width: 1),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(pages[selected], style: Theme.of(context).textTheme.headlineMedium),
+                  const SizedBox(height: 8),
+                  const Text('Ladenfluss WWS · Desktop-Prototyp · Beispieldaten, noch nicht verbunden'),
+                  const SizedBox(height: 28),
+                  if (selected == 0) ...[
+                    Text('Was braucht heute deine Aufmerksamkeit?', style: Theme.of(context).textTheme.titleLarge),
+                    const SizedBox(height: 16),
+                    const Wrap(
+                      spacing: 16,
+                      runSpacing: 16,
+                      children: [
+                        _SignalCard(icon: Icons.warning_amber, title: 'Bestand prüfen', body: 'Beispiel: Ein Artikel könnte bald ausverkauft sein.'),
+                        _SignalCard(icon: Icons.local_shipping_outlined, title: 'Lieferung prüfen', body: 'Beispiel: Eine erwartete Lieferung ist überfällig.'),
+                        _SignalCard(icon: Icons.sell_outlined, title: 'Preis prüfen', body: 'Beispiel: Ein Einkaufspreis ist gestiegen.'),
+                      ],
+                    ),
+                  ] else
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text('Das Modul „${pages[selected]}“ wird schrittweise entwickelt. Noch keine Live-Daten oder Buchungen.'),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SignalCard extends StatelessWidget {
+  const _SignalCard({required this.icon, required this.title, required this.body});
+  final IconData icon;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 280,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, size: 28),
+              const SizedBox(height: 12),
+              Text(title, style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Text(body),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
