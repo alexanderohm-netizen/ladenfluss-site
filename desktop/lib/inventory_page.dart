@@ -11,6 +11,7 @@ class InventoryPage extends StatefulWidget {
 
 class _InventoryPageState extends State<InventoryPage> {
   Future<void> book(String id) async {
+    if (!widget.catalog.canEdit) return;
     final amount = TextEditingController(text: '1');
     final reason = TextEditingController();
     final form = GlobalKey<FormState>();
@@ -76,7 +77,7 @@ class _InventoryPageState extends State<InventoryPage> {
           trailing: Row(mainAxisSize: MainAxisSize.min, children: [
             Text('${widget.catalog.stock(p.id)} ${p.unit}'),
             const SizedBox(width: 12),
-            OutlinedButton(onPressed: () => book(p.id), child: const Text('Buchen')),
+            OutlinedButton(onPressed: widget.catalog.canEdit ? () => book(p.id) : null, child: const Text('Buchen')),
           ]),
         ),
       ]))),
@@ -90,7 +91,7 @@ class _InventoryPageState extends State<InventoryPage> {
         ),
         if (widget.catalog.movements.isEmpty) const ListTile(title: Text('Noch keine Buchungen')),
       ])),
-      const Text('Prototyp: Daten nur im Arbeitsspeicher, nicht dauerhaft gespeichert.'),
+      const Text('Lokale Speicherung auf diesem Gerät · noch keine Synchronisierung mit anderen Filialen'),
     ]),
   ));
 }
