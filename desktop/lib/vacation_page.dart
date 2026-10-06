@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'vacation_plan.dart';
+import 'german_holidays.dart';
 
 class VacationPage extends StatefulWidget {
   const VacationPage({super.key, required this.plan});
@@ -333,6 +334,20 @@ class _VacationPageState extends State<VacationPage> {
             )),
             const SizedBox(height: 12),
             Wrap(spacing: 18, runSpacing: 10, crossAxisAlignment: WrapCrossAlignment.center, children: [
+              const Text('Bundesland:'),
+              DropdownButton<String>(
+                value: plan.state,
+                items: [
+                  for (final entry in GermanHolidays.states.entries)
+                    DropdownMenuItem(value: entry.key, child: Text(entry.value)),
+                ],
+                onChanged: plan.canEdit ? (code) {
+                  if (code != null) {
+                    plan.changeSettings(days: plan.workweekDays,
+                      maximum: plan.maxAbsent, bundesland: code);
+                  }
+                } : null,
+              ),
               const Text('Arbeitstage je Woche:'),
               DropdownButton<int>(
                 value: plan.workweekDays,
@@ -354,7 +369,7 @@ class _VacationPageState extends State<VacationPage> {
               ),
             ]),
             const SizedBox(height: 8),
-            const Text('Arbeitstage-Berechnung vorläufig ohne Feiertage; regionale Sonderfälle und individuelle Dienstpläne werden noch nicht berücksichtigt.'),
+            const Text('Feiertage nach Bundesland werden abgezogen. Lokale Sonderregeln und individuelle Dienstpläne sind noch nicht vollständig berücksichtigt.'),
             const SizedBox(height: 18),
             Text('Urlaubskonten $thisYear', style: Theme.of(context).textTheme.titleLarge),
             if (plan.employees.isEmpty) const ListTile(title: Text('Lege zuerst dein Team an.')),
