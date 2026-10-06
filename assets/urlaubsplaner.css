@@ -1,0 +1,51 @@
+
+.vac-app{padding-top:28px;padding-bottom:75px}
+.vac-notice,.vac-error{background:#fcf6f6;border:1px solid #ecd9df;border-left:4px solid #762f46;padding:16px;border-radius:12px;margin-bottom:18px;line-height:1.6}
+.vac-error{color:#a12b27}
+.vac-overview{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.vac-metric,.vac-panel{background:white;border:1px solid #e9e2e4;border-radius:17px;padding:21px}
+.vac-metric{display:grid;gap:3px}
+.vac-metric small,.vac-metric span{font-size:12px;color:#866874}
+.vac-metric strong{font-size:29px;color:#672c41}
+.vac-layout{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(280px,1fr);gap:20px;align-items:start}
+.vac-main,.vac-sidebar{display:grid;gap:20px;min-width:0}
+.vac-panel h2{font-size:20px;margin:5px 0 15px}
+.vac-panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.vac-controls,.vac-legend{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.vac-controls button,.vac-icon-btn{background:white;border:1px solid #decbd2;border-radius:9px;padding:7px 11px;cursor:pointer;color:#752d43}
+.vac-controls strong{min-width:145px;text-align:center}
+.vac-legend{font-size:12px;color:#6a5360;margin:0 0 13px}
+.vac-key{display:inline-block;width:10px;height:10px;background:#efcbd5;border-radius:50%}
+.vac-key.approved{background:#83384f}.vac-key.collision{background:#d66b59}
+.vac-calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-left:1px solid #ede3e6;border-top:1px solid #ede3e6}
+.vac-weekday{text-align:center;font-size:12px;font-weight:700;background:#fbf7f8;padding:9px 2px;border-right:1px solid #ede3e6;border-bottom:1px solid #ede3e6}
+.vac-day{min-height:90px;min-width:0;padding:7px 5px;border-right:1px solid #ede3e6;border-bottom:1px solid #ede3e6}
+.vac-day.outside,.vac-day.weekend{background:#faf8f8}
+.vac-day.today{box-shadow:inset 0 0 0 2px #9a6578}
+.vac-day.holiday{background:#fff9ed}.vac-day.alert{background:#fff0ec}
+.vac-day-num{font-size:12px;font-weight:700;color:#6a4c59}
+.vac-tag{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#f4dce4;border-radius:5px;padding:4px;font-size:11px;color:#71304a;margin-top:4px}
+.vac-tag.approved{background:#773951;color:white}
+.vac-holiday{display:block;color:#946b2e;font-size:10px}
+.vac-calendar-bottom,.vac-sidebar small{font-size:12px;color:#86777d;line-height:1.6;margin-top:12px}
+.vac-form{display:grid;gap:9px}.vac-form label{font-weight:650;font-size:13px}
+.vac-form input,.vac-form select{width:100%;background:#fff;border:1px solid #d8cbd0;border-radius:9px;padding:10px;color:#42353b}
+.vac-form .btn{justify-content:center;width:100%}
+.vac-field-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vac-field-pair>div{display:grid;gap:7px}
+.vac-preview{background:#faf4f5;color:#795266;padding:12px;border-radius:9px;font-size:13px}
+.vac-employees{margin-top:15px;display:grid;gap:8px}
+.vac-person,.vac-entry{border:1px solid #eee6e9;border-radius:10px;padding:12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.vac-entry{margin-top:8px}.vac-entry-actions{display:flex;gap:8px;flex-wrap:wrap}
+.vac-person strong,.vac-entry strong{display:block;font-size:14px}
+.vac-person small,.vac-entry small{display:block;color:#85757c;font-size:12px;margin-top:4px}
+.vac-entry-state{display:inline-block;padding:3px 7px;background:#f7e0e9;color:#7a354e;font-size:11px;border-radius:6px;margin-top:6px}
+.vac-entry-state.approved{background:#e1f5e8;color:#226941}
+.vac-balance{margin:12px 0;padding-bottom:11px;border-bottom:1px solid #eee6e9}
+.vac-balance-head{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.vac-balance-bar{height:7px;border-radius:30px;background:#f3e8eb;margin-top:7px;overflow:hidden}
+.vac-balance-fill{height:100%;background:#86485d}.vac-balance.over .vac-balance-fill{background:#cb5845}
+.vac-empty{font-size:14px;color:#89777e;padding:10px 0}
+@media(max-width:980px){.vac-layout{grid-template-columns:1fr}.vac-sidebar{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){.vac-sidebar{grid-template-columns:1fr}.vac-overview{gap:8px}.vac-metric{padding:12px}.vac-metric strong{font-size:23px}.vac-panel{padding:14px}.vac-day{min-height:65px;padding:4px 2px}.vac-tag{font-size:9px;padding:3px}.vac-weekday{font-size:10px}.vac-field-pair{grid-template-columns:1fr}}
+@media print{.site-header,.site-footer,.vac-sidebar,.vac-notice,.vac-controls,.vac-entry-actions,#vacPrint{display:none!important}.vac-layout{display:block}.vac-panel{break-inside:avoid}}
