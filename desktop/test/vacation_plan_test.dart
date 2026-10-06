@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ladenfluss_wws/vacation_plan.dart';
 import 'package:ladenfluss_wws/vacation_storage.dart';
+import 'package:ladenfluss_wws/german_holidays.dart';
 
 class MemoryVacationStorage implements VacationStorage {
   Map<String, dynamic>? payload;
@@ -53,7 +54,23 @@ void main() {
       status: LeaveStatus.approved,
     ));
     expect(p.usedDays('e1', 2026), 4);
-    expect(p.usedDays('e1', 2027), 3);
+    expect(p.usedDays('e1', 2027), 2); // 1 January is a holiday
+    await p.pendingSave;
+    p.dispose();
+  });
+
+  test('Bundeslandfeiertage werden vom Urlaub abgezogen', () async {
+    final p = VacationPlan(storage: MemoryVacationStorage());
+    await p.load();
+    final entry = VacationEntry(
+      id: 'holiday', employeeId: 'e1',
+      start: DateTime(2026, 6, 4), end: DateTime(2026, 6, 4),
+      status: LeaveStatus.planned,
+    );
+    expect(GermanHolidays.isHoliday(DateTime(2026, 6, 4), 'HE'), true);
+    expect(p.workingDays(entry), 0);
+    p.changeSettings(days: 5, maximum: 1, bundesland: 'BE');
+    expect(p.workingDays(entry), 1);
     await p.pendingSave;
     p.dispose();
   });
