@@ -199,7 +199,17 @@ document.addEventListener('DOMContentLoaded',()=> {
 
   function bindCells(){
     document.querySelectorAll('.empty-shift,.shift-chip').forEach(b=>{b.onclick=()=>openDialog(b.dataset.e,Number(b.dataset.d));});
-    document.querySelectorAll('.absence-chip').forEach(b=>{b.onclick=()=>openAbsence(b.dataset.ae,Number(b.dataset.ad));});
+    document.querySelectorAll('.absence-chip').forEach(b=>{
+      b.onclick=()=>{
+        const emp=employees.find(e=>e.id===b.dataset.ae);
+        const day=Number(b.dataset.ad);
+        if(emp && !emp.absences[day] && absenceAt(emp,day)==='Urlaub'){
+          window.location.href='/tools/urlaubsplaner';
+          return;
+        }
+        openAbsence(b.dataset.ae,day);
+      };
+    });
   }
 
   document.getElementById('addShift').onclick=()=>openDialog();
