@@ -4,8 +4,19 @@ import 'package:path_provider/path_provider.dart';
 import 'models/product.dart';
 import 'models/inventory.dart';
 
+/// Storage contract enables isolated tests and alternative backends.
+abstract class CatalogStore {
+  Future<Map<String, dynamic>?> read();
+  @override
+  Future<void> write({
+    required List<Product> products,
+    required List<InventoryMovement> movements,
+    required Map<String, int> openingStock,
+  });
+}
+
 /// Local prototype storage. Not encrypted, synced, or suitable for multi-user production.
-class LocalCatalogStore {
+class LocalCatalogStore implements CatalogStore {
   Future<File> get _file async {
     final dir = await getApplicationSupportDirectory();
     final folder = Directory('${dir.path}${Platform.pathSeparator}ladenfluss_wws');
@@ -13,9 +24,19 @@ class LocalCatalogStore {
     return File('${folder.path}${Platform.pathSeparator}catalog-v1.json');
   }
 
+  @override
   Future<Map<String, dynamic>?> read() async {
     final file = await _file;
-    if (!await file.exists()) return null;
+    if (!await file.exists()) {
+      // An interrupted save may have left only the backup.
+      final backup = File('${file.path}.bak');
+      if (!await backup.exists()) return null;
+      return _readFile(backup);
+    }
+    return _readFile(file);
+  }
+
+  Future<Map<String, dynamic>> _readFile(File file) async {
     final decoded = jsonDecode(await file.readAsString());
     if (decoded is! Map<String, dynamic> || decoded['version'] != 1) {
       throw const FormatException('Unbekanntes Datenformat');
