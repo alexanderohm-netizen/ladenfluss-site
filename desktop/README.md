@@ -9,10 +9,13 @@ Eigenständiger Flutter-Desktop-Client für macOS und Windows – **kein WebView
 - Buchungshistorie und Prüfung auf negative Bestände.
 - Dashboard mit tatsächlich berechneten Hinweisen zu Meldebeständen und Preisen unter Einkaufspreis.
 - Einkauf: einfache, transparente Nachbestellvorschläge auf Basis von Meldebeständen. **Keine echte Bestellung**.
+- **Urlaubsplaner: kostenloses Desktop-Modul** mit Mitarbeiterliste, jährlichem Urlaubskontingent, Planungskalender, Status, Überschneidungswarnungen und lokaler Speicherung.
 - Versionierte lokale JSON-Speicherung mit Sicherungsdatei und nacheinander ausgeführten Schreibvorgängen.
 - Bei nicht lesbaren lokalen Daten wird die Bearbeitung gesperrt, um versehentliches Überschreiben zu vermeiden.
-- Erste Unit-Tests für Artikel, Bestandslogik und Speicherreihenfolge unter `test/`.
+- Erste Unit-Tests für Artikel, Bestandslogik, Urlaubstage, Überschneidungen und Speicherreihenfolge unter `test/`.
 - GitHub Actions prüft Dart-Code und Tests; dessen erfolgreiche Ausführung ist noch nicht bestätigt.
+
+**Urlaubstage im WWS:** Aktuell kann für die Planung eine regelmäßige 5- oder 6-Tage-Woche gewählt werden. Feiertage und individuelle Teilzeit-/Schichtmodelle werden noch nicht berücksichtigt. Der öffentliche Urlaubsplaner auf der Website bietet Bundesland-Feiertage; die beiden Speicherstände sind **nicht synchronisiert**. Genehmigungen sind manuell markierter Status, kein echter digitaler Genehmigungsprozess.
 
 **Achtung:** Beim ersten Start werden zwei **Beispielartikel** angelegt. Die lokale Datei enthält keine Verschlüsselung, keine Cloud-Synchronisierung, keinen echten Login und keine Trennung echter Kundenkonten. Nicht für produktive Unternehmensdaten geeignet.
 
