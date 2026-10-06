@@ -186,6 +186,14 @@ document.addEventListener('DOMContentLoaded',()=> {
   document.getElementById('printPlan').onclick=()=>window.print();
 
   publishBtn.onclick=()=>{
+    if(!published){
+      const critical=getIssues().filter(issue=>issue.priority==='critical');
+      if(critical.length){
+        window.alert('Der Plan enthält '+critical.length+' dringende Hinweis(e), zum Beispiel Unterbesetzung oder eine Schicht trotz Abwesenheit. Bitte zuerst prüfen.');
+        document.getElementById('pepFocus').scrollIntoView({behavior:'smooth',block:'center'});
+        return;
+      }
+    }
     published=!published;
     store.savePlanStatus(published?'published':'draft',weekKey);
     renderPlanState();
@@ -239,7 +247,17 @@ document.addEventListener('DOMContentLoaded',()=> {
     const end=document.getElementById('shiftEnd').value;
     const br=Number(document.getElementById('shiftBreak').value||0);
 
-    if(!emp||!start||!end||mins(end)<=mins(start)) return;
+    if(!emp||!start||!end||mins(end)<=mins(start)){
+      window.alert('Bitte gültige Start- und Endzeiten eingeben.');return;
+    }
+    const duration=mins(end)-mins(start);
+    if(!Number.isFinite(br)||br<0||br>=duration){
+      window.alert('Die Pause muss kürzer als die Schicht sein und darf nicht negativ sein.');return;
+    }
+    const minimumBreak=duration>540?45:duration>360?30:0;
+    if(br<minimumBreak){
+      window.alert('Für diese Schicht sind nach § 4 ArbZG mindestens '+minimumBreak+' Minuten Ruhepause einzuplanen.');return;
+    }
 
     if(editing && (editing.eid!==emp.id || editing.day!==day)){
       const oldEmp=employees.find(x=>x.id===editing.eid);
