@@ -346,8 +346,8 @@ class _VacationPageState extends State<VacationPage> {
               ),
               const Text('Max. gleichzeitig abwesend:'),
               DropdownButton<int>(
-                value: plan.maxAbsent.clamp(1, 10),
-                items: [for (var i = 1; i <= 10; i++) DropdownMenuItem(value: i, child: Text('$i'))],
+                value: plan.maxAbsent,
+                items: [for (var i = 1; i <= 100; i++) DropdownMenuItem(value: i, child: Text('$i'))],
                 onChanged: plan.canEdit ? (maximum) {
                   if (maximum != null) plan.changeSettings(days: plan.workweekDays, maximum: maximum);
                 } : null,
