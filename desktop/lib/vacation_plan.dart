@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'vacation_storage.dart';
+import 'german_holidays.dart';
 
 enum LeaveStatus { planned, approved }
 
@@ -39,6 +40,7 @@ class VacationPlan extends ChangeNotifier {
   String? storageError;
   int workweekDays = 5;
   int maxAbsent = 1;
+  String state = 'HE';
 
   bool get canEdit => loaded && !loadFailed;
   Future<void> get pendingSave => _saveTail;
@@ -70,12 +72,15 @@ class VacationPlan extends ChangeNotifier {
         }).toList();
         final days = data['workweekDays'] as int;
         final maximum = data['maxAbsent'] as int;
+        final newState = data['state'] as String? ?? 'HE';
         if (days != 5 && days != 6) throw const FormatException('Ungültige Arbeitswoche');
         if (maximum < 1) throw const FormatException('Ungültige Teamgrenze');
+        if (!GermanHolidays.states.containsKey(newState)) throw const FormatException('Unbekanntes Bundesland');
         employees..clear()..addAll(restoredEmployees);
         entries..clear()..addAll(restoredEntries);
         workweekDays = days;
         maxAbsent = maximum;
+        state = newState;
       }
       storageError = null;
       loadFailed = false;
@@ -95,6 +100,7 @@ class VacationPlan extends ChangeNotifier {
       'version': 1,
       'workweekDays': workweekDays,
       'maxAbsent': maxAbsent,
+      'state': state,
       'employees': [
         for (final e in employees)
           {'id': e.id, 'name': e.name, 'annualDays': e.annualDays},
@@ -130,7 +136,8 @@ class VacationPlan extends ChangeNotifier {
   static DateTime _date(DateTime d) => DateTime(d.year, d.month, d.day, 12);
 
   bool isWorkday(DateTime day) =>
-      day.weekday <= (workweekDays == 6 ? DateTime.saturday : DateTime.friday);
+      day.weekday <= (workweekDays == 6 ? DateTime.saturday : DateTime.friday) &&
+      !GermanHolidays.isHoliday(day, state);
 
   Iterable<DateTime> datesOf(VacationEntry entry) sync* {
     var day = _date(entry.start);
@@ -204,13 +211,15 @@ class VacationPlan extends ChangeNotifier {
     _changed(); save();
   }
 
-  void changeSettings({required int days, required int maximum}) {
+  void changeSettings({required int days, required int maximum, String? bundesland}) {
     _editable();
-    if ((days != 5 && days != 6) || maximum < 1 || maximum > 100) {
+    if ((days != 5 && days != 6) || maximum < 1 || maximum > 100 ||
+        !GermanHolidays.states.containsKey(bundesland ?? state)) {
       throw StateError('Ungültige Einstellungen.');
     }
     workweekDays = days;
     maxAbsent = maximum;
+    state = bundesland ?? state;
     _changed(); save();
   }
 
