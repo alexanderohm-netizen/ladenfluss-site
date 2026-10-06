@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'products_page.dart';
 import 'inventory_page.dart';
+import 'restock_page.dart';
 import 'demo_catalog.dart';
 
 void main() => runApp(const LadenflussApp());
@@ -123,6 +124,8 @@ class _WorkspaceState extends State<Workspace> {
                     ProductsPage(catalog: catalog)
                   else if (selected == 2)
                     InventoryPage(catalog: catalog)
+                  else if (selected == 3)
+                    RestockPage(catalog: catalog, openInventory: () => setState(() => selected = 2))
                   else
                     Card(
                       child: Padding(
