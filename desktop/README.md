@@ -15,7 +15,7 @@ Eigenständiger Flutter-Desktop-Client für macOS und Windows – **kein WebView
 - Erste Unit-Tests für Artikel, Bestandslogik, Urlaubstage, Überschneidungen und Speicherreihenfolge unter `test/`.
 - GitHub Actions prüft Dart-Code und Tests; dessen erfolgreiche Ausführung ist noch nicht bestätigt.
 
-**Urlaubstage im WWS:** Aktuell kann für die Planung eine regelmäßige 5- oder 6-Tage-Woche gewählt werden. Feiertage und individuelle Teilzeit-/Schichtmodelle werden noch nicht berücksichtigt. Der öffentliche Urlaubsplaner auf der Website bietet Bundesland-Feiertage; die beiden Speicherstände sind **nicht synchronisiert**. Genehmigungen sind manuell markierter Status, kein echter digitaler Genehmigungsprozess.
+**Urlaubstage im WWS:** Aktuell kann für die Planung eine regelmäßige 5- oder 6-Tage-Woche gewählt werden. Feiertage nach Bundesland werden berücksichtigt; kommunale Ausnahmen und individuelle Teilzeit-/Schichtmodelle sind noch nicht vollständig abgebildet. Auch der öffentliche Urlaubsplaner auf der Website bietet Bundesland-Feiertage; die beiden Speicherstände sind **nicht synchronisiert**. Genehmigungen sind manuell markierter Status, kein echter digitaler Genehmigungsprozess.
 
 **Achtung:** Beim ersten Start werden zwei **Beispielartikel** angelegt. Die lokale Datei enthält keine Verschlüsselung, keine Cloud-Synchronisierung, keinen echten Login und keine Trennung echter Kundenkonten. Nicht für produktive Unternehmensdaten geeignet.
 
