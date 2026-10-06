@@ -50,6 +50,7 @@ class _WorkspaceState extends State<Workspace> {
       body: Row(
         children: [
           NavigationRail(
+            scrollable: true,
             extended: MediaQuery.sizeOf(context).width > 1050,
             backgroundColor: Colors.white,
             selectedIndex: selected,
@@ -108,6 +109,32 @@ class _WorkspaceState extends State<Workspace> {
                                 ? 'Aktuell kein Verkaufspreis unter dem Einkaufspreis.'
                                 : belowCost.take(2).map((p) => p.name).join(', '),
                               onTap: () => setState(() => selected = 1),
+                            ),
+                            AnimatedBuilder(
+                              animation: vacations,
+                              builder: (context, _) {
+                                final now = DateTime.now();
+                                final today = DateTime(now.year, now.month, now.day);
+                                final horizon = DateTime(now.year, now.month, now.day + 14);
+                                final upcoming = vacations.entries.where((leave) =>
+                                    !leave.end.isBefore(today) &&
+                                    !leave.start.isAfter(horizon)).toList();
+                                return _SignalCard(
+                                  icon: Icons.beach_access_outlined,
+                                  title: upcoming.isEmpty
+                                    ? 'Urlaub im Blick'
+                                    : '${upcoming.length} Urlaubszeiträume in 14 Tagen',
+                                  body: upcoming.isEmpty
+                                    ? 'Keine anstehenden Zeiträume eingetragen.'
+                                    : upcoming.take(2).map((leave) {
+                                        for (final person in vacations.employees) {
+                                          if (person.id == leave.employeeId) return person.name;
+                                        }
+                                        return 'Mitarbeiter';
+                                      }).join(', '),
+                                  onTap: () => setState(() => selected = 7),
+                                );
+                              },
                             ),
                             _SignalCard(
                               icon: Icons.history,
