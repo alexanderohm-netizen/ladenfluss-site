@@ -153,7 +153,7 @@ class VacationPlan extends ChangeNotifier {
       .fold(0, (sum, e) => sum + workingDays(e, year: year));
 
   bool overlaps(VacationEntry a, VacationEntry b) =>
-      !a.start.isAfter(b.end) && !b.start.isAfter(a.end);
+      !_date(a.start).isAfter(_date(b.end)) && !_date(b.start).isAfter(_date(a.end));
 
   bool overlapsEmployee(VacationEntry candidate) =>
       entries.any((e) => e.id != candidate.id &&
@@ -219,7 +219,7 @@ class VacationPlan extends ChangeNotifier {
     if (!employees.any((e) => e.id == entry.employeeId)) {
       throw StateError('Mitarbeiter nicht gefunden.');
     }
-    if (entry.start.isAfter(entry.end)) throw StateError('Ende liegt vor Beginn.');
+    if (_date(entry.start).isAfter(_date(entry.end))) throw StateError('Ende liegt vor Beginn.');
     workingDays(entry); // validates range
     if (overlapsEmployee(entry)) {
       throw StateError('Diese Person hat bereits Urlaub im gewählten Zeitraum.');
