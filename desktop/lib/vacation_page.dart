@@ -235,6 +235,7 @@ class _VacationPageState extends State<VacationPage> {
           !date.isBefore(DateTime(e.start.year, e.start.month, e.start.day, 12)) &&
           !date.isAfter(DateTime(e.end.year, e.end.month, e.end.day, 12))).toList();
       final uniquePeople = entries.map((e) => e.employeeId).toSet();
+      final holiday = GermanHolidays.isHoliday(date, widget.plan.state);
       final warning = widget.plan.isWorkday(date) &&
           uniquePeople.length > widget.plan.maxAbsent;
       final isToday = date.year == today.year &&
@@ -242,7 +243,7 @@ class _VacationPageState extends State<VacationPage> {
       cells.add(Container(
         padding: const EdgeInsets.all(5),
         decoration: BoxDecoration(
-          color: warning ? const Color(0xFFFFF0EC) :
+          color: warning ? const Color(0xFFFFF0EC) : holiday ? const Color(0xFFFFF7E9) :
               date.month != month.month ? const Color(0xFFF4F1F0) : Colors.white,
           border: Border.all(color: isToday ? const Color(0xFF752D43) : const Color(0xFFE6E1E1)),
           borderRadius: BorderRadius.circular(7),
@@ -252,6 +253,7 @@ class _VacationPageState extends State<VacationPage> {
             color: date.month == month.month ? const Color(0xFF55434A) : Colors.grey,
             fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
           )),
+          if (holiday) const Text('Feiertag', style: TextStyle(fontSize: 9, color: Color(0xFF956A34))),
           for (final e in entries.take(2))
             Container(
               width: double.infinity,
