@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'products_page.dart';
 
 void main() => runApp(const LadenflussApp());
 
@@ -74,7 +75,9 @@ class _WorkspaceState extends State<Workspace> {
                         _SignalCard(icon: Icons.sell_outlined, title: 'Preis prüfen', body: 'Beispiel: Ein Einkaufspreis ist gestiegen.'),
                       ],
                     ),
-                  ] else
+                  ] else if (selected == 1)
+                    const ProductsPage()
+                  else
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.all(24),
