@@ -12,8 +12,8 @@ class InventoryPage extends StatefulWidget {
 class _InventoryPageState extends State<InventoryPage> {
   Future<void> book(String id) async {
     if (!widget.catalog.canEdit) return;
-    final amount = TextEditingController(text: '1');
-    final reason = TextEditingController();
+    String amount = '1';
+    String reason = '';
     final form = GlobalKey<FormState>();
     MovementType type = MovementType.receipt;
     final saved = await showDialog<bool>(context: context, builder: (context) => StatefulBuilder(
@@ -33,14 +33,14 @@ class _InventoryPageState extends State<InventoryPage> {
               ],
               onChanged: (v) { if (v != null) update(() => type = v); },
             ),
-            TextFormField(controller: amount,
+            TextFormField(initialValue: amount, onChanged: (value) => amount = value,
               decoration: InputDecoration(labelText: type == MovementType.adjustment ? 'Änderung (z. B. -2)' : 'Menge'),
               validator: (v) {
                 final n = int.tryParse(v ?? '');
                 if (n == null || n == 0 || (type != MovementType.adjustment && n < 0)) return 'Gültige Menge eingeben';
                 return null;
               }),
-            TextFormField(controller: reason, decoration: const InputDecoration(labelText: 'Grund / Notiz'),
+            TextFormField(initialValue: reason, onChanged: (value) => reason = value, decoration: const InputDecoration(labelText: 'Grund / Notiz'),
               validator: (v) => v == null || v.trim().isEmpty ? 'Bitte Grund eingeben' : null),
           ],
         ))),
@@ -50,17 +50,15 @@ class _InventoryPageState extends State<InventoryPage> {
         ],
       ),
     ));
-    if (saved == true) {
-      final n = int.parse(amount.text);
+    if (saved == true && mounted) {
+      final n = int.parse(amount);
       final delta = type == MovementType.adjustment || type == MovementType.receipt ? n : -n;
       try {
-        widget.catalog.book(productId: id, delta: delta, type: type, reason: reason.text);
+        widget.catalog.book(productId: id, delta: delta, type: type, reason: reason);
       } on StateError catch (error) {
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
       }
     }
-    amount.dispose();
-    reason.dispose();
   }
 
   @override
