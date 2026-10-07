@@ -55,6 +55,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.beach_access_outlined).first);
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byIcon(Icons.person_add_alt_outlined));
+    await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.person_add_alt_outlined));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField).first, 'Anna');
@@ -62,6 +64,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(vacations.employees.single.name, 'Anna');
     expect(tester.takeException(), isNull);
+    await tester.ensureVisible(find.byTooltip('Urlaubsbudget ändern'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Urlaubsbudget ändern'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), '25');
@@ -69,6 +73,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(vacations.employees.single.annualDays, 25);
     expect(tester.takeException(), isNull);
+    await tester.ensureVisible(find.text('Urlaub eintragen'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Urlaub eintragen'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), 'Sommer');
@@ -76,6 +82,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(vacations.entries.single.note, 'Sommer');
     expect(tester.takeException(), isNull);
+    await tester.ensureVisible(find.byIcon(Icons.person_add_alt_outlined));
+    await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.person_add_alt_outlined));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField).first, 'Verwerfen');
