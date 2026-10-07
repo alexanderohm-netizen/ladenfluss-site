@@ -121,7 +121,7 @@ class _VacationPageState extends State<VacationPage> {
           content: SizedBox(width: 420, child: SingleChildScrollView(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               DropdownButtonFormField<String>(
-                value: employeeId,
+                initialValue: employeeId,
                 decoration: const InputDecoration(labelText: 'Mitarbeiter'),
                 items: [
                   for (final employee in widget.plan.employees)
@@ -140,14 +140,22 @@ class _VacationPageState extends State<VacationPage> {
                     helpText: 'Urlaubszeitraum auswählen',
                     saveText: 'Übernehmen',
                   );
-                  if (chosen != null) update(() => range = chosen);
+                  if (chosen != null && mounted) {
+                    try {
+                      widget.plan.workingDays(VacationEntry(
+                        id: initial?.id ?? '', employeeId: employeeId,
+                        start: chosen.start, end: chosen.end, status: status,
+                      ));
+                      update(() => range = chosen);
+                    } on StateError catch (e) { message(e.message); }
+                  }
                 },
                 icon: const Icon(Icons.date_range_outlined),
                 label: Text('${dateText(range.start)} – ${dateText(range.end)}'),
               ),
               const SizedBox(height: 10),
               DropdownButtonFormField<LeaveStatus>(
-                value: status,
+                initialValue: status,
                 decoration: const InputDecoration(labelText: 'Status'),
                 items: const [
                   DropdownMenuItem(value: LeaveStatus.planned, child: Text('Geplant')),
@@ -161,7 +169,7 @@ class _VacationPageState extends State<VacationPage> {
                 decoration: const InputDecoration(labelText: 'Notiz (optional)'),
               ),
               Text(
-                '${widget.plan.workingDays(VacationEntry(id: initial?.id ?? '', employeeId: employeeId, start: range.start, end: range.end, status: status))} Arbeitstage · Feiertage derzeit nicht berücksichtigt',
+                '${widget.plan.workingDays(VacationEntry(id: initial?.id ?? '', employeeId: employeeId, start: range.start, end: range.end, status: status))} Arbeitstage · Feiertage in ${GermanHolidays.states[widget.plan.state]} berücksichtigt',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ]),

@@ -1,18 +1,106 @@
-const STORE_KEY='ladenfluss.store.v1';
-const HISTORY_KEY='ladenfluss.history.v1';
-const defaults={name:'',type:'',days:6,hours:9,open:'09:00',close:'18:00',minStaff:2,state:'HE',productivity:185,labor:18,margin:40,lead:7,buffer:5,hourly:24};
-function loadStore(){try{return Object.assign({},defaults,JSON.parse(localStorage.getItem(STORE_KEY)||'{}'))}catch{return Object.assign({},defaults)}}
-function saveStore(next){localStorage.setItem(STORE_KEY,JSON.stringify(Object.assign({},loadStore(),next)));renderCockpit()}
-function n(id){return Number(document.getElementById(id)?.value||0)}
-function set(id,v){const el=document.getElementById(id);if(el)el.value=v??''}
-function switchPanel(name){document.querySelectorAll('[data-cockpit-panel]').forEach(p=>p.hidden=p.dataset.cockpitPanel!==name);document.querySelectorAll('[data-cockpit-tab]').forEach(b=>b.classList.toggle('active',b.dataset.cockpitTab===name))}
-function history(){try{return JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]')}catch{return[]}}
-function renderCockpit(){const s=loadStore();const g=document.getElementById('storeGreeting');if(g)g.textContent=s.name||'Mein Laden';
- const values={dashProductivity:s.productivity?s.productivity.toLocaleString('de-DE')+' €/h':'–',dashLabor:s.labor?s.labor.toLocaleString('de-DE')+' %':'–',dashMargin:s.margin?s.margin.toLocaleString('de-DE')+' %':'–',dashLead:Number.isFinite(s.lead)?s.lead+' Tage':'–'};Object.entries(values).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.textContent=v});
- const d=document.getElementById('decisionCard'),h=history(),signals=window.LadenflussPepSignals?.current?.()||[];const signalBox=document.getElementById('storeSignals');if(signalBox){signalBox.innerHTML=signals.length?'<div class="cockpit-section-head"><div><h3>Was jetzt wichtig ist</h3><p>Ladenfluss sortiert offene Punkte nach Dringlichkeit.</p></div></div>'+signals.slice(0,4).map(x=>'<a class="history-row signal-'+x.priority+'" href="'+x.href+'"><div><strong>'+x.title+'</strong><span>'+x.module+' · '+x.message+'</span></div><b>'+x.action+' →</b></a>').join(''):'';}if(d&&s.name){let title='Deine Betriebsbasis steht.',body='Deine Zielwerte werden jetzt automatisch in passende Rechner übernommen.';if(signals[0]){title=signals[0].title;body=signals[0].message+' '+signals[0].action+'.'}const stock=h.find(x=>x.tool==='Lagerumschlag'&&x.data&&x.data.coverageGap<0);const personnel=h.find(x=>x.tool==='Personalbedarf');if(stock){title='Bestand zuerst prüfen.';body='Deine letzte Bestandsrechnung lag unter der hinterlegten Lieferzeit. Prüfe Nachbestellung und Sicherheitsbestand.'}else if(personnel){title='Personalplanung im Blick behalten.';body='Deine letzte Personalplanung ergab '+personnel.summary+'. Vergleiche den Wert mit deinem tatsächlichen Einsatzplan.'}d.innerHTML='<span class="decision-label">Ladenfluss Fokus</span><h3>'+title+'</h3><p>'+body+'</p><a class="btn btn-primary" href="/tools">Weiterrechnen →</a>';} const list=document.getElementById('recentCalculations');if(list){list.innerHTML=h.length?h.slice(0,5).map(x=>'<div class="history-row"><div><strong>'+x.tool+'</strong><span>'+new Date(x.at).toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short'})+'</span></div><b>'+x.summary+'</b></div>').join(''):'<p class="empty-history">Noch keine Berechnungen gespeichert. Öffne einen Rechner – deine letzten Ergebnisse erscheinen danach hier.</p>';}
-}
-document.addEventListener('DOMContentLoaded',()=>{const s=loadStore();set('store_name',s.name);set('store_type',s.type);set('store_days',s.days);set('store_open',s.open);set('store_close',s.close);set('store_min_staff',s.minStaff);set('target_productivity',s.productivity);set('target_labor',s.labor);set('target_margin',s.margin);set('target_lead',s.lead);set('target_buffer',s.buffer);set('target_hourly',s.hourly);renderCockpit();
- document.querySelectorAll('[data-cockpit-tab]').forEach(b=>b.addEventListener('click',()=>switchPanel(b.dataset.cockpitTab)));document.querySelectorAll('[data-open-profile]').forEach(b=>b.addEventListener('click',()=>switchPanel('profile')));
- document.getElementById('storeProfile')?.addEventListener('submit',e=>{e.preventDefault();const days=n('store_days'),open=document.getElementById('store_open').value,close=document.getElementById('store_close').value,minStaff=n('store_min_staff');if(days<1||days>7||!open||!close||open>=close||minStaff<1){const x=document.getElementById('profileState');x.textContent='Bitte Öffnungszeiten prüfen.';return}saveStore({name:document.getElementById('store_name').value.trim(),type:document.getElementById('store_type').value.trim(),days,open,close,minStaff});const x=document.getElementById('profileState');x.textContent='Gespeichert';setTimeout(()=>x.textContent='',1600);});
- document.getElementById('storeTargets')?.addEventListener('submit',e=>{e.preventDefault();const data={productivity:n('target_productivity'),labor:n('target_labor'),margin:n('target_margin'),lead:n('target_lead'),buffer:n('target_buffer'),hourly:n('target_hourly')};if(data.productivity<=0||data.labor<0||data.labor>100||data.margin<0||data.margin>=100||data.lead<0||data.buffer<0||data.buffer>100||data.hourly<0){const x=document.getElementById('targetState');x.textContent='Bitte Zielwerte prüfen.';return}saveStore(data);const x=document.getElementById('targetState');x.textContent='Gespeichert';setTimeout(()=>x.textContent='',1600);});
-});
+(function () {
+  'use strict';
+  document.addEventListener('DOMContentLoaded', () => {
+    const $=id=>document.getElementById(id), settings=window.LadenflussStoreSettings;
+    let allSignals=[],showAll=false;
+    const priorities={critical:'Dringend prüfen',important:'Im Blick behalten',info:'Zur Einordnung'};
+    const node=(tag,className,text)=>{const el=document.createElement(tag);if(className)el.className=className;if(text!=null)el.textContent=text;return el;};
+    const link=(href,label,className)=>{const a=node('a',className,label);a.href=href;return a;};
+    const number=value=>value.toLocaleString('de-DE',{maximumFractionDigits:1});
+    function report(message){$('cockpitError').textContent=message;$('cockpitError').hidden=!message;}
+    function switchPanel(name,updateHash=true){
+      if(!['overview','profile','targets','backup','modules'].includes(name))name='overview';
+      document.querySelectorAll('[data-cockpit-panel]').forEach(p=>p.hidden=p.dataset.cockpitPanel!==name);
+      document.querySelectorAll('[data-cockpit-tab]').forEach(b=>{const active=b.dataset.cockpitTab===name;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
+      if(updateHash)history.replaceState(null,'',name==='overview'?location.pathname:'#'+name);
+    }
+    function calculationHistory(){
+      const raw=localStorage.getItem('ladenfluss.history.v1');
+      if(raw===null)return [];
+      const data=JSON.parse(raw);
+      if(!Array.isArray(data))throw new Error('Der Rechenverlauf ist nicht lesbar. Sichere deinen Arbeitsstand.');
+      return data.filter(x=>x&&typeof x.tool==='string'&&typeof x.summary==='string');
+    }
+    function renderSignals(){
+      const filter=$('signalFilter').value;
+      const filtered=allSignals.filter(s=>filter==='all'||s.priority===filter);
+      const list=$('storeSignals');list.replaceChildren();
+      for(const signal of filtered.slice(0,showAll?undefined:5)){
+        const card=node('article','signal-card '+signal.priority);
+        const top=node('div','signal-card-top');top.append(node('span','signal-priority',priorities[signal.priority]),node('span','signal-module',signal.module));
+        card.append(top,node('h3','',signal.title),node('p','',signal.message));
+        if(signal.impact)card.append(node('p','signal-impact',signal.impact));
+        const footer=node('div','signal-card-footer');footer.append(node('small','',signal.source),link(signal.href,signal.action+' →','signal-action'));card.append(footer);
+        if(signal.evidence.length){const details=node('details','signal-evidence');details.append(node('summary','','Wie kommt dieser Hinweis zustande?'));const ul=node('ul');signal.evidence.forEach(e=>ul.append(node('li','',String(e))));details.append(ul);card.append(details);}
+        list.append(card);
+      }
+      if(!filtered.length)list.append(node('p','empty-state',filter==='all'?'Keine Hinweise aus den verfügbaren Planungsdaten. Nicht angebundene Bereiche werden noch nicht geprüft.':'Keine Hinweise in dieser Kategorie.'));
+      $('showAllSignals').hidden=showAll||filtered.length<=5;
+      $('showAllSignals').textContent='Weitere '+Math.max(0,filtered.length-5)+' Hinweise zeigen';
+    }
+    function renderFocus(profile,demo){
+      const card=$('decisionCard');card.replaceChildren();
+      let signal=allSignals[0];
+      if(!profile.name&&demo)signal={title:'Mach aus dem Beispiel deinen Laden.',message:'Hinterlege Öffnungszeiten und Mindestbesetzung. Die Beispielhinweise unten zeigen dir, wie Ladenfluss arbeitet.',action:'Ladenprofil einrichten',href:'#profile',source:'Erster Schritt',priority:'info'};
+      if(!signal)signal={title:'Deine Planung hat aktuell keine erkannten Auffälligkeiten.',message:'Prüfe als Nächstes deinen Dienstplan. Umsatz, Warenbestand und MHD sind noch nicht automatisch angebunden.',action:'Dienstplan öffnen',href:'/pep',source:'Vorhandene lokale Planungsdaten',priority:'info'};
+      card.className='focus-card '+signal.priority;
+      card.append(node('span','focus-kicker',signal.source),node('h2','',signal.title),node('p','',signal.message));
+      if(signal.impact)card.append(node('p','focus-impact',signal.impact));
+      const action=link(signal.href,signal.action+' →','btn btn-primary');
+      if(signal.href.startsWith('#'))action.addEventListener('click',e=>{e.preventDefault();switchPanel(signal.href.slice(1));});
+      card.append(action);
+    }
+    function renderHistory(history){
+      const list=$('recentCalculations');list.replaceChildren();
+      for(const entry of history.slice().sort((a,b)=>(Date.parse(b.at)||0)-(Date.parse(a.at)||0)).slice(0,5)){
+        const row=node('div','calculation-row'),left=node('div');
+        const at=Date.parse(entry.at),old=!Number.isFinite(at)||Date.now()-at>7*86400000;
+        left.append(node('strong','',entry.tool),node('small','',Number.isFinite(at)?new Date(at).toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short'})+(old?' · nur Verlauf':''):'Datum unbekannt · nur Verlauf'));
+        row.append(left,node('span','',entry.summary));list.append(row);
+      }
+      if(!history.length)list.append(node('p','empty-state','Noch keine Berechnungen gespeichert. Beginne mit einer konkreten Frage in den kostenlosen Werkzeugen.'));
+    }
+    function render(){
+      report('');
+      let profile;
+      try{profile=settings.read();}catch(error){profile=settings.defaults;report(error.message+' Vorhandene Daten werden beim Speichern nicht ersetzt.');}
+      $('storeGreeting').textContent=profile.name||'Mein Laden';
+      const historyErrors=[];let history=[];
+      try{history=calculationHistory();}catch(error){historyErrors.push(error.message);}
+      if(historyErrors.length)report(historyErrors.join(' '));
+      allSignals=window.LadenflussSignals.sort([...window.LadenflussPepSignals.current(),...window.LadenflussBusinessSignals.fromHistory(history,new Date(),profile)]);
+      const counts=window.LadenflussSignals.counts(allSignals);
+      for(const [key,id] of [['critical','countCritical'],['important','countImportant'],['info','countInfo']])$(id).textContent=String(counts[key]);
+      let demo=false;
+      try{const team=window.LadenflussTeamStore.getTeam();demo=team.length===3&&team.every(p=>({e1:'Anna Müller',e2:'Ben Weber',e3:'Mira Klein'}[p.id]===p.name));}catch{}
+      $('demoNotice').hidden=!demo;
+      $('analysisTime').textContent='Stand '+new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+      $('dashProductivity').textContent=number(profile.productivity)+' €/h';
+      $('dashLabor').textContent=number(profile.labor)+' %';$('dashMargin').textContent=number(profile.margin)+' %';$('dashLead').textContent=number(profile.lead)+' Tage';
+      renderFocus(profile,demo);renderSignals();renderHistory(history);
+    }
+    function fillForms(){
+      let p;try{p=settings.read();}catch{p=settings.defaults;}
+      for(const [id,key] of Object.entries({store_name:'name',store_type:'type',store_days:'days',store_open:'open',store_close:'close',store_min_staff:'minStaff',store_state:'state',target_productivity:'productivity',target_labor:'labor',target_margin:'margin',target_lead:'lead',target_buffer:'buffer',target_hourly:'hourly'}))$(id).value=p[key];
+    }
+    for(const [key,name] of Object.entries(window.LadenflussHolidays.STATES)){const option=node('option','',name);option.value=key;$('store_state').append(option);}
+    $('cockpitDate').textContent=new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});
+    document.querySelectorAll('[data-cockpit-tab],[data-open-panel]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();switchPanel(button.dataset.cockpitTab||button.dataset.openPanel);}));
+    window.addEventListener('hashchange',()=>switchPanel(location.hash.slice(1),false));
+    $('signalFilter').addEventListener('change',()=>{showAll=false;renderSignals();});
+    $('showAllSignals').addEventListener('click',()=>{showAll=true;renderSignals();});
+    const save=(data,status)=>{
+      try{settings.save(data);render();status.textContent='Gespeichert. Hinweise wurden neu berechnet.';}
+      catch(error){status.textContent='Nicht gespeichert: '+error.message;}
+    };
+    const n=id=>$(id).value.trim()===''?NaN:Number($(id).value);
+    $('storeProfile').addEventListener('submit',event=>{event.preventDefault();save({name:$('store_name').value.trim(),type:$('store_type').value.trim(),days:n('store_days'),open:$('store_open').value,close:$('store_close').value,minStaff:n('store_min_staff'),state:$('store_state').value},$('profileState'));});
+    $('storeTargets').addEventListener('submit',event=>{event.preventDefault();save({productivity:n('target_productivity'),labor:n('target_labor'),margin:n('target_margin'),lead:n('target_lead'),buffer:n('target_buffer'),hourly:n('target_hourly')},$('targetState'));});
+    $('downloadBackup').addEventListener('click',()=>{
+      try{const count=window.LadenflussBackup.download();$('backupStatus').textContent='Download für '+count+' Datenbereiche gestartet. Bitte prüfe die Datei in deinen Downloads.';}
+      catch(error){$('backupStatus').textContent='Sicherung nicht möglich: '+error.message;}
+    });
+    window.addEventListener('storage',event=>{if(event.key===null||event.key.startsWith('ladenfluss.'))render();});
+    fillForms();render();switchPanel(location.hash.slice(1),false);
+  });
+})();

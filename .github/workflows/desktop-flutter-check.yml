@@ -2,33 +2,84 @@ name: Desktop Flutter checks
 
 on:
   push:
-    branches:
-      - develop/v1.5
-    paths:
-      - 'desktop/**'
-      - '.github/workflows/desktop-flutter-check.yml'
+    branches: [main, develop/v1.5, fix/v1.5.1-stability]
+    paths: ['desktop/**', '.github/workflows/desktop-flutter-check.yml']
   pull_request:
-    paths:
-      - 'desktop/**'
-      - '.github/workflows/desktop-flutter-check.yml'
+    paths: ['desktop/**', '.github/workflows/desktop-flutter-check.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: desktop
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-      - name: Set up Flutter stable
-        uses: subosito/flutter-action@v2
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.47.6'
           channel: stable
           cache: true
-      - name: Resolve dependencies
-        run: flutter pub get
+      - run: flutter pub get
       - name: Analyze Dart sources
         run: flutter analyze
-      - name: Run unit tests
+      - name: Run unit and widget tests
         run: flutter test
+
+  native-build:
+    needs: verify
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            platform: macos
+          - os: windows-latest
+            platform: windows
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.6'
+          channel: stable
+          cache: true
+      - name: Generate missing native runner without replacing app code
+        run: python tool/prepare_desktop.py --platform ${{ matrix.platform }}
+      - run: flutter pub get
+      - name: Build native application
+        run: flutter build ${{ matrix.platform }} --release
+      - name: Package macOS alpha (unsigned)
+        if: matrix.platform == 'macos'
+        run: |
+          mkdir -p artifacts
+          ditto -c -k --sequesterRsrc --keepParent build/macos/Build/Products/Release/ladenfluss_wws.app artifacts/Ladenfluss-WWS-macOS-alpha.zip
+      - name: Package Windows alpha (unsigned)
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts
+          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath artifacts/Ladenfluss-WWS-Windows-alpha.zip
+      - name: Upload alpha and generated native source
+        uses: actions/upload-artifact@v4
+        with:
+          name: ladenfluss-wws-${{ matrix.platform }}-${{ github.sha }}
+          path: |
+            desktop/artifacts/*.zip
+            desktop/${{ matrix.platform }}/
+            desktop/pubspec.lock
+          if-no-files-found: error
+          retention-days: 14

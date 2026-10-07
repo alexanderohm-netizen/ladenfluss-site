@@ -78,3 +78,6 @@
 .tool-page .result-insight{border-radius:10px}
 @media(max-width:900px){.tool-page .calculator-layout{grid-template-columns:1fr}.tool-page .side-stack{display:none}}
 @media(max-width:620px){.tool-page .calculator{padding:23px 18px}.tool-page .fields{gap:16px}}
+
+/* Invalid inputs must hide both the previous calculation and its actions. */
+.result-toolbar[hidden],.result-insight[hidden]{display:none!important}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'products_page.dart';
 import 'inventory_page.dart';
 import 'restock_page.dart';
@@ -9,25 +10,32 @@ import 'demo_catalog.dart';
 void main() => runApp(const LadenflussApp());
 
 class LadenflussApp extends StatelessWidget {
-  const LadenflussApp({super.key});
+  const LadenflussApp({super.key, this.catalog, this.vacations});
+  final DemoCatalog? catalog;
+  final VacationPlan? vacations;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Ladenfluss WWS',
+      locale: const Locale('de', 'DE'),
+      supportedLocales: const [Locale('de', 'DE')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF752D43)),
         scaffoldBackgroundColor: const Color(0xFFF8F7F5),
       ),
-      home: const Workspace(),
+      home: Workspace(catalog: catalog, vacations: vacations),
     );
   }
 }
 
 class Workspace extends StatefulWidget {
-  const Workspace({super.key});
+  const Workspace({super.key, this.catalog, this.vacations});
+  final DemoCatalog? catalog;
+  final VacationPlan? vacations;
 
   @override
   State<Workspace> createState() => _WorkspaceState();
@@ -35,8 +43,8 @@ class Workspace extends StatefulWidget {
 
 class _WorkspaceState extends State<Workspace> {
   int selected = 0;
-  final catalog = DemoCatalog();
-  final vacations = VacationPlan();
+  late final catalog = widget.catalog ?? DemoCatalog();
+  late final vacations = widget.vacations ?? VacationPlan();
   @override
   void initState() { super.initState(); catalog.load(); vacations.load(); }
   @override
@@ -80,7 +88,9 @@ class _WorkspaceState extends State<Workspace> {
                     style: TextStyle(color: catalog.storageError == null ? null : Colors.red),
                   )),
                   const SizedBox(height: 28),
-                  if (selected == 0) ...[
+                  if (selected == 0)
+                    Expanded(child: SingleChildScrollView(child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('Was braucht heute deine Aufmerksamkeit?', style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 16),
                     AnimatedBuilder(
@@ -150,7 +160,8 @@ class _WorkspaceState extends State<Workspace> {
                     ),
                     const SizedBox(height: 16),
                     const Text('Hinweise basieren auf lokalen Demodaten. Absatzprognosen, Liefertermine und echte Filialdaten folgen später.'),
-                  ] else if (selected == 1)
+                  ])))
+                  else if (selected == 1)
                     ProductsPage(catalog: catalog)
                   else if (selected == 2)
                     InventoryPage(catalog: catalog)

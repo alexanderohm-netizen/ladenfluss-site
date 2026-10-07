@@ -23,7 +23,7 @@
   function clone(v){return JSON.parse(JSON.stringify(v))}
   function getTeam(){
     const team=read(TEAM_KEY,null);
-    if(Array.isArray(team)&&team.length)return team;
+    if(Array.isArray(team))return team;
     localStorage.setItem(TEAM_KEY,JSON.stringify(defaultTeam));
     return clone(defaultTeam);
   }
@@ -31,7 +31,7 @@
   function mondayKey(date=new Date()){
     const d=new Date(date);d.setHours(12,0,0,0);
     const day=d.getDay()||7;d.setDate(d.getDate()-day+1);
-    return d.toISOString().slice(0,10);
+    return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
   }
   function getAllWeeks(){
     let weeks=read(SHIFTS_KEY,null);
@@ -77,5 +77,8 @@
     Object.keys(shifts).forEach(id=>{if(!team.some(p=>p.id===id))delete shifts[id]});
     return shifts;
   }
-  window.LadenflussTeamStore={getTeam,saveTeam,getShifts,saveShifts,getPlanStatus,savePlanStatus,getAbsences,saveAbsences,ensureEmployeeAbsenceRows,ensureEmployeeShiftRows,mondayKey};
+  // Only use escaped text when interpolating local user input into HTML.
+  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  window.LadenflussTeamStore={getTeam,saveTeam,getShifts,saveShifts,getPlanStatus,savePlanStatus,getAbsences,saveAbsences,ensureEmployeeAbsenceRows,ensureEmployeeShiftRows,mondayKey,escapeHtml};
 })();

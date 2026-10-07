@@ -1,0 +1,9 @@
+node_modules/
+test-results/
+playwright-report/
+desktop/.dart_tool/
+desktop/build/
+desktop/.flutter-plugins*
+desktop/artifacts/
+
+__pycache__/

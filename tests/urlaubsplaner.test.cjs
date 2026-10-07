@@ -72,3 +72,40 @@ test('Browserdaten erhalten Team und Urlaubseinträge', () => {
   assert.equal(api.read().employees[0].name, 'Anna');
   assert.equal(api.read().entries.length, 1);
 });
+
+for (const [title, breakData] of [
+  ['fehlende Arbeitstage', d => { delete d.settings.workdays; }],
+  ['unbekanntes Bundesland', d => { d.settings.state = 'XX'; }],
+  ['ungültiges Budget', d => { d.employees[0].allowance = -1; }],
+  ['doppelte Mitarbeiter-ID', d => { d.employees.push({...d.employees[0]}); }],
+  ['verwaister Urlaub', d => { d.entries[0].employeeId = 'missing'; }],
+  ['unbekannter Status', d => { d.entries[0].status = 'other'; }],
+  ['ungültiges Datum', d => { d.entries[0].start = '2026-02-30'; }],
+  ['überlappender Urlaub', d => { d.entries.push({...d.entries[0], id: 'second'}); }],
+]) {
+  test('Beschädigte Daten bleiben geschützt: ' + title, () => {
+    const {api, storage} = setup();
+    const data = api.empty();
+    data.employees.push({id:'a', name:'Anna', allowance:30});
+    data.entries.push(vacation('1','a','2026-11-02','2026-11-06'));
+    breakData(data);
+    const raw = JSON.stringify(data);
+    storage.set(api.KEY, raw);
+    assert.throws(() => api.read());
+    assert.throws(() => api.save(data));
+    assert.equal(storage.get(api.KEY), raw);
+  });
+}
+
+test('Ein ausdrücklich leeres Team wird nicht mit Demopersonen aufgefüllt', () => {
+  const storage = new Map([['ladenfluss.team.v1', '[]']]);
+  const window = {};
+  vm.runInNewContext(fs.readFileSync('assets/team-store.js', 'utf8'), {
+    window, localStorage: {
+      getItem: k => storage.get(k) ?? null,
+      setItem: (k,v) => storage.set(k,v),
+    },
+  });
+  assert.equal(window.LadenflussTeamStore.getTeam().length, 0);
+  assert.equal(storage.get('ladenfluss.team.v1'), '[]');
+});

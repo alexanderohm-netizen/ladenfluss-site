@@ -18,7 +18,24 @@ Build Command: leer lassen
 Output Directory: leer lassen
 
 
-## Produktplan v1.3–v1.5
+## Aktueller Stand
+
+Website v1.5 ist der bisher veröffentlichte Stand. Die Stabilisierung v1.5.1
+ist lokal vorbereitet, noch nicht hochgeladen oder veröffentlicht.
+Details und nachvollziehbare Prüfergebnisse: [v1.5.1](docs/v1.5.1-stability.md).
+Die lokale Weiterentwicklung ergänzt ein überarbeitetes Cockpit, gemeinsame
+Besetzungsanalyse, Sicherungsexport und robustere Rechner. Aktueller Prüfstand:
+[Cockpit und Planungslogik](docs/smarter-cockpit.md) – 44 Funktionstests bestanden;
+visuelle Browserprüfung und native Builds weiterhin offen.
+
+Für lokale Funktionstests: `npm ci --ignore-scripts` und `npm test`.
+Für Browsertests zusätzlich `npx playwright install chromium` und
+`npm run test:browser`.
+
+## Historischer Produktplan v1.3–v1.5
+
+Die folgenden Punkte sind Planungsziele, keine Bestätigung des Lieferstands.
+Echtes Kundenlogin, Cloudspeicherung und buchbare Module sind weiterhin offen.
 
 ### v1.3 — Orientierung + Mein Laden
 - öffentliche Willkommensseite als klarer Einstieg

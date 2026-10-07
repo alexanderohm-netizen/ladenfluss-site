@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded',()=> {
   const store=window.LadenflussTeamStore;
+  const escape=store.escapeHtml;
   const team=store.getTeam();
   let weekStart=new Date();
   const day=weekStart.getDay()||7;
@@ -10,13 +11,16 @@ document.addEventListener('DOMContentLoaded',()=> {
   let absences=store.ensureEmployeeAbsenceRows(team,store.getAbsences(weekKey));
 
   let approvedVacations = [];
+  let vacationError = false;
   function reloadVacations() {
     try {
       const saved = window.LadenflussVacation?.read();
+      vacationError = false;
       approvedVacations = Array.isArray(saved?.entries)
         ? saved.entries.filter(entry => entry.status === 'approved') : [];
     } catch {
       approvedVacations = [];
+      vacationError = true;
     }
   }
   function absenceAt(employee, index) {
@@ -49,10 +53,21 @@ document.addEventListener('DOMContentLoaded',()=> {
   const deleteAbsence=document.getElementById('deleteAbsence');
   let published=store.getPlanStatus(weekKey)==='published';
 
-  const mins=t=>{const [h,m]=t.split(':').map(Number);return h*60+m};
-  const hours=s=>!s?0:Math.max(0,(mins(s[1])-mins(s[0])-Number(s[2]||0))/60);
-  const shop=(()=>{try{return Object.assign({open:'09:00',close:'18:00',minStaff:2,days:6,state:'HE'},JSON.parse(localStorage.getItem('ladenfluss.store.v1')||'{}'))}catch{return{open:'09:00',close:'18:00',minStaff:2,days:6,state:'HE'}}})();
-  function coverageIssues(){const out=[],names=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'],start=mins(shop.open),end=mins(shop.close),need=Number(shop.minStaff||2);for(let d=0;d<7;d++){if(d>=Number(shop.days||6))continue;const date=new Date(weekStart);date.setDate(date.getDate()+d);if(window.LadenflussHolidays?.getHoliday(date,shop.state||'HE'))continue;let gap=null;for(let t=start;t<end;t+=30){const count=employees.filter(e=>{const s=e.shifts[d];return s&&!absenceAt(e,d)&&mins(s[0])<=t&&mins(s[1])>t}).length;if(count<need){if(!gap)gap={from:t,to:t+30,min:count};else{gap.to=t+30;gap.min=Math.min(gap.min,count)}}else if(gap){out.push({priority:'critical',text:names[d]+' '+String(Math.floor(gap.from/60)).padStart(2,'0')+':'+String(gap.from%60).padStart(2,'0')+'–'+String(Math.floor(gap.to/60)).padStart(2,'0')+':'+String(gap.to%60).padStart(2,'0')+' nur '+gap.min+' von '+need+' Personen verfügbar.',detail:'Schicht verlängern oder Ersatz einplanen.'});gap=null}}if(gap)out.push({priority:'critical',text:names[d]+' bis Ladenschluss nur '+gap.min+' von '+need+' Personen verfügbar.',detail:'Schicht verlängern oder Ersatz einplanen.'})}return out}
+  const mins=window.LadenflussPlanning.minutes;
+  const hours=window.LadenflussPlanning.shiftHours;
+  let shop;
+  try { shop=window.LadenflussStoreSettings.read(); }
+  catch (error) {
+    document.getElementById('pepFocus').innerHTML='<strong>Profil prüfen</strong><p>'+escape(error.message)+'</p><a href="/mein-laden#profile">Unternehmensprofil öffnen</a>';
+    document.querySelectorAll('.pep-actions button').forEach(button=>button.disabled=true);
+    return;
+  }
+  function analysis() {
+    return window.LadenflussPlanning.analyze({week:weekKey,team,
+      shifts:Object.fromEntries(employees.map(e=>[e.id,e.shifts])),
+      absences:Object.fromEntries(employees.map(e=>[e.id,e.absences])),
+      vacations:approvedVacations,shop,holiday:window.LadenflussHolidays.getHoliday});
+  }
 
   function persist(){
     const next={};
@@ -61,15 +76,9 @@ document.addEventListener('DOMContentLoaded',()=> {
   }
 
   function getIssues(){
-    const conflicts=[];
-    employees.forEach(e=>e.shifts.forEach((s,i)=>{if(s&&absenceAt(e,i)) conflicts.push({name:e.name,type:'conflict',priority:'critical',module:'Personal',title:'Planungskonflikt',text:e.name+' ist '+absenceAt(e,i)+' und gleichzeitig eingeplant.',detail:'Schicht entfernen oder Ersatz einplanen.'})}));
-    const hourIssues=employees.map(e=>{
-      const total=e.shifts.reduce((a,s)=>a+hours(s),0);
-      if(total>e.target+5) return {name:e.name,type:'high',priority:'important',module:'Personal',title:'Sollstunden überschritten',text:`${e.name} liegt deutlich über den Sollstunden.`};
-      if(total<Math.max(0,e.target-8)) return {name:e.name,type:'low',priority:'info',module:'Personal',title:'Weniger Stunden geplant',text:`${e.name} liegt deutlich unter den Sollstunden.`};
-      return null;
-    }).filter(Boolean);
-    return conflicts.concat(coverageIssues(),hourIssues).sort((a,b)=>({critical:0,important:1,info:2}[a.priority]??9)-({critical:0,important:1,info:2}[b.priority]??9));
+    const signals=analysis().signals;
+    if(vacationError) signals.unshift({priority:'critical',message:'Urlaubsdaten konnten nicht gelesen werden.',impact:'Besetzungsprüfung unvollständig. Bitte Urlaubsplan prüfen.'});
+    return signals.map(s=>({...s,text:s.message,detail:s.impact}));
   }
 
   function persistAbsences(){
@@ -92,10 +101,10 @@ document.addEventListener('DOMContentLoaded',()=> {
     body.innerHTML=employees.map(e=>{
       const total=e.shifts.reduce((a,s)=>a+hours(s),0);
       const cells=e.shifts.map((s,i)=>{const a=absenceAt(e,i);return s
-        ? `<td class="${a?'has-conflict':''}"><button class="shift-chip" data-e="${e.id}" data-d="${i}" title="Schicht bearbeiten"><strong>${s[0]}–${s[1]}</strong><span>${hours(s).toLocaleString('de-DE',{maximumFractionDigits:1})} h · ${s[2]} Min Pause</span></button></td>`
-        : a ? `<td><button class="absence-chip" data-ae="${e.id}" data-ad="${i}"><strong>${a}</strong><span>Abwesend</span></button></td>` : `<td><button class="empty-shift" data-e="${e.id}" data-d="${i}" aria-label="Schicht hinzufügen">+</button></td>`}).join('');
+        ? `<td class="${a?'has-conflict':''}"><button class="shift-chip" data-e="${escape(e.id)}" data-d="${i}" title="Schicht bearbeiten"><strong>${escape(s[0])}–${escape(s[1])}</strong><span>${hours(s).toLocaleString('de-DE',{maximumFractionDigits:1})} h · ${escape(s[2])} Min Pause</span></button></td>`
+        : a ? `<td><button class="absence-chip" data-ae="${escape(e.id)}" data-ad="${i}"><strong>${escape(a)}</strong><span>Abwesend</span></button></td>` : `<td><button class="empty-shift" data-e="${escape(e.id)}" data-d="${i}" aria-label="Schicht hinzufügen">+</button></td>`}).join('');
       const state=total>e.target+5?'high':total<Math.max(0,e.target-8)?'low':'ok';
-      return `<tr><th><strong>${e.name}</strong><span>${e.role} · Ziel ${e.target} h</span></th>${cells}<td class="week-total ${state}"><strong>${total.toLocaleString('de-DE',{maximumFractionDigits:1})} h</strong><span>${state==='ok'?'passt':state==='high'?'zu hoch':'zu niedrig'}</span></td></tr>`;
+      return `<tr><th><strong>${escape(e.name)}</strong><span>${escape(e.role)} · Ziel ${e.target} h</span></th>${cells}<td class="week-total ${state}"><strong>${total.toLocaleString('de-DE',{maximumFractionDigits:1})} h</strong><span>${state==='ok'?'passt':state==='high'?'zu hoch':'zu niedrig'}</span></td></tr>`;
     }).join('');
 
     const total=employees.reduce((a,e)=>a+e.shifts.reduce((x,s)=>x+hours(s),0),0);
@@ -134,17 +143,15 @@ document.addEventListener('DOMContentLoaded',()=> {
   }
 
   function renderDayCheck(){
-    const names=['Mo','Di','Mi','Do','Fr','Sa','So'];
-    const html=names.map((name,i)=>{
-      const date=new Date(weekStart);date.setDate(date.getDate()+i);
-      const holiday=window.LadenflussHolidays?.getHoliday(date,shop.state||'HE');
-      const working=employees.filter(e=>e.shifts[i]&&!absenceAt(e,i)).length;
-      if(holiday) return '<div class="holiday-check"><small>'+name+' · Feiertag</small><strong>'+holiday+'</strong></div>'; 
-      const state=working===0?'empty':working===1?'thin':'ok';
-      const label=working===0?'Niemand geplant':working===1?'Nur 1 Person':working+' Personen';
-      return '<div class="'+state+'"><small>'+name+'</small><strong>'+label+'</strong></div>';
+    const result=analysis();
+    document.getElementById('dayCheck').innerHTML='<span>Besetzung</span>'+result.days.map(day=>{
+      const name=day.name.slice(0,2);
+      const state=day.closed?'holiday-check':day.gaps.length?'thin':day.pauseMinutes?'thin':'ok';
+      const label=day.closed?(day.holiday||'Geschlossen'):day.gaps.length
+        ? (day.missingMinutes/60).toLocaleString('de-DE',{maximumFractionDigits:1})+' h Besetzung fehlen'
+        : day.pauseMinutes?'Pausenlage prüfen':'Durchgehend besetzt';
+      return '<div class="'+state+'"><small>'+name+'</small><strong>'+escape(label)+'</strong></div>';
     }).join('');
-    document.getElementById('dayCheck').innerHTML='<span>Besetzung</span>'+html;
   }
 
   function changeWeek(offset){
@@ -168,7 +175,7 @@ document.addEventListener('DOMContentLoaded',()=> {
 
   function openDialog(eid=null,day=null){
     const sel=document.getElementById('shiftEmployee');
-    sel.innerHTML=employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+    sel.innerHTML=employees.map(e=>`<option value="${escape(e.id)}">${escape(e.name)}</option>`).join('');
     editing=null;
     resetDialog();
 
@@ -192,7 +199,7 @@ document.addEventListener('DOMContentLoaded',()=> {
   }
 
   function openAbsence(eid=null,day=0){
-    const sel=document.getElementById('absenceEmployee');sel.innerHTML=employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');editingAbsence=null;deleteAbsence.hidden=true;
+    const sel=document.getElementById('absenceEmployee');sel.innerHTML=employees.map(e=>`<option value="${escape(e.id)}">${escape(e.name)}</option>`).join('');editingAbsence=null;deleteAbsence.hidden=true;
     if(eid){sel.value=eid;document.getElementById('absenceDay').value=String(day);const emp=employees.find(x=>x.id===eid);if(emp?.absences[day]){document.getElementById('absenceType').value=emp.absences[day];editingAbsence={eid,day};deleteAbsence.hidden=false;}}
     absenceDlg.showModal();
   }
@@ -279,7 +286,7 @@ document.addEventListener('DOMContentLoaded',()=> {
     const end=document.getElementById('shiftEnd').value;
     const br=Number(document.getElementById('shiftBreak').value||0);
 
-    if(!emp||!start||!end||mins(end)<=mins(start)){
+    if(!emp||!Number.isInteger(day)||day<0||day>6||mins(start)===null||mins(end)===null||mins(end)<=mins(start)){
       window.alert('Bitte gültige Start- und Endzeiten eingeben.');return;
     }
     const duration=mins(end)-mins(start);
@@ -290,6 +297,9 @@ document.addEventListener('DOMContentLoaded',()=> {
     if(br<minimumBreak){
       window.alert('Für diese Schicht sind nach § 4 ArbZG mindestens '+minimumBreak+' Minuten Ruhepause einzuplanen.');return;
     }
+
+    const destinationChanged=!editing||editing.eid!==emp.id||editing.day!==day;
+    if(destinationChanged&&emp.shifts[day]&&!window.confirm('Für diese Person ist bereits eine Schicht eingetragen. Diese ersetzen?'))return;
 
     if(editing && (editing.eid!==emp.id || editing.day!==day)){
       const oldEmp=employees.find(x=>x.id===editing.eid);
@@ -303,6 +313,18 @@ document.addEventListener('DOMContentLoaded',()=> {
     render();
   });
 
-  persist();
+  document.querySelectorAll('dialog button[value=cancel]').forEach(button=>{
+    button.type='button';button.onclick=()=>button.closest('dialog').close();
+  });
+  const requested=new URLSearchParams(window.location.search).get('week');
+  if(requested&&/^\d{4}-\d{2}-\d{2}$/.test(requested)){
+    const date=new Date(requested+'T12:00:00');
+    if(Number.isFinite(date.getTime())&&store.mondayKey(date)===requested){
+      weekStart=date;weekKey=requested;
+      shifts=store.ensureEmployeeShiftRows(team,store.getShifts(weekKey));
+      absences=store.ensureEmployeeAbsenceRows(team,store.getAbsences(weekKey));
+      employees.forEach(e=>{e.shifts=shifts[e.id];e.absences=absences[e.id]});
+    }
+  }
   render();
 });

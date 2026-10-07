@@ -5,6 +5,7 @@
     const $ = id => document.getElementById(id);
     const error = $('vacError');
     let data;
+    let savedSnapshot;
     let editId = null;
     let month = new Date();
     month = new Date(month.getFullYear(), month.getMonth(), 1, 12);
@@ -19,13 +20,21 @@
     const fail = message => { error.textContent = message; error.hidden = false; };
     const clearError = () => { error.hidden = true; error.textContent = ''; };
     function persist() {
-      try { api.save(data); clearError(); return true; }
-      catch (e) { fail('Speichern nicht möglich. Bitte Speicherplatz und Browser-Einstellungen prüfen: ' + e.message); return false; }
+      try { api.save(data); savedSnapshot = JSON.stringify(data); clearError(); return true; }
+      catch (e) {
+        data = JSON.parse(savedSnapshot);
+        $('vacState').value = data.settings.state;
+        $('vacWorkweek').value = String(data.settings.workdays.length);
+        $('vacMaxAbsent').value = data.settings.maxAbsent;
+        render();
+        fail('Die Änderung wurde nicht gespeichert. Bitte Speicherplatz und Browser-Einstellungen prüfen und erneut versuchen: ' + e.message);
+        return false;
+      }
     }
-    try { data = api.read(); }
+    try { data = api.read(); savedSnapshot = JSON.stringify(data); }
     catch (e) {
       fail('Gespeicherte Daten konnten nicht gelesen werden. Zum Schutz vor Datenverlust ist die Bearbeitung gesperrt. ' + e.message);
-      document.querySelectorAll('.vac-form input,.vac-form select,.vac-form button').forEach(control => { control.disabled = true; });
+      document.querySelectorAll('.vac-app input,.vac-app select,.vac-app button').forEach(control => { control.disabled = true; });
       return;
     }
     const states = window.LadenflussHolidays?.STATES || {HE: 'Hessen'};
@@ -187,7 +196,9 @@
         return fail('Die Personalplanung konnte nicht geladen werden.');
       }
       if (!confirm('Mitarbeiter aus der Personalplanung auf diesem Browser übernehmen? Wenn noch kein Team gespeichert ist, werden die Demo-Mitarbeiter übernommen.')) return;
-      const source = window.LadenflussTeamStore.getTeam();
+      let source;
+      try { source = window.LadenflussTeamStore.getTeam(); }
+      catch (e) { return fail('Team konnte nicht übernommen werden: ' + e.message); }
       let added = 0;
       for (const member of source) {
         if (!member.id || !member.name ||
