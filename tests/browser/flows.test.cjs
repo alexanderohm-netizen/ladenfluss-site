@@ -14,7 +14,7 @@ before(async () => {
     const route = decodeURIComponent(new URL(req.url, 'http://local').pathname);
     let file = path.join(root, route);
     if (!file.startsWith(root + path.sep) && file !== root) { res.writeHead(403).end(); return; }
-    if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
+    if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = fs.existsSync(file+'.html') ? file+'.html' : path.join(file, 'index.html');
     if (!fs.existsSync(file)) file += '.html';
     if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404).end(); return; }
     const mime = {'.html':'text/html', '.js':'application/javascript', '.css':'text/css', '.svg':'image/svg+xml'};
