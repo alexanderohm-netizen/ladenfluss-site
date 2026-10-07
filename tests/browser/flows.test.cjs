@@ -172,10 +172,11 @@ test('Gemeinsamer Rechner: Menü, Dezimaltastatur und Formelergebnisse', async t
   await page.goto(base+'/rechner');
   await page.locator('#chooseMode').click();
   await page.locator('[data-mode=margenrechner]').click();
-  await page.locator('#m_cost').click();
+  await page.locator('[data-field=m_cost]').click();
   for(const key of ['clear','1','2','.','5'])await page.locator('[data-key="'+key+'"]').click();
   assert.equal(await page.locator('#m_cost').inputValue(),'12.5');
   await page.locator('[data-key=calculate]').click();
+  await page.locator('#fullInputs > summary').click();
   assert.equal(await page.locator('#m_result').isVisible(),true);
   for(const mode of ['rabattrechner','break-even','kpi-dashboard','personalkosten-budget','rohertrag-wareneinsatz','lagerumschlag','personalbedarf']){
     await page.locator('#chooseMode').click();await page.locator('[data-mode='+mode+']').click();
