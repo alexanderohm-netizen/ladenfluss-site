@@ -232,3 +232,36 @@ test('PEP: Abbrechen aller Dialoge verändert keine gespeicherten Daten', async(
   }
   assert.deepEqual(p.storage(),before);assert.deepEqual(p.errors,[]);p.close();
 });
+
+test('Personalbedarf übergibt einen datierten Richtwert und PEP vergleicht verfügbare Stunden', async()=>{
+  let p=await load('tools/personalbedarf.html');
+  for(const [id,value] of Object.entries({p_date:'2026-10-06',p_revenue:'1000',p_productivity:'100',p_open:'8',p_min:'1',p_extra:'0',p_break:'0',p_buffer:'0'}))p.$(id).value=value;
+  p.w.calcPersonnel();
+  const link=p.w.document.querySelector('.planning-transfer');
+  assert.equal(link.getAttribute('href'),'/pep?week=2026-10-05&day=2026-10-06');
+  link.dispatchEvent(new p.w.MouseEvent('click',{bubbles:true,cancelable:true}));
+  const saved=p.storage();
+  assert.equal(JSON.parse(saved['ladenfluss.history.v1'])[0].data.total,10);
+  p.$('p_revenue').dispatchEvent(new p.w.Event('input',{bubbles:true}));
+  assert.equal(p.$('p_result').hidden,true);p.close();
+  saved['ladenfluss.team.v1']=JSON.stringify([{id:'e1',name:'Anna',role:'Verkauf',hours:8}]);
+  saved['ladenfluss.pep.weeks.v2']=JSON.stringify({'2026-10-05':{e1:[null,['09:00','17:00',0],null,null,null,null,null]}});
+  p=await load('pep.html',saved);
+  assert.match(p.$('planningReference').textContent,/10 h Richtwert · 8 h verfügbar geplant · 2 h unter/);
+  assert.deepEqual(p.errors,[]);p.close();
+  saved['ladenfluss.pep.absences.v1']=JSON.stringify({'2026-10-05':{e1:[null,'Krank',null,null,null,null,null]}});
+  p=await load('pep.html',saved);
+  assert.match(p.$('planningReference').textContent,/0 h verfügbar geplant · 10 h unter/);
+  assert.deepEqual(p.errors,[]);p.close();
+});
+
+test('Bedarfsübergabe stoppt bei Speicherfehler und überschreibt beschädigten Verlauf nicht', async()=>{
+  const p=await load('tools/personalbedarf.html',{'ladenfluss.history.v1':'{kaputt'});
+  const link=p.w.document.querySelector('.planning-transfer');
+  const click=new p.w.MouseEvent('click',{cancelable:true});
+  link.dispatchEvent(click);
+  assert.equal(click.defaultPrevented,true);
+  assert.match(p.$('p_error').textContent,/nicht gespeichert/);
+  assert.equal(p.w.localStorage.getItem('ladenfluss.history.v1'),'{kaputt');
+  p.close();
+});
