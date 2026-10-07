@@ -41,7 +41,7 @@ async function load(file, initial = {}) {
   };
 }
 
-test('Alle 27 HTML-Seiten initialisieren ihre echten Skripte fehlerfrei', async () => {
+test('Alle HTML-Seiten initialisieren ihre echten Skripte fehlerfrei', async () => {
   const files = fs.readdirSync(root).filter(f=>f.endsWith('.html'))
     .concat(['tools','produkte'].flatMap(dir=>fs.readdirSync(path.join(root,dir)).filter(f=>f.endsWith('.html')).map(f=>dir+'/'+f)));
   for (const file of files) {
@@ -264,4 +264,35 @@ test('Bedarfsübergabe stoppt bei Speicherfehler und überschreibt beschädigten
   assert.match(p.$('p_error').textContent,/nicht gespeichert/);
   assert.equal(p.w.localStorage.getItem('ladenfluss.history.v1'),'{kaputt');
   p.close();
+});
+
+test('Gemeinsamer Rechner wechselt alle acht Formeln und behält Eingaben je Rechenart', async()=>{
+  const p=await load('rechner.html');
+  const modes=[['margenrechner','m'],['rabattrechner','d'],['break-even','b'],['kpi-dashboard','k'],['personalkosten-budget','lb'],['rohertrag-wareneinsatz','gp'],['lagerumschlag','st'],['personalbedarf','p']];
+  for(const [mode,prefix] of modes){
+    p.w.location.hash=mode;p.w.dispatchEvent(new p.w.Event('hashchange'));
+    assert.equal(p.$(prefix+'_result').hidden,false,mode);
+    assert.doesNotMatch(p.$('screenValue').textContent,/NaN|Infinity|undefined/);
+  }
+  p.w.location.hash='margenrechner';p.w.dispatchEvent(new p.w.Event('hashchange'));
+  p.$('m_cost').focus();
+  for(const key of ['clear','1','2','.','5'])p.w.document.querySelector('[data-key="'+key+'"]').click();
+  assert.equal(p.$('m_cost').value,'12.5');
+  p.w.document.querySelector('[data-key=calculate]').click();
+  assert.equal(p.$('m_result').hidden,false);
+  p.w.location.hash='rabattrechner';p.w.dispatchEvent(new p.w.Event('hashchange'));
+  p.w.location.hash='margenrechner';p.w.dispatchEvent(new p.w.Event('hashchange'));
+  assert.equal(p.$('m_cost').value,'12.5');
+  assert.deepEqual(p.errors,[]);p.close();
+});
+
+test('Urlaubsansichten zeigen nur die benötigten Bereiche und öffnen Bearbeitung', async()=>{
+  const p=await load('tools/urlaubsplaner.html');
+  assert.equal(p.$('vacEntryForm').closest('section').hidden,true);
+  p.w.document.querySelector('[data-vac-view=team]').click();
+  assert.equal(p.$('vacCalendar').closest('section').hidden,true);
+  assert.equal(p.$('vacEmployeeForm').closest('section').hidden,false);
+  p.w.document.querySelector('[data-vac-view=entry]').click();
+  assert.equal(p.$('vacEntryForm').closest('section').hidden,false);
+  assert.deepEqual(p.errors,[]);p.close();
 });

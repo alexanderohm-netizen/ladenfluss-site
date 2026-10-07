@@ -27,3 +27,11 @@ jobs:
       - run: npm test
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
+      - name: Upload app screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ladenfluss-web-screenshots
+          path: test-artifacts/*.png
+          if-no-files-found: ignore
+          retention-days: 7
