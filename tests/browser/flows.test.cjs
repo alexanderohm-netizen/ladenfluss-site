@@ -146,3 +146,16 @@ test('Ungültige Rechnung blendet Ergebnis und Kopieren sichtbar aus', async t =
   assert.equal(await page.locator('#st_result').isVisible(),true);
   assert.equal(await page.locator('.result-toolbar').isVisible(),true);
 });
+
+test('Personalbedarf führt zum gewählten Tag und zeigt den gespeicherten Vergleich', async t=>{
+  const page=await session(t);
+  await page.goto(base+'/tools/personalbedarf');
+  await page.locator('#p_date').fill('2026-10-08');
+  await page.getByRole('button',{name:'Team-Bedarf anzeigen'}).click();
+  await page.locator('.planning-transfer').click();
+  assert.match(page.url(),/week=2026-10-05&day=2026-10-08/);
+  assert.equal(await page.locator('#planningReference').isVisible(),true);
+  assert.match(await page.locator('#planningReference').innerText(),/Donnerstag/);
+  await page.locator('#nextWeek').click();
+  assert.equal(await page.locator('#planningReference').isVisible(),false);
+});

@@ -123,7 +123,39 @@ document.addEventListener('DOMContentLoaded',()=> {
         ? 'Die markierte Wochensumme weicht deutlich vom hinterlegten Soll ab.'
         : 'Keine auffälligen Wochenstunden in diesem Plan.';
 
+    renderNeed();
     bindCells();
+  }
+
+  function renderNeed(){
+    const box=document.getElementById('planningReference');
+    box.replaceChildren();box.hidden=true;
+    let history;
+    try{history=JSON.parse(localStorage.getItem('ladenfluss.history.v1')||'[]');}catch{return;}
+    if(!Array.isArray(history))return;
+    const selected=new URLSearchParams(location.search).get('day');
+    const records=history.filter(e=>e?.tool==='Personalbedarf'&&Number.isFinite(e.data?.total)&&e.data.total>=0&&/^\d{4}-\d{2}-\d{2}$/.test(e.data.date)&&Number.isFinite(Date.parse(e.at)))
+      .sort((a,b)=>Date.parse(b.at)-Date.parse(a.at));
+    const used=new Set();
+    for(const e of records){
+      const date=new Date(e.data.date+'T12:00:00');
+      if(!Number.isFinite(date.getTime())||window.LadenflussPlanning.iso(date)!==e.data.date||store.mondayKey(date)!==weekKey||used.has(e.data.date))continue;
+      if(selected&&store.mondayKey(new Date(selected+'T12:00:00'))===weekKey&&selected!==e.data.date)continue;
+      used.add(e.data.date);
+      const index=(date.getDay()||7)-1;
+      const available=employees.reduce((sum,person)=>sum+(absenceAt(person,index)?0:hours(person.shifts[index])),0);
+      const diff=e.data.total-available;
+      const title=document.createElement('strong');
+      title.textContent=date.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'2-digit'})+' · Dein berechneter Personalbedarf';
+      const detail=document.createElement('p');
+      const num=n=>n.toLocaleString('de-DE',{maximumFractionDigits:1});
+      detail.textContent=num(e.data.total)+' h Richtwert · '+num(available)+' h verfügbar geplant · '+num(Math.abs(diff))+' h '+(diff>0?'unter':'über')+' dem Richtwert.';
+      const source=document.createElement('p');
+      source.textContent='Quelle: deine Personalbedarfsrechnung vom '+new Date(e.at).toLocaleDateString('de-DE')+'. Nettoschichtstunden ohne Abwesenheiten; zeitliche Besetzung und Pausen separat prüfen.';
+      if(Date.now()-Date.parse(e.at)>7*86400000)source.textContent+=' Älter als sieben Tage – Eingaben vor Verwendung aktualisieren.';
+      box.append(title,detail,source);box.hidden=false;
+    }
+    if(!box.hidden){const a=document.createElement('a');a.href='/tools/personalbedarf';a.textContent='Bedarf neu berechnen →';box.append(a);}
   }
 
   function renderPlanState(){

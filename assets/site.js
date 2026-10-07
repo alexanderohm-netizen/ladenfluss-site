@@ -73,11 +73,30 @@ function calcPersonnel(save=true){
   const revenue=val('p_revenue'), productivity=val('p_productivity'), open=val('p_open'), extra=val('p_extra'), minStaff=val('p_min'), breakMin=val('p_break'), buffer=val('p_buffer');
   if([revenue,productivity,open,extra,minStaff,breakMin,buffer].some(n=>!Number.isFinite(n))||revenue<0||productivity<=0||open<=0||extra<0||minStaff<1||breakMin<0||buffer<0||buffer>100){ error('p_error','Bitte prüfe deine Eingaben. Stundenleistung und Öffnungsdauer müssen größer als 0 sein.'); return; }
   const salesHours=revenue/productivity, extraHours=(extra+breakMin)/60, base=salesHours+extraHours, minimumHours=open*minStaff, total=Math.max(base,minimumHours)*(1+buffer/100), concurrent=total/open;
-  if(save) lfSaveHistory('Personalbedarf',de(total)+' h Personalbedarf',{revenue,total,productivity});
+  const date=document.getElementById('p_date')?.value;
+  const target=new Date(date+'T12:00:00');
+  if(!date||!Number.isFinite(target.getTime())||target.getFullYear()+'-'+String(target.getMonth()+1).padStart(2,'0')+'-'+String(target.getDate()).padStart(2,'0')!==date){error('p_error','Bitte einen gültigen Verkaufstag auswählen.');return;}
+  if(save) lfSaveHistory('Personalbedarf',de(total)+' h Personalbedarf',{revenue,total,productivity,date});
   renderRows('p_result',[
     ['Meine Empfehlung',`${de(total)} Personalstunden`],['Im Schnitt gleichzeitig',`${de(concurrent)} Personen`],
     ['Davon für den geplanten Umsatz',`${de(salesHours)} h`],['Für Zusatzaufgaben & Pausen',`${de(extraHours)} h`],['Minimum durch deine Besetzung',`${de(minimumHours)} h`]
   ],`<strong>Dein nächster Schritt:</strong> Plane zunächst mit rund ${de(total)} Stunden. Prüfe danach nur noch, wann deine Stoßzeiten liegen und welche Qualifikationen du zu diesen Zeiten brauchst.`);
+  const toolbar=document.getElementById('p_result').nextElementSibling;
+  toolbar.querySelector('.planning-transfer')?.remove();
+  const transfer=document.createElement('a');transfer.className='planning-transfer example-action';
+  target.setDate(target.getDate()-(target.getDay()||7)+1);
+  const week=target.getFullYear()+'-'+String(target.getMonth()+1).padStart(2,'0')+'-'+String(target.getDate()).padStart(2,'0');
+  transfer.href='/pep?week='+week+'&day='+date;
+  transfer.textContent='Für diesen Tag im Dienstplan vergleichen →';
+  transfer.addEventListener('click',event=>{
+    try{
+      const raw=localStorage.getItem(LF_HISTORY_KEY),history=raw===null?[]:JSON.parse(raw);
+      if(!Array.isArray(history))throw new Error('Ungültiger Verlauf');
+      history.unshift({id:Date.now(),tool:'Personalbedarf',summary:de(total)+' h Personalbedarf',data:{revenue,total,productivity,date},at:new Date().toISOString()});
+      localStorage.setItem(LF_HISTORY_KEY,JSON.stringify(history.slice(0,12)));
+    }catch{event.preventDefault();error('p_error','Der Bedarf konnte nicht gespeichert werden. Prüfe deinen Browserspeicher.');}
+  });
+  toolbar.append(transfer);
 }
 function calcMargin(save=true){
   error('m_error');
@@ -152,6 +171,11 @@ function calcStockTurn(save=true){
 
 Object.assign(window,{calcPersonnel,calcMargin,calcDiscount,calcBreakEven,calcKpi,calcLaborBudget,calcGrossProfit,calcStockTurn});
 document.addEventListener('DOMContentLoaded',()=>{
+  const dateInput=document.getElementById('p_date');
+  if(dateInput){
+    const now=new Date();dateInput.value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    document.querySelectorAll('.calculator input').forEach(input=>input.addEventListener('input',()=>error('p_error','Eingaben geändert. Bitte den Bedarf neu berechnen.')));
+  }
   lfApplyStoreDefaults();
   if($('#p_result')) calcPersonnel(false); if($('#m_result')) calcMargin(false); if($('#d_result')) calcDiscount(); if($('#b_result')) calcBreakEven(false);
   if($('#k_result')) calcKpi(); if($('#lb_result')) calcLaborBudget(); if($('#gp_result')) calcGrossProfit(); if($('#st_result')) calcStockTurn(false);
