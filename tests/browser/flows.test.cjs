@@ -61,15 +61,19 @@ for (const width of [1440, 390]) {
 test('Team übernehmen, Urlaub bearbeiten, speichern und in PEP erkennen', async t => {
   const page = await session(t);
   await page.goto(base+'/tools/urlaubsplaner');
+  await page.locator('[data-vac-view=team]').click();
   await page.locator('#vacImportPep').click();
   assert.equal((await snapshot(page)).employees.length, 3);
+  await page.locator('[data-vac-view=settings]').click();
   await page.locator('#vacWorkweek').selectOption('6');
+  await page.locator('[data-vac-view=entry]').click();
   await page.locator('#vacPerson').selectOption('e1');
   await page.locator('#vacFrom').fill('2026-10-05');
   await page.locator('#vacTo').fill('2026-10-10');
   await page.locator('#vacStatus').selectOption('approved');
   await page.locator('#vacSaveEntry').click();
   assert.equal((await snapshot(page)).entries[0].status, 'approved');
+  await page.locator('[data-vac-view=team]').click();
   assert.match(await page.locator('#vacBalances').innerText(), /24 frei \/ 30/);
   await page.reload();
   assert.match(await page.locator('#vacEntries').innerText(), /6 Arbeitstage/);
@@ -80,7 +84,9 @@ test('Team übernehmen, Urlaub bearbeiten, speichern und in PEP erkennen', async
   await page.getByRole('button', {name:'Bearbeiten', exact:true}).click();
   await page.locator('#vacTo').fill('2026-10-09');
   await page.locator('#vacSaveEntry').click();
+  await page.locator('[data-vac-view=team]').click();
   assert.match(await page.locator('#vacBalances').innerText(), /25 frei \/ 30/);
+  await page.locator('[data-vac-view=calendar]').click();
   await page.locator('#vacEntries').getByRole('button', {name:'Löschen', exact:true}).click();
   await page.reload();
   assert.equal((await snapshot(page)).entries.length, 0);
@@ -108,6 +114,7 @@ test('Speicherfehler erzeugt keine versteckten oder doppelten Mitarbeiter', asyn
       return original.call(this,name,value);
     };
   }, key);
+  await page.locator('[data-vac-view=team]').click();
   await page.locator('#vacEmployeeName').fill('Nicht gespeichert');
   await page.locator('#vacEmployeeForm button').click();
   assert.match(await page.locator('#vacError').innerText(), /nicht gespeichert/);
@@ -158,4 +165,33 @@ test('Personalbedarf führt zum gewählten Tag und zeigt den gespeicherten Vergl
   assert.match(await page.locator('#planningReference').innerText(),/Donnerstag/);
   await page.locator('#nextWeek').click();
   assert.equal(await page.locator('#planningReference').isVisible(),false);
+});
+
+test('Gemeinsamer Rechner: Menü, Dezimaltastatur und Formelergebnisse', async t=>{
+  const page=await session(t,{width:390,height:844});
+  await page.goto(base+'/rechner');
+  await page.locator('#chooseMode').click();
+  await page.locator('[data-mode=margenrechner]').click();
+  await page.locator('[data-field=m_cost]').click();
+  for(const key of ['clear','1','2','.','5'])await page.locator('[data-key="'+key+'"]').click();
+  assert.equal(await page.locator('#m_cost').inputValue(),'12.5');
+  await page.locator('[data-key=calculate]').click();
+  await page.locator('#fullInputs > summary').click();
+  assert.equal(await page.locator('#m_result').isVisible(),true);
+  for(const mode of ['rabattrechner','break-even','kpi-dashboard','personalkosten-budget','rohertrag-wareneinsatz','lagerumschlag','personalbedarf']){
+    await page.locator('#chooseMode').click();await page.locator('[data-mode='+mode+']').click();
+    assert.doesNotMatch(await page.locator('#screenValue').innerText(),/NaN|Infinity|undefined/);
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)<=2,mode);
+  }
+});
+
+for(const width of [390,1440])test('App-Ansichten als Bild prüfen ('+width+' px)',async t=>{
+  const page=await session(t,{width,height:1000});
+  const folder=path.join(root,'test-artifacts');fs.mkdirSync(folder,{recursive:true});
+  await page.goto(base+'/rechner#margenrechner');
+  await page.screenshot({path:path.join(folder,'calculator-'+width+'.png'),fullPage:true});
+  await page.locator('#chooseMode').click();
+  await page.screenshot({path:path.join(folder,'menu-'+width+'.png'),fullPage:true});
+  await page.goto(base+'/tools/urlaubsplaner');
+  await page.screenshot({path:path.join(folder,'vacation-'+width+'.png'),fullPage:true});
 });

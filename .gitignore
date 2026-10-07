@@ -7,3 +7,5 @@ desktop/.flutter-plugins*
 desktop/artifacts/
 
 __pycache__/
+
+test-artifacts/
