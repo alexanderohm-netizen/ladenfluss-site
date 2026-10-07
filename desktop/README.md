@@ -22,7 +22,7 @@ Eigenständiger Flutter-Desktop-Client für macOS und Windows – **kein WebView
 ## Start auf einem Entwicklungsrechner
 
 1. Flutter SDK mit Desktop-Unterstützung installieren.
-2. Im Ordner `desktop/` einmal ausführen: `flutter create --platforms=macos,windows .` (erzeugt die noch fehlenden nativen Runner).
+2. Flutter 3.47.6 verwenden. Im Ordner `desktop/` auf dem Mac `python3 tool/prepare_desktop.py --platform macos`, auf Windows `python tool/prepare_desktop.py --platform windows` ausführen. Das erzeugt den fehlenden Runner, ohne App-Code oder Tests zu ersetzen.
 3. `flutter pub get`
 4. `flutter run -d macos` oder auf Windows `flutter run -d windows`.
 5. `flutter test` und `flutter analyze` zur Prüfung ausführen.
@@ -38,3 +38,12 @@ Eigenständiger Flutter-Desktop-Client für macOS und Windows – **kein WebView
 5. Ladenfluss MHD, Zahlenfluss und PEP mit gemeinsamem Firmenkonto verbinden.
 
 Im ersten Schritt wird bewusst **keine** Offline-/Cloud-Synchronisation behauptet. Das erfordert später Konfliktauflösung, serverseitige Autorisierung und eigene Tests.
+
+## Stabilisierung v1.5.1 (vorbereitet)
+
+Die drei bekannten Dropdown-Analysehinweise sind im Code korrigiert. Deutsche
+Dialoge, ein scrollbareres Dashboard und zwei Widgettests wurden ergänzt.
+Der GitHub-Workflow bereitet nach erfolgreichen Analyse-/Testschritten native
+macOS- und Windows-ZIP-Artefakte vor. Die automatische Prüfung wurde für diesen
+Stand noch nicht ausgeführt: Der Upload benötigt eine Freigabe.
+Siehe [Prüfstatus](../docs/v1.5.1-stability.md).

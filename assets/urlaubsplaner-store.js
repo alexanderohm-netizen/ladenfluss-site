@@ -21,16 +21,42 @@
   }
   function read() {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return empty();
-    const parsed = JSON.parse(raw);
-    if (!parsed || parsed.version !== 1 || !Array.isArray(parsed.employees) || !Array.isArray(parsed.entries) || !parsed.settings) {
-      throw new Error('Das gespeicherte Urlaubsformat ist beschädigt. Daten werden nicht überschrieben.');
-    }
-    return parsed;
+    if (raw === null) return empty();
+    return validate(JSON.parse(raw));
   }
   function save(data) {
-    if (!data || data.version !== 1) throw new Error('Ungültige Daten');
+    validate(data);
     localStorage.setItem(KEY, JSON.stringify(data));
+  }
+  function validate(data) {
+    const invalid = () => { throw new Error('Das gespeicherte Urlaubsformat ist beschädigt. Daten werden nicht überschrieben.'); };
+    const text = value => typeof value === 'string' && value.trim().length > 0;
+    if (!data || data.version !== 1 || !Array.isArray(data.employees) ||
+        !Array.isArray(data.entries) || !data.settings) invalid();
+    const s = data.settings;
+    const states = ['BW','BY','BE','BB','HB','HH','HE','MV','NI','NW','RP','SL','SN','ST','SH','TH'];
+    if (!states.includes(s.state) || !Array.isArray(s.workdays) ||
+        !['1,2,3,4,5', '1,2,3,4,5,6'].includes(s.workdays.join(',')) ||
+        !s.workdays.every(Number.isInteger) || !Number.isInteger(s.maxAbsent) ||
+        s.maxAbsent < 1 || s.maxAbsent > 100) invalid();
+    const people = new Set();
+    for (const person of data.employees) {
+      if (!person || !text(person.id) || people.has(person.id) || !text(person.name) ||
+          !Number.isInteger(person.allowance) || person.allowance < 0 || person.allowance > 366) invalid();
+      people.add(person.id);
+    }
+    const ids = new Set();
+    const checked = [];
+    for (const entry of data.entries) {
+      if (!entry || !text(entry.id) || ids.has(entry.id) || !people.has(entry.employeeId) ||
+          !['planned', 'approved'].includes(entry.status) ||
+          (entry.note != null && typeof entry.note !== 'string')) invalid();
+      eachDate(entry.start, entry.end, () => {});
+      if (conflictForEmployee(entry, checked)) invalid();
+      ids.add(entry.id);
+      checked.push(entry);
+    }
+    return data;
   }
   function isWorkday(d, settings) {
     const day = d.getDay();

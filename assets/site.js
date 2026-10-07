@@ -5,8 +5,15 @@ const $$ = (s, scope=document) => [...scope.querySelectorAll(s)];
 function euro(n){ return new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(Number.isFinite(n)?n:0); }
 function de(n,d=1){ return new Intl.NumberFormat('de-DE',{maximumFractionDigits:d}).format(Number.isFinite(n)?n:0); }
 function pct(n){ return `${de(n,1)} %`; }
-function val(id){ return Number(document.getElementById(id)?.value || 0); }
-function error(id,text=''){ const el=document.getElementById(id); if(el) el.textContent=text; }
+function val(id){ const value=document.getElementById(id)?.value; return value==null||value.trim()===''?NaN:Number(value); }
+function error(id,text=''){
+  const el=document.getElementById(id);if(el)el.textContent=text;
+  if(text){const result=document.getElementById(id.replace(/_error$/,'_result'));
+    if(result){result.hidden=true;const toolbar=result.nextElementSibling;
+      if(toolbar?.classList.contains('result-toolbar')){toolbar.hidden=true;const info=toolbar.nextElementSibling;if(info?.classList.contains('result-insight'))info.hidden=true;}
+    }
+  }
+}
 
 async function copyResult(el,button){
   const rows=[...el.querySelectorAll('.metric,.kpi')].map(row=>{
@@ -28,6 +35,7 @@ function addResultMeta(el,insight=''){
     button.addEventListener('click',()=>copyResult(el,button)); toolbar.append(button);
     el.insertAdjacentElement('afterend',toolbar);
   }
+  toolbar.hidden=false;
   let info=toolbar.nextElementSibling;
   if(!info || !info.classList.contains('result-insight')){
     info=document.createElement('div'); info.className='result-insight'; toolbar.insertAdjacentElement('afterend',info);
@@ -42,7 +50,7 @@ function renderRows(id,rows,insight=''){
 
 
 const LF_STORE_KEY='ladenfluss.store.v1', LF_HISTORY_KEY='ladenfluss.history.v1';
-function lfStore(){ try{return JSON.parse(localStorage.getItem(LF_STORE_KEY)||'{}')}catch{return{}} }
+function lfStore(){ try{const data=JSON.parse(localStorage.getItem(LF_STORE_KEY)||'{}');return data&&typeof data==='object'&&!Array.isArray(data)?data:{};}catch{return{}} }
 function lfSetIf(id,value){ const el=document.getElementById(id); if(el&&value!==undefined&&value!==null&&value!=='') el.value=value; }
 function lfApplyStoreDefaults(){ const s=lfStore(); if(!Object.keys(s).length)return;
   lfSetIf('p_productivity',s.productivity); lfSetIf('p_open',s.hours); lfSetIf('p_buffer',s.buffer);
@@ -62,8 +70,8 @@ $$('[data-filter]').forEach(btn=>btn.addEventListener('click',()=>{
 
 function calcPersonnel(save=true){
   error('p_error');
-  const revenue=val('p_revenue'), productivity=val('p_productivity'), open=val('p_open'), extra=val('p_extra'), minStaff=val('p_min')||1, breakMin=val('p_break'), buffer=val('p_buffer');
-  if(revenue<0||productivity<=0||open<=0||extra<0||minStaff<1||breakMin<0||buffer<0||buffer>100){ error('p_error','Bitte prüfe deine Eingaben. Stundenleistung und Öffnungsdauer müssen größer als 0 sein.'); return; }
+  const revenue=val('p_revenue'), productivity=val('p_productivity'), open=val('p_open'), extra=val('p_extra'), minStaff=val('p_min'), breakMin=val('p_break'), buffer=val('p_buffer');
+  if([revenue,productivity,open,extra,minStaff,breakMin,buffer].some(n=>!Number.isFinite(n))||revenue<0||productivity<=0||open<=0||extra<0||minStaff<1||breakMin<0||buffer<0||buffer>100){ error('p_error','Bitte prüfe deine Eingaben. Stundenleistung und Öffnungsdauer müssen größer als 0 sein.'); return; }
   const salesHours=revenue/productivity, extraHours=(extra+breakMin)/60, base=salesHours+extraHours, minimumHours=open*minStaff, total=Math.max(base,minimumHours)*(1+buffer/100), concurrent=total/open;
   if(save) lfSaveHistory('Personalbedarf',de(total)+' h Personalbedarf',{revenue,total,productivity});
   renderRows('p_result',[
@@ -74,7 +82,7 @@ function calcPersonnel(save=true){
 function calcMargin(save=true){
   error('m_error');
   const cost=val('m_cost'), margin=val('m_margin'), vat=val('m_vat'), waste=val('m_waste'); const rounding=document.getElementById('m_round')?.value||'none';
-  if(cost<0||margin<0||margin>=100||vat<0||waste<0||waste>=100){ error('m_error','Bitte gültige Werte eingeben. Die Ziel-Handelsspanne muss unter 100 % liegen.'); return; }
+  if([cost,margin,vat,waste].some(n=>!Number.isFinite(n))||cost<0||margin<0||margin>=100||vat<0||waste<0||waste>=100){ error('m_error','Bitte gültige Werte eingeben. Die Ziel-Handelsspanne muss unter 100 % liegen.'); return; }
   const effectiveCost=cost*(1+waste/100), net=effectiveCost/(1-margin/100); let gross=net*(1+vat/100); if(rounding!=='none'){ const cents=Number(rounding)/100; gross=Math.floor(gross)+cents; if(gross+1e-9<net*(1+vat/100)) gross+=1; } const roundedNet=gross/(1+vat/100), profit=roundedNet-effectiveCost, markup=effectiveCost>0?profit/effectiveCost*100:0, actualMargin=roundedNet>0?profit/roundedNet*100:0;
   if(save) lfSaveHistory('Marge & Verkaufspreis',euro(gross)+' Brutto-VK',{cost,gross,actualMargin});
   renderRows('m_result',[
@@ -84,7 +92,7 @@ function calcMargin(save=true){
 function calcDiscount(){
   error('d_error');
   const gross=val('d_price'), cost=val('d_cost'), discount=val('d_discount'), vat=val('d_vat');
-  if(gross<0||cost<0||discount<0||discount>100||vat<0){ error('d_error','Bitte gültige Werte eingeben. Der Rabatt muss zwischen 0 und 100 % liegen.'); return; }
+  if([gross,cost,discount,vat].some(n=>!Number.isFinite(n))||gross<0||cost<0||discount<0||discount>100||vat<0){ error('d_error','Bitte gültige Werte eingeben. Der Rabatt muss zwischen 0 und 100 % liegen.'); return; }
   const newGross=gross*(1-discount/100), oldNet=gross/(1+vat/100), newNet=newGross/(1+vat/100), oldProfit=oldNet-cost, newProfit=newNet-cost, margin=newNet?newProfit/newNet*100:0, loss=oldProfit-newProfit;
   renderRows('d_result',[
     ['Neuer Preis für deine Kunden',euro(newGross)],['Dir bleiben nach dem Wareneinkauf',euro(newProfit)],['So viel kostet dich der Rabatt je Stück',euro(loss)],
@@ -94,7 +102,7 @@ function calcDiscount(){
 function calcBreakEven(save=true){
   error('b_error');
   const fixed=val('b_fixed'), rate=val('b_rate'), days=val('b_days'), targetProfit=val('b_profit'), buffer=val('b_buffer');
-  if(fixed<0||rate<=0||rate>100||days<=0||targetProfit<0||buffer<0||buffer>100){ error('b_error','Bitte gültige Werte eingeben.'); return; }
+  if([fixed,rate,days,targetProfit,buffer].some(n=>!Number.isFinite(n))||fixed<0||rate<=0||rate>100||days<=0||targetProfit<0||buffer<0||buffer>100){ error('b_error','Bitte gültige Werte eingeben.'); return; }
   const baseMonthly=fixed/(rate/100), targetMonthly=(fixed+targetProfit)/(rate/100), monthly=targetMonthly*(1+buffer/100), daily=monthly/days;
   if(save) lfSaveHistory('Break-even',euro(monthly)+' Zielumsatz',{fixed,monthly,daily});
   renderRows('b_result',[
@@ -104,7 +112,7 @@ function calcBreakEven(save=true){
 function calcKpi(){
   error('k_error');
   const revenue=val('k_revenue'), hours=val('k_hours'), labor=val('k_labor'), tx=val('k_tx'), visitors=val('k_visitors'), waste=val('k_waste');
-  if([revenue,hours,labor,tx,visitors,waste].some(n=>n<0)){ error('k_error','Bitte keine negativen Werte eingeben.'); return; }
+  if([revenue,hours,labor,tx,visitors,waste].some(n=>!Number.isFinite(n)||n<0)){ error('k_error','Bitte alle Werte ausfüllen und keine negativen Zahlen eingeben.'); return; }
   const values=[
     ['Stundenleistung',hours?`${euro(revenue/hours)}/h`:'–'],['Ø Bon',tx?euro(revenue/tx):'–'],['Conversion',visitors?pct(tx/visitors*100):'–'],
     ['Personalkostenquote',revenue?pct(labor/revenue*100):'–'],['Abschriftenquote',revenue?pct(waste/revenue*100):'–'],['Umsatz je Besucher',visitors?euro(revenue/visitors):'–']
@@ -116,7 +124,7 @@ function calcKpi(){
 function calcLaborBudget(){
   error('lb_error');
   const revenue=val('lb_revenue'), ratio=val('lb_ratio'), hourly=val('lb_hourly'), days=val('lb_days');
-  if(revenue<0||ratio<=0||ratio>100||hourly<=0||days<=0){ error('lb_error','Bitte gültige Werte eingeben.'); return; }
+  if([revenue,ratio,hourly,days].some(n=>!Number.isFinite(n))||revenue<0||ratio<=0||ratio>100||hourly<=0||days<=0){ error('lb_error','Bitte gültige Werte eingeben.'); return; }
   const budget=revenue*ratio/100, hours=budget/hourly, perDay=hours/days, productivity=hours?revenue/hours:0;
   renderRows('lb_result',[
     ['Dieses Budget hast du für dein Team',euro(budget)],['Damit kannst du ungefähr planen',`${de(hours)} Stunden`],['Im Schnitt pro Öffnungstag',`${de(perDay)} Stunden`],['Dafür brauchst du je Arbeitsstunde',`${euro(productivity)} Umsatz`]
@@ -125,7 +133,7 @@ function calcLaborBudget(){
 function calcGrossProfit(){
   error('gp_error');
   const revenue=val('gp_revenue'), cogs=val('gp_cogs');
-  if(revenue<=0||cogs<0){ error('gp_error','Umsatz muss größer als 0 sein; Wareneinsatz darf nicht negativ sein.'); return; }
+  if([revenue,cogs].some(n=>!Number.isFinite(n))||revenue<=0||cogs<0){ error('gp_error','Umsatz muss größer als 0 sein; Wareneinsatz darf nicht negativ sein.'); return; }
   const grossProfit=revenue-cogs, margin=grossProfit/revenue*100, cogsRatio=cogs/revenue*100, factor=cogs>0?revenue/cogs:0;
   renderRows('gp_result',[
     ['Das bleibt nach dem Wareneinkauf',euro(grossProfit)],['Anteil, der übrig bleibt',pct(margin)],['Anteil deines Umsatzes für Ware',pct(cogsRatio)],['Umsatz je 1 € Warenkosten',factor?`${de(factor,2)} €`:'–']
@@ -134,12 +142,12 @@ function calcGrossProfit(){
 function calcStockTurn(save=true){
   error('st_error');
   const cogs=val('st_cogs'), avgStock=val('st_stock'), period=val('st_period'), lead=val('st_lead'), safety=val('st_safety');
-  if(cogs<0||avgStock<=0||period<=0||lead<0||safety<0){ error('st_error','Durchschnittsbestand und Zeitraum müssen größer als 0 sein.'); return; }
-  const turns=cogs/avgStock, days=turns?period/turns:0, avgDaily=cogs/period, coverage=avgDaily?avgStock/avgDaily:0, reorderNeed=avgDaily*lead+safety, coverageGap=coverage-lead;
-  if(save) lfSaveHistory('Lagerumschlag',de(coverage)+' Tage Reichweite',{cogs,avgStock,coverage,coverageGap});
+  if([cogs,avgStock,period,lead,safety].some(n=>!Number.isFinite(n))||cogs<0||avgStock<=0||period<=0||lead<0||safety<0){ error('st_error','Durchschnittsbestand und Zeitraum müssen größer als 0 sein.'); return; }
+  const turns=cogs/avgStock, avgDaily=cogs/period, coverage=avgDaily?avgStock/avgDaily:null, reorderNeed=avgDaily*lead+safety, coverageGap=coverage===null?null:coverage-lead;
+  if(save) lfSaveHistory('Lagerumschlag',coverage===null?'Reichweite ohne Verbrauch nicht bestimmbar':de(coverage)+' Tage Reichweite',{cogs,avgStock,coverage,coverageGap});
   renderRows('st_result',[
-    ['Dein Bestand reicht rechnerisch',`${de(coverage)} Tage`],['Nach der Lieferzeit bleiben',`${de(coverageGap)} Tage`],['Warenwert pro Tag',euro(avgDaily)],['Bedarf bis zur nächsten Lieferung inkl. Reserve',euro(reorderNeed)],['So oft bewegt sich dein Bestand im Zeitraum',`${de(turns,2)} ×`]
-  ],coverageGap<0?`<strong>Handlungsbedarf:</strong> Dein Bestand reicht rechnerisch nicht bis zur nächsten Lieferung. Prüfe jetzt Nachbestellung, Liefertermin und Reserve.`:`<strong>Dein nächster Schritt:</strong> Nach der Lieferzeit bleiben rechnerisch ${de(coverageGap)} Tage Reserve. Beobachte besonders Artikel, die deutlich schneller laufen als dieser Durchschnitt.`);
+    ['Dein Bestand reicht rechnerisch',coverage===null?'Ohne Verbrauch nicht bestimmbar':`${de(coverage)} Tage`],['Nach der Lieferzeit bleiben',coverageGap===null?'Nicht berechenbar':`${de(coverageGap)} Tage`],['Warenwert pro Tag',euro(avgDaily)],['Bedarf bis zur nächsten Lieferung inkl. Reserve',euro(reorderNeed)],['So oft bewegt sich dein Bestand im Zeitraum',`${de(turns,2)} ×`]
+  ],coverage===null?'<strong>Kein Verbrauch erfasst:</strong> Ohne Wareneinsatz lässt sich keine Lagerreichweite ableiten. Daraus entsteht kein automatischer Nachbestellhinweis. Prüfe Zeitraum und Warenbewegungen.':coverageGap<0?`<strong>Handlungsbedarf:</strong> Dein Bestand reicht rechnerisch nicht bis zur nächsten Lieferung. Prüfe jetzt Nachbestellung, Liefertermin und Reserve.`:`<strong>Dein nächster Schritt:</strong> Nach der Lieferzeit bleiben rechnerisch ${de(coverageGap)} Tage Reserve. Beobachte besonders Artikel, die deutlich schneller laufen als dieser Durchschnitt.`);
 }
 
 Object.assign(window,{calcPersonnel,calcMargin,calcDiscount,calcBreakEven,calcKpi,calcLaborBudget,calcGrossProfit,calcStockTurn});

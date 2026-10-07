@@ -23,7 +23,7 @@ class _InventoryPageState extends State<InventoryPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             DropdownButtonFormField<MovementType>(
-              value: type,
+              initialValue: type,
               decoration: const InputDecoration(labelText: 'Vorgang'),
               items: const [
                 DropdownMenuItem(value: MovementType.receipt, child: Text('Wareneingang (+)')),
