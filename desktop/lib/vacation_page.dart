@@ -29,8 +29,8 @@ class _VacationPageState extends State<VacationPage> {
 
   Future<void> addEmployee() async {
     if (!widget.plan.canEdit) return;
-    final name = TextEditingController();
-    final allowance = TextEditingController(text: '30');
+    String name = '';
+    String allowance = '30';
     final form = GlobalKey<FormState>();
     final confirmed = await showDialog<bool>(
       context: context,
@@ -40,12 +40,12 @@ class _VacationPageState extends State<VacationPage> {
           key: form,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             TextFormField(
-              controller: name,
+              initialValue: name, onChanged: (value) => name = value,
               decoration: const InputDecoration(labelText: 'Name'),
               validator: (text) => text == null || text.trim().isEmpty ? 'Name fehlt' : null,
             ),
             TextFormField(
-              controller: allowance,
+              initialValue: allowance, onChanged: (value) => allowance = value,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(labelText: 'Urlaubstage pro Jahr'),
               validator: (text) {
@@ -64,37 +64,34 @@ class _VacationPageState extends State<VacationPage> {
         ],
       ),
     );
-    if (confirmed == true) {
-      try { widget.plan.addEmployee(name.text, int.parse(allowance.text)); }
+    if (confirmed == true && mounted) {
+      try { widget.plan.addEmployee(name, int.parse(allowance)); }
       on StateError catch (e) { message(e.message); }
     }
-    name.dispose();
-    allowance.dispose();
   }
 
   Future<void> editAllowance(VacationEmployee employee) async {
-    final input = TextEditingController(text: employee.annualDays.toString());
+    String input = employee.annualDays.toString();
     final days = await showDialog<int>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Urlaubsbudget · ${employee.name}'),
-        content: SizedBox(width: 330, child: TextField(
-          controller: input,
+        content: SizedBox(width: 330, child: TextFormField(
+          initialValue: input, onChanged: (value) => input = value,
           keyboardType: TextInputType.number,
           decoration: const InputDecoration(labelText: 'Urlaubstage pro Jahr'),
         )),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Abbrechen')),
           FilledButton(onPressed: () {
-            final value = int.tryParse(input.text);
+            final value = int.tryParse(input);
             if (value == null || value < 0 || value > 366) return;
             Navigator.pop(context, value);
           }, child: const Text('Speichern')),
         ],
       ),
     );
-    input.dispose();
-    if (days != null) {
+    if (days != null && mounted) {
       try { widget.plan.updateAnnualDays(employee.id, days); }
       on StateError catch (e) { message(e.message); }
     }
@@ -112,7 +109,7 @@ class _VacationPageState extends State<VacationPage> {
       start: initial?.start ?? DateTime.now(),
       end: initial?.end ?? DateTime.now(),
     );
-    final note = TextEditingController(text: initial?.note ?? '');
+    String note = initial?.note ?? '';
     final result = await showDialog<VacationEntry>(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -140,7 +137,7 @@ class _VacationPageState extends State<VacationPage> {
                     helpText: 'Urlaubszeitraum auswählen',
                     saveText: 'Übernehmen',
                   );
-                  if (chosen != null && mounted) {
+                  if (chosen != null && mounted && context.mounted) {
                     try {
                       widget.plan.workingDays(VacationEntry(
                         id: initial?.id ?? '', employeeId: employeeId,
@@ -163,8 +160,8 @@ class _VacationPageState extends State<VacationPage> {
                 ],
                 onChanged: (next) { if (next != null) update(() => status = next); },
               ),
-              TextField(
-                controller: note,
+              TextFormField(
+                initialValue: note, onChanged: (value) => note = value,
                 maxLength: 120,
                 decoration: const InputDecoration(labelText: 'Notiz (optional)'),
               ),
@@ -183,7 +180,7 @@ class _VacationPageState extends State<VacationPage> {
                 start: DateTime(range.start.year, range.start.month, range.start.day, 12),
                 end: DateTime(range.end.year, range.end.month, range.end.day, 12),
                 status: status,
-                note: note.text.trim(),
+                note: note.trim(),
               );
               if (widget.plan.overlapsEmployee(entry)) {
                 message('Diese Person hat in diesem Zeitraum schon einen Urlaubseintrag.');
@@ -195,7 +192,6 @@ class _VacationPageState extends State<VacationPage> {
         ),
       ),
     );
-    note.dispose();
     if (result == null || !mounted) return;
     final conflictDays = widget.plan.capacityWarnings(result);
     if (conflictDays.isNotEmpty) {
