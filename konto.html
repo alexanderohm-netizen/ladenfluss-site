@@ -6,6 +6,8 @@
 <title>Kundenkonto | Ladenfluss</title>
 <meta name="description" content="Ladenfluss Kundenkonto – Zugang für Händler und ihre Unternehmen.">
 <meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://nzxtdrmdvqyvcbohplzt.supabase.co; base-uri 'none'; object-src 'none'; form-action 'self'">
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/account.css">
 </head>
@@ -16,13 +18,15 @@
 <section class="account-intro"><span class="eyebrow">Dein Laden. Dein Zugang.</span><h1>Alles beginnt mit deinem Konto.</h1><p>Verwalte dein Unternehmensprofil in der Cloud. Rechner und Urlaubsplaner kannst du weiterhin ohne Anmeldung verwenden.</p><div class="onboarding-promise"><strong>Schritt für Schritt verbunden.</strong><span>Bestehende Planungen bleiben auf diesem Gerät. Sie werden noch nicht automatisch in die Cloud übertragen.</span></div></section>
 <section class="account-card" aria-label="Kundenkonto">
 <div id="authStatus" class="auth-status" role="status" aria-live="polite">Verbindung wird geprüft …</div>
-<div id="signedOut">
+<button id="authRetry" type="button" class="text-button" hidden>Verbindung erneut prüfen</button>
+<noscript><p>Bitte aktiviere JavaScript, um dich sicher anzumelden. Die <a href="/tools">freien Werkzeuge</a> findest du hier.</p></noscript>
+<div id="signedOut" hidden>
 <div class="account-tabs"><button type="button" data-account-tab="login" aria-pressed="true">Anmelden</button><button type="button" data-account-tab="register" aria-pressed="false">Konto erstellen</button></div>
 <section data-account-panel="login"><h2>Willkommen zurück.</h2><form id="loginForm" class="account-form"><label>E-Mail-Adresse<input name="email" type="email" autocomplete="username" required></label><label>Passwort<input name="password" type="password" autocomplete="current-password" required></label><button class="btn btn-primary">Anmelden</button><button class="text-button" type="button" data-account-tab="reset">Passwort vergessen?</button></form></section>
 <section data-account-panel="register" hidden><h2>Dein Konto erstellen.</h2><form id="registerForm" class="account-form"><label>E-Mail-Adresse<input name="email" type="email" autocomplete="username" required></label><label>Passwort<input name="password" type="password" autocomplete="new-password" minlength="12" required></label><p>Verwende mindestens 12 Zeichen. Bitte bestätige anschließend deine E-Mail-Adresse.</p><p>Wie wir deine Daten verarbeiten, steht im <a href="/datenschutz">Datenschutzhinweis</a>.</p><button class="btn btn-primary">Konto erstellen</button></form></section>
 <section data-account-panel="reset" hidden><h2>Neues Passwort anfordern.</h2><form id="resetForm" class="account-form"><label>E-Mail-Adresse<input name="email" type="email" autocomplete="username" required></label><button class="btn btn-primary">Link anfordern</button><button class="text-button" type="button" data-account-tab="login">Zurück zur Anmeldung</button></form></section>
 </div>
-<section id="recoveryPanel" hidden><h2>Neues Passwort festlegen.</h2><form id="recoveryForm" class="account-form"><label>Neues Passwort<input name="password" type="password" autocomplete="new-password" minlength="12" required></label><button class="btn btn-primary">Passwort speichern</button></form></section>
+<section id="recoveryPanel" hidden><h2>Neues Passwort festlegen.</h2><form id="recoveryForm" class="account-form"><label>Neues Passwort<input name="password" type="password" autocomplete="new-password" minlength="12" required></label><button class="btn btn-primary">Passwort speichern</button><button id="cancelRecovery" type="button" class="text-button">Zurück zum Konto</button></form></section>
 <section id="signedIn" hidden><span class="eyebrow">Dein Kundenbereich</span><h2 id="welcomeTitle">Dein Unternehmen.</h2><p id="accountEmail"></p><button id="signOut" type="button" class="text-button">Auf diesem Gerät abmelden</button>
 <form id="companyForm" class="account-form"><label>Name deines Unternehmens<input name="company" type="text" maxlength="120" required></label><button class="btn btn-primary" id="companySave">Unternehmen anlegen</button></form>
 <div id="companyDetails" hidden><p id="cloudSaved"></p><h3>Deine Module</h3><ul id="moduleList" class="module-list"></ul><p>PEP, Zahlenfluss und Warenfluss werden schrittweise angebunden. Hier werden keine Zahlungen ausgelöst.</p></div>

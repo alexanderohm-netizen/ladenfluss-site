@@ -3,9 +3,9 @@ name: Web stability checks
 on:
   push:
     branches: [main, develop/v1.5, fix/v1.5.1-stability]
-    paths: ['assets/**', '**/*.html', 'tests/**', 'package*.json', '.github/workflows/web-vacation-check.yml']
+    paths: ['assets/**', '**/*.html', 'supabase/**', 'tests/**', 'package*.json', '.github/workflows/web-vacation-check.yml']
   pull_request:
-    paths: ['assets/**', '**/*.html', 'tests/**', 'package*.json', '.github/workflows/web-vacation-check.yml']
+    paths: ['assets/**', '**/*.html', 'supabase/**', 'tests/**', 'package*.json', '.github/workflows/web-vacation-check.yml']
   workflow_dispatch:
 
 permissions:

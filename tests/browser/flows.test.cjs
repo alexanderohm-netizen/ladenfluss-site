@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
+const {createHash} = require('node:crypto');
 const {chromium} = require('playwright');
 const root = path.resolve(__dirname, '../..');
 const key = 'ladenfluss.urlaubsplaner.v1';
@@ -38,6 +39,96 @@ async function session(t, viewport = {width:1440, height:1000}) {
   return page;
 }
 const snapshot = page => page.evaluate(k => JSON.parse(localStorage.getItem(k)), key);
+
+// Use the shipped Supabase SDK. Only the HTTP service is replaced, so these
+// checks exercise PKCE storage, callback events and the real account page.
+async function accountService(page, {expired = false} = {}) {
+  const calls = {recover: null, exchange: [], passwordUpdates: 0};
+  const user = {id:'00000000-0000-4000-8000-000000000001', aud:'authenticated', role:'authenticated',
+    email:'test@example.invalid', email_confirmed_at:'2026-10-01T00:00:00Z',
+    app_metadata:{provider:'email',providers:['email']}, user_metadata:{}, created_at:'2026-10-01T00:00:00Z'};
+  const issued = Date.parse('2026-10-06T12:00:00+02:00') / 1000;
+  const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url');
+  const token = encode({alg:'HS256',typ:'JWT'}) + '.' + encode({sub:user.id,exp:issued+3600,iat:issued,role:'authenticated'}) + '.test-signature';
+  await page.route('https://nzxtdrmdvqyvcbohplzt.supabase.co/**', async route => {
+    const request = route.request(), url = new URL(request.url());
+    const headers = {'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'GET,POST,PUT,OPTIONS'};
+    const send = (data, status = 200) => route.fulfill({status,headers,contentType:'application/json',body:JSON.stringify(data)});
+    if (request.method() === 'OPTIONS') return route.fulfill({status:204,headers});
+    if (url.pathname === '/auth/v1/recover') {
+      calls.recover = {body:request.postDataJSON(),redirect:new URL(url.searchParams.get('redirect_to'))};
+      return send({});
+    }
+    if (url.pathname === '/auth/v1/token') {
+      calls.exchange.push(request.postDataJSON());
+      if (expired) return send({error:'invalid_grant',code:'flow_state_expired',message:'Flow expired'},400);
+      return send({access_token:token,refresh_token:'test-only-refresh',token_type:'bearer',expires_in:3600,expires_at:issued+3600,user});
+    }
+    if (url.pathname === '/auth/v1/user') {
+      if (request.method() === 'PUT') calls.passwordUpdates++;
+      return send(user);
+    }
+    if (url.pathname === '/rest/v1/companies') return send(null);
+    return send({message:'Unexpected test request'},500);
+  });
+  return calls;
+}
+
+async function requestPasswordLink(page) {
+  await page.goto(base+'/konto');
+  await page.locator('[data-account-tab=reset]').click();
+  await page.locator('#resetForm input[name=email]').fill('test@example.invalid');
+  await page.locator('#resetForm button[type=submit], #resetForm button:not([type])').click();
+  await page.getByText('Wenn ein passendes Konto besteht, erhältst du einen Link zum Zurücksetzen. Öffne ihn in diesem Browser.', {exact:true}).waitFor();
+}
+
+test('Konto: echtes SDK führt PKCE-Passwortwechsel unter der Content Security Policy aus', async t => {
+  const page = await session(t);
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  const service = await accountService(page);
+  await requestPasswordLink(page);
+  assert.equal(service.recover.body.code_challenge_method,'s256');
+  const callback = service.recover.redirect;
+  callback.searchParams.set('code','test-recovery-code');
+  await page.goto(callback.toString());
+  await page.locator('#recoveryPanel').waitFor({state:'visible'});
+  assert.equal(service.exchange.length,1);
+  assert.equal(service.exchange[0].auth_code,'test-recovery-code');
+  assert.equal(createHash('sha256').update(service.exchange[0].code_verifier).digest('base64url'),service.recover.body.code_challenge);
+  assert.equal(new URL(page.url()).search,'');
+  await page.locator('#recoveryForm input[name=password]').fill('a-test-only-new-password');
+  await page.locator('#recoveryForm button:not([type])').click();
+  await page.getByText('Dein Passwort wurde geändert.', {exact:true}).waitFor();
+  assert.equal(service.passwordUpdates,1);
+  assert.equal(await page.locator('#recoveryPanel').isHidden(),true);
+  assert.equal(await page.locator('#recoveryForm input').inputValue(),'');
+  assert.deepEqual(errors,[]);
+});
+
+test('Konto: abgelaufener PKCE-Link zeigt Hilfe und keinen Passwortwechsel', async t => {
+  const page = await session(t);
+  const service = await accountService(page,{expired:true});
+  await requestPasswordLink(page);
+  const callback = service.recover.redirect;
+  callback.searchParams.set('code','test-expired-code');
+  await page.goto(callback.toString());
+  await page.getByText(/Der Link konnte nicht bestätigt werden/).waitFor();
+  assert.equal(await page.locator('#recoveryPanel').isHidden(),true);
+  assert.equal(await page.locator('#resetForm').isVisible(),true);
+  assert.equal(service.passwordUpdates,0);
+  assert.equal(new URL(page.url()).search,'');
+});
+
+test('Konto: Link aus anderem Browser scheitert ohne PKCE-Verifier sicher', async t => {
+  const page = await session(t);
+  const service = await accountService(page);
+  await page.goto(base+'/konto?recovery=1&code=test-foreign-code');
+  await page.getByText(/Der Link konnte nicht bestätigt werden/).waitFor();
+  assert.equal(await page.locator('#recoveryPanel').isHidden(),true);
+  assert.equal(service.exchange.length,0);
+  assert.equal(service.passwordUpdates,0);
+});
 
 for (const width of [1440, 390]) {
   test('Alle öffentlichen Seiten laden ohne JavaScriptfehler (' + width + ' px)', async t => {

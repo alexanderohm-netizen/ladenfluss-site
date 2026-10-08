@@ -10,7 +10,8 @@
       }
       client = window.supabase.createClient(config.url, config.publishableKey, {
         auth: { flowType: 'pkce', persistSession: true, autoRefreshToken: true,
-          detectSessionInUrl: true, storageKey: 'ladenfluss.auth.v1' }
+          // The account page exchanges callback codes explicitly so failures can be shown.
+          detectSessionInUrl: false, storageKey: 'ladenfluss.auth.v1' }
       });
       return client;
     }

@@ -31,6 +31,8 @@ async function load(file, initial = {}) {
     w.eval(fs.readFileSync(src,'utf8'));
   }
   w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
+  // Let asynchronous initializers settle before assertions or window.close().
+  await new Promise(resolve => setImmediate(resolve));
   return {
     w, errors, close:() => w.close(),
     $:id => w.document.getElementById(id),
