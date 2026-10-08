@@ -26,7 +26,7 @@
 <button type="button" data-cockpit-tab="backup" aria-pressed="false">Datensicherung</button>
 <button type="button" data-cockpit-tab="modules" aria-pressed="false">Module & Stand</button>
 <div class="workspace-nav-note">Kostenlos starten.<br>Im eigenen Tempo wachsen.</div>
-<a href="/zahlenfluss">Zahlenfluss öffnen ↗</a><a href="/tools/urlaubsplaner">Urlaub planen ↗</a><a href="/tools">Alle Werkzeuge ↗</a>
+<a href="/warenfluss">Warenfluss öffnen ↗</a><a href="/zahlenfluss">Zahlenfluss öffnen ↗</a><a href="/tools/urlaubsplaner">Urlaub planen ↗</a><a href="/tools">Alle Werkzeuge ↗</a>
 </nav>
 <div class="workspace-main">
 <section data-cockpit-panel="overview" aria-label="Überblick">
@@ -65,7 +65,7 @@
 <div class="field"><label for="target_hourly">Personalkosten je Stunde (€)</label><input id="target_hourly" type="number" min="0" step=".01" required></div></div>
 <div class="form-actions"><button type="submit" class="btn btn-primary">Richtwerte speichern</button><span id="targetState" role="status"></span></div></form></section>
 <section data-cockpit-panel="backup" hidden><div class="section-line"><div><span class="eyebrow">Deine Daten</span><h2>Eine Kopie für dich</h2><p>Browserdaten können verloren gehen. Lade deinen Arbeitsstand als Datei herunter.</p></div></div>
-<div class="backup-card"><h3>Lokalen Arbeitsstand sichern</h3><p>Enthalten sind Ladenprofil, Richtwerte, Team, Dienstpläne, Abwesenheiten, Urlaubsplan, Zahlenfluss und Rechenverlauf, soweit auf diesem Gerät vorhanden.</p><p class="workspace-note">Die Datei enthält unverschlüsselte Daten. Bewahre sie geschützt auf. Sie wird nicht an Ladenfluss übertragen.</p><button type="button" class="btn btn-primary" id="downloadBackup">Sicherung herunterladen</button><p id="backupStatus" role="status"></p><small>Exportformat JSON · Die Wiederherstellung über die Oberfläche ist noch nicht freigeschaltet.</small></div>
+<div class="backup-card"><h3>Lokalen Arbeitsstand sichern</h3><p>Enthalten sind Ladenprofil, Richtwerte, Team, Dienstpläne, Abwesenheiten, Urlaubsplan, Zahlenfluss, Warenfluss und Rechenverlauf, soweit auf diesem Gerät vorhanden.</p><p class="workspace-note">Die Datei enthält unverschlüsselte Daten. Bewahre sie geschützt auf. Sie wird nicht an Ladenfluss übertragen.</p><button type="button" class="btn btn-primary" id="downloadBackup">Sicherung herunterladen</button><p id="backupStatus" role="status"></p><small>Exportformat JSON · Die Wiederherstellung über die Oberfläche ist noch nicht freigeschaltet.</small></div>
 </section>
 <section data-cockpit-panel="modules" hidden><div class="section-line"><div><span class="eyebrow">Heute & morgen</span><h2>Was du bereits nutzen kannst</h2><p>Ein klarer Stand für jeden Bereich.</p></div></div>
 <div class="module-grid">
@@ -73,7 +73,7 @@
 <article><span>Dauerhaft kostenlos · lokal</span><h3>Urlaubsplaner</h3><p>Teamurlaub, Jahresbudgets und Überschneidungen.</p><a href="/tools/urlaubsplaner">Urlaub planen →</a></article>
 <article><span>Lokaler Prototyp</span><h3>Personalplanung</h3><p>Schichten, Abwesenheiten und Hinweise zur Besetzung.</p><a href="/pep">Dienstplan öffnen →</a></article>
 <article><span>In Entwicklung</span><h3>Kundenkonto</h3><p>Sichere Anmeldung, gemeinsame Unternehmensdaten und Benutzerrechte sind noch nicht freigeschaltet.</p></article>
-<article><span>Desktop-Prototyp</span><h3>Warenwirtschaft</h3><p>Artikel, Bestand und Einkauf für macOS und Windows. Eine getestete Installation steht noch aus.</p></article>
+<article><span>Erste lokale Web-Version</span><h3>Warenfluss</h3><p>Artikel, Bestände, Warenbewegungen und Hinweise zum Nachschub.</p><a href="/warenfluss">Warenfluss öffnen →</a></article>
 <article><span>Erste lokale Version</span><h3>Zahlenfluss</h3><p>Tagesumsätze, Kosten, Wochenziel und vergleichbare Wochentage im Blick.</p><a href="/zahlenfluss">Zahlenfluss öffnen →</a></article>
 </div></section>
 </div></div>

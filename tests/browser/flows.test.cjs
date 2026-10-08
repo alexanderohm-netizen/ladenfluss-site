@@ -316,3 +316,16 @@ test('Zahlenfluss: mobile entry, edit, reload, target and duplicate protection',
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  fs.mkdirSync(path.join(root,'test-artifacts'),{recursive:true});await page.screenshot({path:path.join(root,'test-artifacts/zahlenfluss-mobile.png'),fullPage:true});
 });
+
+test('Warenfluss: mobile article, receipt, oversell protection and persistent history', async t=>{
+ const page=await session(t,{width:390,height:844});await page.goto(base+'/warenfluss');
+ await page.getByRole('button',{name:'Artikel',exact:true}).click();await page.getByRole('button',{name:'Artikel anlegen',exact:true}).click();
+ await page.locator('#article-form [name=name]').fill('Kaffee');await page.locator('[name=sku]').fill('K01');await page.locator('[name=minimum]').fill('5');await page.getByRole('button',{name:'Artikel speichern',exact:true}).click();
+ await page.getByRole('button',{name:'Buchen',exact:true}).click();await page.locator('[name=quantity]').fill('10');await page.locator('[name=note]').fill('Anfangsbestand');await page.locator('#book').click();
+ assert.match(await page.locator('#movement-list').textContent(),/\+10 Stk/);
+ await page.getByRole('button',{name:'Buchen',exact:true}).click();await page.locator('#movement-type').selectOption('issue');await page.locator('[name=quantity]').fill('11');await page.locator('[name=note]').fill('Verkauf');await page.locator('#book').click();assert.match(await page.locator('#wf-error').textContent(),/Nicht genügend Bestand/);
+ await page.locator('[name=quantity]').fill('6');await page.locator('#book').click();await page.reload();
+ assert.equal(await page.locator('#stock-count').textContent(),'4');assert.equal(await page.locator('#low-count').textContent(),'1');
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ fs.mkdirSync(path.join(root,'test-artifacts'),{recursive:true});await page.screenshot({path:path.join(root,'test-artifacts/warenfluss-mobile.png'),fullPage:true});
+});
