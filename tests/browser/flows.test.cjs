@@ -286,3 +286,33 @@ for(const width of [390,1440])test('App-Ansichten als Bild prüfen ('+width+' px
   await page.goto(base+'/tools/urlaubsplaner');
   await page.screenshot({path:path.join(folder,'vacation-'+width+'.png'),fullPage:true});
 });
+
+test('Zahlenfluss: mobile entry, edit, reload, target and duplicate protection', async t => {
+ const page=await session(t,{width:390,height:844});
+ await page.goto(base+'/zahlenfluss');
+ await page.getByRole('button',{name:'Tageszahlen',exact:true}).click();
+ await page.locator('[name=date]').fill('2026-10-06');
+ await page.locator('[name=revenue]').fill('1234,56');
+ await page.locator('[name=goods]').fill('400');
+ await page.locator('[name=labor]').fill('300');
+ await page.locator('[name=other]').fill('100');
+ await page.getByRole('button',{name:'Tag speichern',exact:true}).click();
+ assert.match(await page.locator('#revenue').textContent(),/1\.234,56/);
+ assert.match(await page.locator('#contribution').textContent(),/434,56/);
+ await page.reload();
+ assert.match(await page.locator('#revenue').textContent(),/1\.234,56/);
+ await page.getByRole('button',{name:'Bearbeiten 06.10.'}).click();
+ await page.locator('[name=revenue]').fill('1500');
+ await page.getByRole('button',{name:'Tag speichern',exact:true}).click();
+ assert.match(await page.locator('#revenue').textContent(),/1\.500,00/);
+ await page.getByRole('button',{name:'Tageszahlen',exact:true}).click();
+ await page.locator('[name=date]').fill('2026-10-06');await page.locator('[name=revenue]').fill('99');
+ await page.getByRole('button',{name:'Tag speichern',exact:true}).click();
+ assert.match(await page.locator('#zf-error').textContent(),/bereits erfasst/);
+ await page.getByRole('button',{name:'Ziel & Export',exact:true}).click();
+ await page.locator('#target').fill('3000');await page.getByRole('button',{name:'Ziel speichern',exact:true}).click();
+ await page.getByRole('button',{name:'Überblick',exact:true}).click();
+ assert.match(await page.locator('#goal-label').textContent(),/50 %/);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ fs.mkdirSync(path.join(root,'test-artifacts'),{recursive:true});await page.screenshot({path:path.join(root,'test-artifacts/zahlenfluss-mobile.png'),fullPage:true});
+});
