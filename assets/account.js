@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     ++generation;
     $('signedIn').hidden = true; $('companyDetails').hidden = true; $('recoveryPanel').hidden = true;
     $('accountEmail').textContent = ''; $('moduleList').replaceChildren();
+    $('billingCard').replaceChildren(); $('billingCard').hidden = true;
     $('companyForm').reset(); company = null; user = null;
   }
   async function refresh() {
@@ -91,6 +92,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       $('moduleList').append(li);
     }
     message('Dein Unternehmensprofil wurde aus der Cloud geladen.');
+    if (window.LadenflussBilling) {
+      await window.LadenflussBilling.render({client,companyId:company.id,element:$('billingCard'),
+        isCurrent:() => current === generation,onRefresh:() => refresh().catch(failed),access:access.data.find(row => row.module_key === 'pep')});
+    }
   }
   bindForm('loginForm', async data => {
     const result = await client.auth.signInWithPassword({ email: data.get('email').trim(), password: data.get('password') });

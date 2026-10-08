@@ -1,0 +1,9 @@
+project_id = "ladenfluss"
+
+# New Supabase keys use custom auth in the function body. Never remove those checks.
+[functions.billing]
+verify_jwt = false
+
+# Stripe authenticates this endpoint with a signed raw request body.
+[functions.stripe-webhook]
+verify_jwt = false

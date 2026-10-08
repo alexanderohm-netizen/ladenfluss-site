@@ -5,7 +5,8 @@ Initial project creation was approved at quoted recurring cost 0/month.
 Stripe target approved separately: Ladenfluss Sandbox, testmode only,
 `acct_1UO0PELuBESyH3u9`. Product `prod_VP6NVdxlEdG1Hv` (Ladenfluss PEP) was created
 and read back on 2026-10-08. It is inactive, has no default price, and `livemode=false`.
-No prices, subscriptions, payment links, webhook endpoint or checkout integration exist yet.
+No prices, subscriptions, payment links or hosted webhook endpoint exist yet.
+Sandbox checkout/webhook code is now prepared; see `billing-setup.md` for deployment gates.
 
 ## Implemented
 - Pinned Supabase JS SDK, locally served UMD with upstream MIT license.
@@ -23,7 +24,7 @@ No prices, subscriptions, payment links, webhook endpoint or checkout integratio
 - Five RLS tables: companies, company_members, branches, module_access, cloud_documents.
 - Internal membership/entitlement checks use database records, not user-editable metadata.
 - Clients cannot grant membership or activate modules. Paid access requires a non-expired
-  active/trial entitlement. No billing source is wired yet, so no paid access is granted.
+  active/trial entitlement. The sandbox billing source is implemented but not deployed, so it grants no hosted paid access yet.
 - Revision-checked document save RPC; generic JSON storage is preparation only and is not
   yet called by the PEP, vacation, numbers or inventory UI.
 - One owned company per user initially; employees can see basic company/branch information
@@ -31,8 +32,9 @@ No prices, subscriptions, payment links, webhook endpoint or checkout integratio
 - Existing free tools/local data stay unchanged. No bulk transfer of real customer data.
 
 ## Verification
-- 58 local tests: existing 48 + nine account flow tests with mocked auth/client
-  + one PostgreSQL/PGlite test executing the schema and security scenarios.
+- 78 local tests: existing 48, nine account tests, one PostgreSQL/PGlite test
+  executing baseline and billing security scenarios, 16 billing backend tests and
+  four billing UI tests. Provider responses are mocked; signatures use the real SDK.
 - Three additional browser tests exercise the shipped SDK's actual PKCE verifier,
   callback, password update and error paths with HTTP responses intercepted. They do
   not prove live Supabase mail delivery or a real cross-device customer session.
@@ -65,10 +67,13 @@ No prices, subscriptions, payment links, webhook endpoint or checkout integratio
    the Supabase connector does not expose Auth configuration updates.
 
 ## Next paid-module slice
-Agree PEP price and test duration. Stripe Checkout subscription in approved sandbox,
-server-derived company/price mapping, signed webhook with idempotency, server-side
-entitlements, expiry/cancellation handling and customer portal. Never unlock from the
-success redirect alone. PEP's existing local page is not paywalled by this change.
+Stripe Checkout, server-derived company/price mapping, signed idempotent webhooks,
+entitlements, cancellation handling and Customer Portal are implemented for the approved
+sandbox. The billing migration failed with `Invalid or expired requestState`; a readback
+confirmed no billing tables and no Edge Functions. See `billing-setup.md`. Agree the PEP
+price and any trial before activation. Never unlock from the success redirect alone.
+PEP's existing local page is not paywalled. Build its paid cloud workflow before allowing
+customers to subscribe.
 Numbers and inventory require actual input workflows and data validation before release.
 Price/tax behavior must be agreed before checkout activation; only enable Stripe Tax
 after verifying active registrations. Use a restricted test key in the hosting secrets

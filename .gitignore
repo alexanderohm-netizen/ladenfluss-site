@@ -9,3 +9,8 @@ desktop/artifacts/
 __pycache__/
 
 test-artifacts/
+.env
+.env.*
+**/.env
+**/.env.*
+supabase/.temp/
