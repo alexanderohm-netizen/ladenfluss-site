@@ -7,14 +7,10 @@
 <meta name="description" content="Dein Laden im Blick: Besetzung prüfen, Prioritäten erkennen und lokale Daten sichern.">
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/cockpit.css">
-</head>
+<link rel="stylesheet" href="/assets/workspace-nav.css"></head>
 <body class="workspace-body">
 <a class="skip-link" href="#main">Zum Inhalt</a>
-<header class="site-header"><div class="container header-row">
-<a class="brand" href="/" aria-label="Ladenfluss Startseite"><span class="brand-mark" aria-hidden="true"></span>Ladenfluss</a>
-<nav class="desktop-nav" aria-label="Hauptnavigation"><a href="/mein-laden" aria-current="page">Mein Laden</a><a href="/mitarbeiter">Team</a><a href="/pep">Dienstplan</a><a href="/tools/urlaubsplaner">Urlaub</a><a href="/tools">Werkzeuge</a></nav>
-<button class="menu-toggle" aria-expanded="false" aria-controls="mobile-nav">Menü</button></div>
-<nav id="mobile-nav" class="mobile-nav" aria-label="Mobile Navigation"><a href="/mein-laden">Mein Laden</a><a href="/mitarbeiter">Team</a><a href="/pep">Dienstplan</a><a href="/tools/urlaubsplaner">Urlaub</a><a href="/tools">Werkzeuge</a></nav></header>
+<header class="lf-header"><div class="lf-header-inner"><a class="brand" href="/" aria-label="Ladenfluss Startseite"><span class="brand-mark" aria-hidden="true"></span>Ladenfluss</a><nav class="lf-primary" aria-label="Hauptnavigation"><a href="/mein-laden" aria-current="page">Mein Laden</a><a href="/zahlenfluss">Zahlenfluss</a><a href="/warenfluss">Warenfluss</a><a href="/teamfluss">Teamfluss</a><a href="/rechner">Rechner</a></nav></div></header>
 <main id="main" class="container workspace">
 <div class="workspace-heading"><div><span class="eyebrow">Dein Arbeitsbereich</span><h1 id="storeGreeting">Mein Laden</h1><p>Was zählt heute? Was ist als Nächstes dran?</p></div><div class="workspace-date"><span id="cockpitDate"></span><small>Lokale Planung · auf diesem Gerät</small></div></div>
 <div id="cockpitError" class="workspace-alert" role="alert" hidden></div>
@@ -26,7 +22,7 @@
 <button type="button" data-cockpit-tab="backup" aria-pressed="false">Datensicherung</button>
 <button type="button" data-cockpit-tab="modules" aria-pressed="false">Module & Stand</button>
 <div class="workspace-nav-note">Kostenlos starten.<br>Im eigenen Tempo wachsen.</div>
-<a href="/warenfluss">Warenfluss öffnen ↗</a><a href="/zahlenfluss">Zahlenfluss öffnen ↗</a><a href="/tools/urlaubsplaner">Urlaub planen ↗</a><a href="/tools">Alle Werkzeuge ↗</a>
+<a href="/teamfluss">Teamfluss öffnen ↗</a><a href="/warenfluss">Warenfluss öffnen ↗</a><a href="/zahlenfluss">Zahlenfluss öffnen ↗</a><a href="/tools/urlaubsplaner">Urlaub planen ↗</a><a href="/tools">Alle Werkzeuge ↗</a>
 </nav>
 <div class="workspace-main">
 <section data-cockpit-panel="overview" aria-label="Überblick">

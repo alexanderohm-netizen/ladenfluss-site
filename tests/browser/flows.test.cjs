@@ -329,3 +329,15 @@ test('Warenfluss: mobile article, receipt, oversell protection and persistent hi
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  fs.mkdirSync(path.join(root,'test-artifacts'),{recursive:true});await page.screenshot({path:path.join(root,'test-artifacts/warenfluss-mobile.png'),fullPage:true});
 });
+
+test('Teamfluss: shared mobile navigation, read-only overview and dated plan link',async t=>{
+ const page=await session(t,{width:390,height:844});await page.goto(base+'/teamfluss');
+ assert.equal(await page.evaluate(()=>localStorage.length),0);
+ await page.evaluate(()=>{localStorage.setItem('ladenfluss.team.v1',JSON.stringify([{id:'a',name:'Alex',role:'Verkauf',hours:30}]));localStorage.setItem('ladenfluss.pep.weeks.v2',JSON.stringify({'2026-10-05':{a:[null,['09:00','17:00',30],null,null,null,null,null]}}));localStorage.setItem('ladenfluss.pep.absences.v1',JSON.stringify({'2026-10-05':{a:[null,'Krank',null,null,null,null,null]}}));});
+ await page.reload();assert.equal(await page.locator('#tf-count').textContent(),'1');assert.equal(await page.locator('#tf-planned').textContent(),'0');assert.equal(await page.locator('#tf-away').textContent(),'1');assert.match(await page.locator('#tf-roster').textContent(),/Konflikt/);
+ assert.equal(await page.locator('#tf-plan-link').getAttribute('href'),'/pep?week=2026-10-05&day=2026-10-06');
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ await page.getByRole('navigation',{name:'Hauptnavigation',exact:true}).getByRole('link',{name:'Warenfluss',exact:true}).click();assert.match(page.url(),/warenfluss$/);
+ await page.getByRole('navigation',{name:'Hauptnavigation',exact:true}).getByRole('link',{name:'Teamfluss',exact:true}).click();
+ fs.mkdirSync(path.join(root,'test-artifacts'),{recursive:true});await page.screenshot({path:path.join(root,'test-artifacts/teamfluss-mobile.png'),fullPage:true});
+});
