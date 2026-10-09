@@ -19,7 +19,7 @@ is required. No subscription or pricing promise is introduced.
   protection. Save errors retain the input; malformed storage is never reset silently.
 
 Limitations: no negative daily revenue, CSV import, multi-company selector,
-monthly view, cloud synchronization, invoicing or accounting integration yet.
+cloud synchronization, invoicing or accounting integration yet.
 The weekly target is shared across all viewed weeks, not historical per-week targets.
 No sample business data is injected on opening the page.
 
@@ -28,3 +28,23 @@ weighted ratios, comparable weekdays, corrupt storage/quota errors and CSV blank
 A mobile browser flow covers create/edit/reload/duplicate rejection/target and overflow.
 
 JSON backup restoration is now available with a reviewed replacement preview; see restore.md.
+
+
+## Monthly overview
+
+Week/month switch, month navigation and a mobile calendar use the same daily records.
+Coverage counts recorded calendar days, not opening days; missing dates are never zero.
+The monthly comparison pairs equal calendar day numbers with records in both months,
+excluding dates absent in the shorter month. This is not weekday-adjusted or seasonally
+adjusted and is labelled accordingly. Zero prior paired revenue gives no percentage.
+Leap years and year boundaries use UTC date arithmetic. A selected-period CSV exports
+only the displayed week/month; the existing all-records CSV remains available.
+
+Optional `monthlyTargets` map uses YYYY-MM keys and integer cents, independently of
+the shared weekly `target`. Old v1 records remain valid; no automatic rewrite occurs.
+JSON exports/restoration preserve monthly targets. Clearing a month target removes only
+that month's key. These are user goals, not forecasts.
+
+Added tests cover short months, leap years, year boundaries, matched dates, missing
+costs, weighted ratios, legacy schema compatibility and backup roundtrip. Mobile flow
+covers mode changes, month target isolation, calendar editing and persistence.
