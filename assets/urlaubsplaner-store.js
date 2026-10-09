@@ -20,13 +20,13 @@
     return {version: 1, employees: [], entries: [], settings: {state: 'HE', workdays: [1, 2, 3, 4, 5], maxAbsent: 1}};
   }
   function read() {
-    const raw = localStorage.getItem(KEY);
+    const raw = (window.LadenflussLocal||localStorage).getItem(KEY);
     if (raw === null) return empty();
     return validate(JSON.parse(raw));
   }
   function save(data) {
     validate(data);
-    localStorage.setItem(KEY, JSON.stringify(data));
+    (window.LadenflussLocal||localStorage).setItem(KEY, JSON.stringify(data));
   }
   function validate(data) {
     const invalid = () => { throw new Error('Das gespeicherte Urlaubsformat ist beschädigt. Daten werden nicht überschrieben.'); };
@@ -97,7 +97,7 @@
       .reduce((total, entry) => total + countDays(entry, settings, year), 0);
   }
   window.LadenflussVacation = {
-    KEY, read, save, empty, dateOf, iso, eachDate, countDays, isWorkday,
+    KEY, read, save, empty, validate, dateOf, iso, eachDate, countDays, isWorkday,
     conflictForEmployee, overCapacity, tally, absencesOn,
   };
 })();

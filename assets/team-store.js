@@ -18,16 +18,16 @@
   };
 
   function read(key,fallback){
-    try{const parsed=JSON.parse(localStorage.getItem(key)||'null');return parsed??fallback}catch{return fallback}
+    try{const parsed=JSON.parse((window.LadenflussLocal||localStorage).getItem(key)||'null');return parsed??fallback}catch(error){if(window.LadenflussTeamStorage&&localStorage.getItem(window.LadenflussTeamStorage.KEY)!==null)throw error;return fallback}
   }
   function clone(v){return JSON.parse(JSON.stringify(v))}
   function getTeam(){
     const team=read(TEAM_KEY,null);
     if(Array.isArray(team))return team;
-    localStorage.setItem(TEAM_KEY,JSON.stringify(defaultTeam));
+    (window.LadenflussLocal||localStorage).setItem(TEAM_KEY,JSON.stringify(defaultTeam));
     return clone(defaultTeam);
   }
-  function saveTeam(team){localStorage.setItem(TEAM_KEY,JSON.stringify(team))}
+  function saveTeam(team){(window.LadenflussLocal||localStorage).setItem(TEAM_KEY,JSON.stringify(team))}
   function mondayKey(date=new Date()){
     const d=new Date(date);d.setHours(12,0,0,0);
     const day=d.getDay()||7;d.setDate(d.getDate()-day+1);
@@ -39,7 +39,7 @@
     weeks={};
     const legacy=read(LEGACY_SHIFTS_KEY,null);
     weeks[mondayKey()]=legacy&&typeof legacy==='object'?legacy:clone(defaultShifts);
-    localStorage.setItem(SHIFTS_KEY,JSON.stringify(weeks));
+    (window.LadenflussLocal||localStorage).setItem(SHIFTS_KEY,JSON.stringify(weeks));
     return weeks;
   }
   function getShifts(week=mondayKey()){
@@ -48,7 +48,7 @@
   }
   function saveShifts(shifts,week=mondayKey()){
     const weeks=getAllWeeks();weeks[week]=shifts;
-    localStorage.setItem(SHIFTS_KEY,JSON.stringify(weeks));
+    (window.LadenflussLocal||localStorage).setItem(SHIFTS_KEY,JSON.stringify(weeks));
   }
   function getPlanStatus(week=mondayKey()){
     const states=read(PLAN_KEY,{});
@@ -56,7 +56,7 @@
   }
   function savePlanStatus(status,week=mondayKey()){
     const states=read(PLAN_KEY,{});states[week]=status;
-    localStorage.setItem(PLAN_KEY,JSON.stringify(states));
+    (window.LadenflussLocal||localStorage).setItem(PLAN_KEY,JSON.stringify(states));
   }
   function getAbsences(week=mondayKey()){
     const weeks=read(ABSENCE_KEY,{});
@@ -65,7 +65,7 @@
   function saveAbsences(absences,week=mondayKey()){
     const weeks=read(ABSENCE_KEY,{});
     weeks[week]=absences;
-    localStorage.setItem(ABSENCE_KEY,JSON.stringify(weeks));
+    (window.LadenflussLocal||localStorage).setItem(ABSENCE_KEY,JSON.stringify(weeks));
   }
   function ensureEmployeeAbsenceRows(team,absences){
     team.forEach(p=>{if(!Array.isArray(absences[p.id]))absences[p.id]=[null,null,null,null,null,null,null]});

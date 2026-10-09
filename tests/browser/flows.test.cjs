@@ -369,3 +369,17 @@ test('Restore: corrupt Warenfluss can be recovered and hostile text stays text',
  await Promise.all([page.waitForEvent('load'),page.locator('#restore-apply').click()]);
  assert.equal(await page.locator('#stock-count').textContent(),'4');await page.getByRole('button',{name:'Artikel',exact:true}).click();assert.match(await page.locator('#article-list').textContent(),/<img/);assert.equal(await page.locator('#article-list img').count(),0);
 });
+
+test('Team restore: one package drives team, roster and vacation after reload',async t=>{
+ const page=await session(t,{width:390,height:844});await page.goto(base+'/teamfluss');
+ await page.evaluate(()=>{localStorage.setItem('ladenfluss.zahlenfluss.v1','untouched');localStorage.setItem('ladenfluss.store.v1',JSON.stringify({name:'Mein Geschäft'}));});
+ const data={format:'ladenfluss-local-backup',version:1,records:{'ladenfluss.team.v1':JSON.stringify([{id:'restore-a',name:'Lena',role:'Verkauf',branch:'Hauptfiliale',hours:30,docs:true}]),'ladenfluss.pep.weeks.v2':JSON.stringify({'2026-10-05':{'restore-a':[null,['09:00','17:00',30],null,null,null,null,null]}}),'ladenfluss.urlaubsplaner.v1':JSON.stringify({version:1,employees:[{id:'restore-a',name:'Lena',allowance:30}],entries:[{id:'v',employeeId:'restore-a',start:'2026-10-06',end:'2026-10-06',status:'approved',note:''}],settings:{state:'HE',workdays:[1,2,3,4,5],maxAbsent:1}})}};
+ await page.locator('.restore-box summary').click();await page.locator('#restore-file').setInputFiles({name:'ladenfluss.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});await page.locator('#restore-preview').waitFor({state:'visible'});await page.locator('#restore-confirm').check();
+ await Promise.all([page.waitForEvent('load'),page.locator('#restore-apply').click()]);
+ fs.mkdirSync(path.join(root,'test-artifacts'),{recursive:true});await page.locator('.restore-box').screenshot({path:path.join(root,'test-artifacts/team-restore-mobile.png')});
+ assert.match(await page.locator('#tf-roster').textContent(),/Konflikt: Urlaub/);assert.equal(await page.locator('#tf-away').textContent(),'1');assert.equal(await page.evaluate(()=>localStorage.getItem('ladenfluss.zahlenfluss.v1')),'untouched');
+ await page.goto(base+'/mitarbeiter');assert.match(await page.locator('#staffList').textContent(),/Lena/);await page.evaluate(()=>{const s=window.LadenflussTeamStore,t=s.getTeam();t[0].hours=32;s.saveTeam(t);});await page.reload();assert.match(await page.locator('#targetHours').textContent(),/32/);
+ await page.goto(base+'/pep?week=2026-10-05');assert.match(await page.locator('#pepBody').textContent(),/Lena/);
+ await page.goto(base+'/tools/urlaubsplaner');assert.equal(await page.evaluate(()=>window.LadenflussVacation.read().entries[0].employeeId),'restore-a');
+ await page.goto(base+'/mein-laden');const backup=await page.evaluate(()=>window.LadenflussBackup.capture());assert.equal(JSON.parse(backup.records['ladenfluss.team.v1'])[0].hours,32);assert.equal(JSON.parse(backup.records['ladenfluss.urlaubsplaner.v1']).entries.length,1);
+});

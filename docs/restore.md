@@ -2,7 +2,7 @@
 
 Zahlenfluss and Warenfluss accept their native JSON export or extract their exact key
 from a version-1 Ladenfluss workspace backup. No other key, including credentials,
-team data or other modules, is written. Workspace-wide restoration is not implemented.
+team data or other modules, is written. The coupled Teamfluss records now have a separate atomic restoration flow; see team-restore.md. Full workspace replacement is not implemented.
 
 Flow: choose file -> validate -> inspect before/after summary -> optional download of
 the exact previous value -> explicitly confirm replacement -> write one storage key ->
@@ -26,5 +26,5 @@ Tests cover exact cents, schema field projection, isolated extraction from works
 backups, unsupported/oversize files, stale writes, quota failure, corrupted existing
 values, inventory integrity and browser preview/cancel/confirm/reload/recovery flows.
 
-Next: restore the coupled team/shift/vacation/profile dataset through a separately
-validated flow; it must not introduce partial references or silently merge identities.
+Team/shift/vacation restoration is implemented through the separately validated
+Teamfluss flow. Profile and calculation-history restoration remain out of scope.
