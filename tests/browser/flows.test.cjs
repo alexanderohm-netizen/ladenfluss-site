@@ -341,3 +341,31 @@ test('Teamfluss: shared mobile navigation, read-only overview and dated plan lin
  await page.getByRole('navigation',{name:'Hauptnavigation',exact:true}).getByRole('link',{name:'Teamfluss',exact:true}).click();
  fs.mkdirSync(path.join(root,'test-artifacts'),{recursive:true});await page.screenshot({path:path.join(root,'test-artifacts/teamfluss-mobile.png'),fullPage:true});
 });
+
+test('Restore: preview, cancel, confirmation and reload preserve unrelated data',async t=>{
+ const page=await session(t,{width:390,height:844});await page.goto(base+'/zahlenfluss');
+ await page.evaluate(()=>localStorage.setItem('unrelated','keep'));
+ await page.locator('.restore-box summary').click();
+ const data={version:1,target:300000,entries:[{date:'2026-10-06',revenue:150000,goods:null,labor:null,other:null,hours:null,receipts:null}]};
+ const upload=()=>page.locator('#restore-file').setInputFiles({name:'sicherung.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});
+ await upload();await page.locator('#restore-preview').waitFor({state:'visible'});
+ assert.equal(await page.locator('#restore-apply').isDisabled(),true);
+ assert.equal(await page.evaluate(()=>localStorage.getItem('ladenfluss.zahlenfluss.v1')),null);
+ await page.locator('#restore-cancel').click();assert.equal(await page.locator('#restore-preview').isVisible(),false);
+ await upload();await page.locator('#restore-preview').waitFor({state:'visible'});await page.locator('#restore-confirm').check();
+ fs.mkdirSync(path.join(root,'test-artifacts'),{recursive:true});await page.locator('.restore-box').screenshot({path:path.join(root,'test-artifacts/restore-mobile.png')});
+ await Promise.all([page.waitForEvent('load'),page.locator('#restore-apply').click()]);
+ assert.match(await page.locator('#revenue').textContent(),/1\.500,00/);
+ assert.match(await page.locator('#restore-status').textContent(),/wiederhergestellt/);
+ assert.equal(await page.evaluate(()=>localStorage.getItem('unrelated')),'keep');
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+});
+
+test('Restore: corrupt Warenfluss can be recovered and hostile text stays text',async t=>{
+ const page=await session(t);await page.goto(base+'/warenfluss');await page.evaluate(()=>localStorage.setItem('ladenfluss.warenfluss.v1','{broken'));await page.reload();
+ await page.locator('.restore-box summary').click();
+ const data={version:1,articles:[{id:'a',name:'<img src=x onerror=alert(1)>',sku:'A',minimum:2,archived:false}],movements:[{id:'m',articleId:'a',type:'receipt',delta:4,note:'Start',at:'2026-10-08T12:00:00Z'}]};
+ await page.locator('#restore-file').setInputFiles({name:'waren.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});await page.locator('#restore-preview').waitFor({state:'visible'});await page.locator('#restore-confirm').check();
+ await Promise.all([page.waitForEvent('load'),page.locator('#restore-apply').click()]);
+ assert.equal(await page.locator('#stock-count').textContent(),'4');await page.getByRole('button',{name:'Artikel',exact:true}).click();assert.match(await page.locator('#article-list').textContent(),/<img/);assert.equal(await page.locator('#article-list img').count(),0);
+});

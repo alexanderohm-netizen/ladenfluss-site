@@ -1,0 +1,18 @@
+(function(root){
+'use strict';
+const MAX_BYTES=5*1024*1024;
+function adapter(module){const api=module==='zahlenfluss'?root.Zahlenfluss:module==='warenfluss'?root.Warenfluss:null;if(!api)throw Error('Unbekannter Bereich.');return api;}
+function clean(module,input){const api=adapter(module);api.validate(input);
+ if(module==='zahlenfluss')return {version:1,target:input.target,entries:input.entries.map(r=>Object.fromEntries(['date',...api.fields].map(k=>[k,r[k]])))};
+ if(input.articles.length>2000||input.movements.length>20000)throw Error('Diese Datei ist für die lokale Wiederherstellung zu groß (maximal 2.000 Artikel und 20.000 Buchungen).');
+ return {version:1,articles:input.articles.map(a=>Object.fromEntries(['id','name','sku','minimum','archived'].map(k=>[k,a[k]]))),movements:input.movements.map(m=>Object.fromEntries(['id','articleId','type','delta','note','at'].map(k=>[k,m[k]])))};
+}
+function parse(module,text){if(typeof text!=='string'||new TextEncoder().encode(text).length>MAX_BYTES)throw Error('Bitte eine JSON-Datei bis 5 MB auswählen.');let value;try{value=JSON.parse(text.replace(/^\uFEFF/,''));}catch{throw Error('Die Datei enthält kein gültiges JSON.');}
+ if(value?.format==='ladenfluss-local-backup'){if(value.version!==1||!value.records||Array.isArray(value.records)||typeof value.records!=='object')throw Error('Unbekannte Gesamtsicherung.');const key=adapter(module).KEY;if(!Object.hasOwn(value.records,key)||typeof value.records[key]!=='string')throw Error('Die Gesamtsicherung enthält keine Daten für diesen Bereich.');try{value=JSON.parse(value.records[key]);}catch{throw Error('Die Daten dieses Bereichs sind beschädigt.');}}
+ try{return clean(module,value);}catch(e){throw Error('Sicherung nicht verwendbar: '+e.message);}
+}
+function summary(module,data){if(module==='zahlenfluss'){const dates=data.entries.map(r=>r.date).sort();return data.entries.length+(data.entries.length===1?' Tag':' Tage')+(dates.length?' · '+dates[0]+' bis '+dates[dates.length-1]:'')+' · '+(data.target===null?'kein Wochenziel':'Wochenziel '+(data.target/100).toLocaleString('de-DE',{style:'currency',currency:'EUR'}));}return data.articles.length+' Artikel (davon '+data.articles.filter(a=>a.archived).length+' archiviert) · '+data.movements.length+' Warenbewegungen';}
+function prepare(module,text,storage){const api=adapter(module),data=parse(module,text),before=storage.getItem(api.KEY);let current='Keine gespeicherten Daten';if(before!==null){try{current=summary(module,clean(module,JSON.parse(before)));}catch{current='Vorhandene Daten sind nicht lesbar';}}return {module,key:api.KEY,before,data,current,incoming:summary(module,data)};}
+function apply(plan,storage){const api=adapter(plan.module);if(plan.key!==api.KEY)throw Error('Ungültiger Wiederherstellungsbereich.');const next=JSON.stringify(clean(plan.module,plan.data));if(storage.getItem(api.KEY)!==plan.before)throw Error('Die Daten wurden seit der Vorschau geändert. Bitte die Datei erneut auswählen.');try{storage.setItem(api.KEY,next);}catch{throw Error('Speichern fehlgeschlagen. Die vorhandenen Daten bleiben erhalten. Prüfe den verfügbaren Browserspeicher.');}}
+root.LadenflussRestore={MAX_BYTES,parse,prepare,apply,summary};
+})(typeof window==='undefined'?globalThis:window);

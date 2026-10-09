@@ -18,7 +18,7 @@ is required. No subscription or pricing promise is introduced.
   existing workspace backup. Existing days require explicit edit, with stale-edit
   protection. Save errors retain the input; malformed storage is never reset silently.
 
-Limitations: no negative daily revenue, import/restore UI, multi-company selector,
+Limitations: no negative daily revenue, CSV import, multi-company selector,
 monthly view, cloud synchronization, invoicing or accounting integration yet.
 The weekly target is shared across all viewed weeks, not historical per-week targets.
 No sample business data is injected on opening the page.
@@ -26,3 +26,5 @@ No sample business data is injected on opening the page.
 Validation: five domain tests cover cents and invalid input, missing costs and
 weighted ratios, comparable weekdays, corrupt storage/quota errors and CSV blanks.
 A mobile browser flow covers create/edit/reload/duplicate rejection/target and overflow.
+
+JSON backup restoration is now available with a reviewed replacement preview; see restore.md.

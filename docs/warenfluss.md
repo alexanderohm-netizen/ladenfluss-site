@@ -19,10 +19,12 @@ No automatic order quantity, demand forecast or inventory value is claimed. Expo
 include stock CSV (quoted and protected against spreadsheet formula prefixes) and full
 JSON backup. Data is also included in the existing workspace backup.
 
-Not yet included: backup restore UI, CSV import, barcode scanning, batch/MHD tracking,
+Not yet included: CSV import, barcode scanning, batch/MHD tracking,
 suppliers, purchase orders, locations, valuation, cloud/role integration. The existing
 desktop inventory prototype is not changed or synchronized by this web version.
 
 Validation: domain tests cover balance, overselling and invalid input, archive/history,
 corrupt records and CSV formula escaping. Browser test covers mobile article creation,
 receipt, rejected oversell, valid issue, reload, low-stock signal and overflow.
+
+JSON backup restoration is now available with a reviewed replacement preview; see restore.md.
