@@ -20,7 +20,7 @@ include stock CSV (quoted and protected against spreadsheet formula prefixes) an
 JSON backup. Data is also included in the existing workspace backup.
 
 Not yet included: CSV import, barcode scanning, batch/MHD tracking,
-suppliers, purchase orders, locations, valuation, cloud/role integration. The existing
+purchase orders, locations, valuation, cloud/role integration. The existing
 desktop inventory prototype is not changed or synchronized by this web version.
 
 Validation: domain tests cover balance, overselling and invalid input, archive/history,
@@ -28,3 +28,27 @@ corrupt records and CSV formula escaping. Browser test covers mobile article cre
 receipt, rejected oversell, valid issue, reload, low-stock signal and overflow.
 
 JSON backup restoration is now available with a reviewed replacement preview; see restore.md.
+
+
+## Suppliers and delivery receipts
+
+Optional suppliers and deliveries extend the v1 snapshot without modifying existing
+records on load. Suppliers have name/contact text and archive state. A delivery contains
+supplier/name snapshot, reference, delivery date, booking time and 1–100 distinct article
+lines. Each line is linked to one receipt movement by stable IDs; validation checks both
+sides. Names/SKUs on old delivery receipts survive later master-data edits.
+
+Multi-line booking validates a cloned snapshot and publishes all movements and the
+receipt together in the existing single-key commit. Failure in any line leaves the
+original snapshot intact. Duplicate document references per supplier are rejected,
+case-insensitively; archived suppliers/articles cannot receive new deliveries. The UI
+confirms the receipt reference and position count before committing.
+
+Existing inventory JSON backups preserve supplier, delivery and movement-link fields.
+Restore previews now include supplier/delivery counts. No orders are sent, no costs or
+invoice accounting are recorded. Corrections still use explicit opposite movements;
+delivery receipts are not removed or edited in place. This is local bookkeeping of
+stock, not a tamper-proof audit trail or cloud synchronization.
+
+Tests cover atomic multi-line failure, document/article duplication, archived suppliers,
+reference integrity, historical snapshots, backup restoration, and mobile entry/reload.

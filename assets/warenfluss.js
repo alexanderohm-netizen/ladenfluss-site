@@ -2,7 +2,7 @@
 const el=(tag,text,cls)=>{const n=document.createElement(tag);n.textContent=text;if(cls)n.className=cls;return n;};
 function fail(e){$('wf-error').textContent=e.message||'Speichern fehlgeschlagen.';$('wf-error').hidden=false;}
 function load(){data=W.load(localStorage);baseline=localStorage.getItem(W.KEY);}
-function commit(fn){if(localStorage.getItem(W.KEY)!==baseline)throw Error('Daten wurden in einem anderen Fenster geändert. Bitte die Seite neu laden.');const next=JSON.parse(JSON.stringify(data));fn(next);W.validate(next);const raw=JSON.stringify(next);localStorage.setItem(W.KEY,raw);baseline=raw;data=next;$('wf-error').hidden=true;render();}
+function commit(fn){if(localStorage.getItem(W.KEY)!==baseline)throw Error('Daten wurden in einem anderen Fenster geändert. Bitte die Seite neu laden.');const next=JSON.parse(JSON.stringify(data));fn(next);W.validate(next);const raw=JSON.stringify(next);localStorage.setItem(W.KEY,raw);baseline=raw;data=next;$('wf-error').hidden=true;render();window.dispatchEvent(new Event('warenfluss:change'));}
 function panel(id){document.querySelectorAll('.zf-panel').forEach(n=>n.hidden=n.id!==id);document.querySelectorAll('[data-panel]').forEach(n=>n.setAttribute('aria-pressed',String(n.dataset.panel===id)));}
 function button(text,fn){const b=el('button',text);b.type='button';b.onclick=()=>{try{fn();}catch(e){fail(e);}};return b;}
 function available(){const a=data.articles.find(a=>a.id===mf.elements.articleId.value);$('available').textContent=a?'Verfügbar: '+W.stock(data,a.id)+' Stück':'Lege zuerst einen Artikel an.';$('book').disabled=!a;}
@@ -19,5 +19,6 @@ function render(){const active=data.articles.filter(a=>!a.archived),low=active.f
  function download(text,type,name){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
  $('csv').onclick=()=>{try{download(W.csv(W.load(localStorage)),'text/csv;charset=utf-8','warenfluss-bestaende.csv');}catch(e){fail(e);}};$('backup').onclick=()=>{try{download(JSON.stringify(W.load(localStorage),null,2),'application/json','warenfluss-sicherung.json');}catch(e){fail(e);}};
  window.addEventListener('storage',e=>{if(e.key===W.KEY||e.key===null)fail(Error('Daten wurden in einem anderen Fenster geändert. Lade die Seite neu, bevor du weiter buchst.'));});
+ window.WarenflussApp={snapshot:()=>JSON.parse(JSON.stringify(data)),commit,panel,fail};
  try{load();render();}catch(e){fail(Error('Lokale Waren können nicht geladen werden. Vorhandene Daten bleiben erhalten. '+e.message));document.querySelectorAll('button').forEach(b=>b.disabled=true);}
 })();
