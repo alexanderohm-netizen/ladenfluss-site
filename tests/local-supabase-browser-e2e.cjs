@@ -61,10 +61,15 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
   const config=localSupabase();
   const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
   const errors=[];
+  let page;
   try {
     const ctx=await browser.newContext();
-    const page=await ctx.newPage();
+    page=await ctx.newPage();
     page.on('pageerror',error=>errors.push(error.message));
+    page.on('requestfailed',request=>{
+      if(request.url().startsWith('https://esm.sh/'))
+        errors.push('Pinned browser SDK failed to load: '+(request.failure()?.errorText||'network failure'));
+    });
     // In CI only, replace the disabled production switch with disposable local credentials.
     await page.route('**/assets/cloud-config.js', async route=>{
       await route.fulfill({
@@ -127,7 +132,8 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
     assert.deepEqual(errors,[],'Browser runtime emitted JavaScript errors');
     await ctx.close();
   } catch(e){
-    if(errors.length)throw Error(e.message+'\nBrowser exceptions:\n'+errors.join('\n'));
-    throw e;
+    let safeStatus='';
+    try {safeStatus=(await page?.locator('#authStatus').textContent())||'';}catch(_){ }
+    throw new Error(e.message+'\nAccount UI status: '+safeStatus.slice(0,300)+'\nBrowser errors: '+errors.join('; ').slice(0,1400));
   } finally{await browser.close();}
 });
