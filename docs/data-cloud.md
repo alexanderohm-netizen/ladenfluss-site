@@ -4,9 +4,9 @@ Stand: 10.10.2026. Route `/daten-cloud`, aus dem Kundenkonto verlinkt.
 Keine Produktionsfreigabe, keine automatische Synchronisation und keine Desktop-WWS-Anbindung.
 
 ## Umgesetzt
-- Ein gemeinsamer manueller Sicherungsbildschirm für Zahlenfluss und Warenfluss.
+- Ein gemeinsamer manueller Sicherungsbildschirm für das kostenlose Ladenprofil sowie Zahlenfluss und Warenfluss bei aktivem Modulzugang.
 - Bestätigtes Supabase-Konto, Firmenzuordnung und erlaubte Rollen (owner/admin/manager).
-- Prüft das gebuchte Modul (active/trial, gültiges Ablaufdatum) vor jeder Cloud-Datenabfrage. Das bestehende Postgres-RLS erzwingt die Berechtigung unabhängig vom Frontend.
+- Prüft bei kostenpflichtigen Modulen den Zugang (active/trial, gültiges Ablaufdatum) vor jeder Cloud-Datenabfrage. Das Ladenprofil ist als kostenloser Cloud-Bereich ausgenommen. Das bestehende Postgres-RLS erzwingt die Berechtigung unabhängig vom Frontend.
 - Bestehender `cloud_documents`-Speicher und `save_cloud_document` RPC mit Revisionsprüfung. Keine Schemaänderung, keine Zahlungsfreigabe.
 - Vorschau des lokalen und des Cloud-Datenstands; Upload oder lokale Übernahme nur nach ausdrücklicher Zustimmung.
 - Download vor der Übernahme möglich. Kein Merge, kein Hintergrund-Sync, kein automatisches Überschreiben.
@@ -28,3 +28,10 @@ Keine Produktionsfreigabe, keine automatische Synchronisation und keine Desktop-
 5. Erst nach Cloud-Stabilisierung das gemeinsame Warenwirtschaftsdatenmodell, danach das Systemlayout angehen.
 
 Die lokalen Zahlenfluss- und Warenfluss-Werkzeuge bleiben ohne Konto nutzbar. Eine aktive Bezahlung oder Lizenz wird durch diese Änderung nicht erzeugt.
+
+## Ergänzende Verifikation (10. Oktober)
+- SQL mit authentifizierter Testsession und ROLLBACK: Erstellung von Unternehmen inklusive Inhaberrolle und Hauptfiliale erfolgreich.
+- Zweite Testsession unter ROLLBACK: kein lesbares Cloud-Dokument aus fremder Firma (RLS-Firmenisolation).
+- Nachweis nach ROLLBACK: keine dauerhaften Testkunden, Firmen oder Dokumente.
+- Kostenloses Ladenprofil über eigene strikte Feldauswahl und bestehende Profilvalidierung ergänzt. Dazu zwei Regressionstests in der Suite.
+- GitHub Actions CI für Unit-Tests und Browser-Tests unter `.github/workflows/cloud-regression.yml` eingerichtet; vollständiges Testergebnis zum Zeitpunkt dieser Dokumentation noch nicht bestätigt.
