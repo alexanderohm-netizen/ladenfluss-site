@@ -99,6 +99,8 @@ async function renderAccount({enabled=true,client=fakeClient(),isSignedIn=false}
   const w=dom.window;
   w.LadenflussAuthCore=require('../assets/auth-core.js');
   w.LadenflussSupabase={isEnabled:()=>enabled,getClient:async()=>client};
+  w.LadenflussLocalPrivacy=require('../assets/local-privacy.js');
+  w.confirm=()=>true;
   w.eval(readFileSync(resolve(root,'assets/account.js'),'utf8'));
   w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
   const flush=async()=>{await new Promise(resolve=>setImmediate(resolve));await new Promise(resolve=>setImmediate(resolve));};
@@ -247,4 +249,34 @@ test('Supabase bootstrap refuses disabled and secret-key configurations',()=>{
   w.LadenflussCloudConfig={enabled:true,url:'https://nzxtdrmdvqyvcbohplzt.supabase.co',publishableKey:'sb_secret_NOT_ALLOWED'};
   assert.throws(()=>w.LadenflussSupabase.isEnabled(),/konfiguriert/);
   dom.window.close();
+});
+
+
+test('logout with explicit device cleanup removes only Ladenfluss data after confirmation',async()=>{
+  const t=await renderAccount({isSignedIn:true});
+  const w=t.w;
+  w.localStorage.setItem('ladenfluss.store.v1','{"name":"Shared device"}');
+  w.localStorage.setItem('ladenfluss.cloud-draft.v2.user.company.profile','{"payload":1}');
+  w.localStorage.setItem('other.application','keep');
+  w.document.getElementById('accountLogoutClear').click();
+  await t.flush();
+  assert.equal(w.localStorage.getItem('ladenfluss.store.v1'),null);
+  assert.equal(w.localStorage.getItem('ladenfluss.cloud-draft.v2.user.company.profile'),null);
+  assert.equal(w.localStorage.getItem('other.application'),'keep');
+  assert.equal(w.document.getElementById('signedInPanel').hidden,true);
+  assert.ok(t.client.calls.some(x=>x[0]==='signOut'));
+  assert.match(w.document.getElementById('authStatus').textContent,/bereinigt/);
+  t.close();
+});
+
+test('declining device cleanup preserves data and authenticated account',async()=>{
+  const t=await renderAccount({isSignedIn:true});
+  t.w.localStorage.setItem('ladenfluss.team.v1','private-data');
+  t.w.confirm=()=>false;
+  t.w.document.getElementById('accountLogoutClear').click();
+  await t.flush();
+  assert.equal(t.w.localStorage.getItem('ladenfluss.team.v1'),'private-data');
+  assert.equal(t.w.document.getElementById('signedInPanel').hidden,false);
+  assert.equal(t.client.calls.filter(x=>x[0]==='signOut').length,0);
+  t.close();
 });
