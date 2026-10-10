@@ -1,0 +1,24 @@
+# Disposable local Supabase config for isolated Auth/Email E2E testing.
+# No production project ref, remote credentials or live customer data.
+project_id = "ladenfluss-local-auth-e2e"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+
+[db]
+port = 54322
+major_version = 17
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:54321"
+additional_redirect_urls = ["http://127.0.0.1:54321/**"]
+
+[auth.email]
+enable_signup = true
+enable_confirmations = true
+
+[studio]
+enabled = false
