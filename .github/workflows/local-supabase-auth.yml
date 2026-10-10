@@ -10,6 +10,7 @@ on:
       - 'tests/local-supabase-cloud-e2e.cjs'
       - 'tests/local-supabase-cloud-schema.sql'
       - 'supabase/drafts/**'
+      - 'supabase/checks/**'
   pull_request:
     paths:
       - '.github/workflows/local-supabase-auth.yml'
@@ -18,6 +19,7 @@ on:
       - 'tests/local-supabase-cloud-e2e.cjs'
       - 'tests/local-supabase-cloud-schema.sql'
       - 'supabase/drafts/**'
+      - 'supabase/checks/**'
   workflow_dispatch:
 
 permissions:
@@ -64,6 +66,20 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/create_cloud_document_if_absent.sql
           psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/create_company_onboarding.sql
           psql -X -v ON_ERROR_STOP=1 -c "NOTIFY pgrst, 'reload schema';"
+      - name: Assert all 13 SQL release gates in local real-auth database
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '54322'
+          PGDATABASE: postgres
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: |
+          results="$(psql -X -At -v ON_ERROR_STOP=1 -f supabase/checks/cloud-beta-readiness.sql)"
+          echo "$results"
+          printf '%s\n' "$results" | awk -F '|' '
+            { total++; if ($2 != "PASS") bad++ }
+            END { if (total != 13 || bad != 0) exit 1 }
+          '
       - name: Allow local PostgREST schema cache to update
         run: sleep 2
       - name: Real local Auth, confirmation and recovery HTTP tests
