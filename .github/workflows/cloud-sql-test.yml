@@ -51,5 +51,7 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/guard_cloud_document_revision.sql
       - name: Install save RPC draft in test DB only
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/save_cloud_document_if_revision.sql
+      - name: Install initial create RPC in test DB only
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/create_cloud_document_if_absent.sql
       - name: Verify permissions, conflict rejection and history
         run: psql -X -v ON_ERROR_STOP=1 -f tests/cloud-postgres-assertions.sql
