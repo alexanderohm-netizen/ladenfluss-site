@@ -1,0 +1,47 @@
+name: Local Supabase Auth end-to-end
+
+on:
+  push:
+    branches: [plan/cloud-beta-hardening-20261010]
+    paths:
+      - '.github/workflows/local-supabase-auth.yml'
+      - 'supabase/config.toml'
+      - 'tests/local-supabase-auth-e2e.cjs'
+  pull_request:
+    paths:
+      - '.github/workflows/local-supabase-auth.yml'
+      - 'supabase/config.toml'
+      - 'tests/local-supabase-auth-e2e.cjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  auth-email-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Inspect CLI compatibility
+        run: |
+          supabase --version
+          supabase start --help >/dev/null
+      - name: Start local Supabase Auth and Mailpit (NO hosted project)
+        run: |
+          if ! supabase start > /tmp/ladenfluss-local-supabase-start.log 2>&1; then
+            echo "The isolated local Supabase stack did not start. See CLI/Docker compatibility."
+            exit 1
+          fi
+          echo "Local Supabase services started."
+      - name: Real local Auth, confirmation and recovery HTTP tests
+        run: node --test tests/local-supabase-auth-e2e.cjs
+      - name: Stop disposable local Supabase
+        if: always()
+        run: supabase stop >/dev/null 2>&1 || true
