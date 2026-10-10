@@ -145,6 +145,13 @@
       status = compare();
       return state();
     }
+    function discardDraft() {
+      if (pendingSave || status === 'saving')
+        throw cloudError('SAVE_IN_PROGRESS', 'Cannot discard an in-flight save');
+      persist(null);
+      status = compare();
+      return state();
+    }
     async function save() {
       if (pendingSave) return pendingSave;
       if (status === 'conflict') throw cloudError('REVISION_CONFLICT', 'Explicit conflict resolution required');
@@ -187,7 +194,7 @@
       })();
       return pendingSave;
     }
-    return {load, edit, save, resolveConflict, state, draftKey};
+    return {load, edit, save, resolveConflict, discardDraft, state, draftKey};
   }
 
   return {createCloudSync, createSupabaseTransport, MAX_PAYLOAD_BYTES};
