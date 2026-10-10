@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   'use strict';
+  if (window.__ladenflussOnboardingInitialized) return;
+  window.__ladenflussOnboardingInitialized = true;
   const form = document.getElementById('companyOnboarding');
   const status = document.getElementById('onboardingStatus');
   let core = null, client = null, busy = false;
