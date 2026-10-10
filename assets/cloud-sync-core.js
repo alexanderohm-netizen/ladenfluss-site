@@ -48,6 +48,15 @@
         if (error) throw error;
         return data ? {payload:data.payload, revision:data.revision, updatedAt:data.updated_at} : null;
       },
+      async create({companyId, moduleKey, payload}) {
+        const {data, error} = await client.rpc('create_cloud_document_if_absent', {
+          p_company_id: companyId, p_module_key: moduleKey, p_payload: payload,
+        });
+        if (error) throw error;
+        const row = Array.isArray(data) ? data[0] : data;
+        if (!row) throw cloudError('EMPTY_RESPONSE', 'Create returned no revision');
+        return {revision:row.saved_revision, updatedAt:row.saved_at};
+      },
       async write({companyId, moduleKey, expectedRevision, payload}) {
         const {data, error} = await client.rpc('save_cloud_document_if_revision', {
           p_company_id: companyId, p_module_key: moduleKey,
@@ -71,6 +80,7 @@
 
     const draftKey = 'ladenfluss.cloud-draft.v1.' + companyId.toLowerCase() + '.' + moduleKey;
     let remote = null;
+    let loaded = false;
     let draft = null;
     let status = 'idle';
     let pendingSave = null;
@@ -86,7 +96,7 @@
       if (raw === null) return null;
       try {
         const item = JSON.parse(raw);
-        if (!item || !Number.isSafeInteger(item.baseRevision) || item.baseRevision < 1)
+        if (!item || !Number.isSafeInteger(item.baseRevision) || item.baseRevision < 0)
           throw new Error('Invalid base revision');
         return {baseRevision:item.baseRevision, payload:encodedPayload(item.payload)};
       } catch (e) { throw cloudError('INVALID_LOCAL_DRAFT', 'Local draft is corrupt; it has not been overwritten', e); }
@@ -104,7 +114,8 @@
     }
     function compare() {
       if (!draft) return remote ? 'synced' : 'missing';
-      if (!remote || draft.baseRevision !== remote.revision) return 'conflict';
+      if (!remote) return draft.baseRevision === 0 ? 'dirty' : 'conflict';
+      if (draft.baseRevision !== remote.revision) return 'conflict';
       return 'dirty';
     }
 
@@ -114,13 +125,14 @@
       status = 'loading';
       try { remote = validRemote(await transport.read({companyId,moduleKey})); }
       catch (e) { status = draft ? 'offline-draft' : 'offline'; throw e; }
+      loaded = true;
       status = compare();
       return state();
     }
     function edit(nextPayload) {
-      if (!remote) throw cloudError('NOT_LOADED', 'Load an existing cloud document first');
+      if (!loaded && !draft) throw cloudError('NOT_LOADED', 'Load the cloud document first');
       if (status === 'conflict') throw cloudError('REVISION_CONFLICT', 'Resolve the conflict before editing');
-      const next = {baseRevision:draft ? draft.baseRevision : remote.revision, payload:encodedPayload(nextPayload)};
+      const next = {baseRevision:draft ? draft.baseRevision : (remote ? remote.revision : 0), payload:encodedPayload(nextPayload)};
       persist(next);
       status = compare();
       return state();
@@ -136,12 +148,17 @@
     async function save() {
       if (pendingSave) return pendingSave;
       if (status === 'conflict') throw cloudError('REVISION_CONFLICT', 'Explicit conflict resolution required');
-      if (!draft || !remote) throw cloudError('NO_DRAFT', 'No draft available to save');
+      if (!draft) throw cloudError('NO_DRAFT', 'No draft available to save');
       const snapshot = copy(draft);
+      const creating = !remote && snapshot.baseRevision === 0;
+      if (creating && typeof transport.create !== 'function')
+        throw cloudError('CREATE_UNAVAILABLE', 'Cloud document creation API is unavailable');
       status = 'saving';
       pendingSave = (async () => {
         try {
-          const result = await transport.write({companyId,moduleKey,expectedRevision:snapshot.baseRevision,payload:snapshot.payload});
+          const result = creating
+            ? await transport.create({companyId,moduleKey,payload:snapshot.payload})
+            : await transport.write({companyId,moduleKey,expectedRevision:snapshot.baseRevision,payload:snapshot.payload});
           if (!result || result.revision !== snapshot.baseRevision + 1)
             throw cloudError('INVALID_REMOTE', 'Cloud returned an unexpected revision');
           remote = {revision:result.revision, updatedAt:result.updatedAt || null, payload:snapshot.payload};
@@ -155,7 +172,7 @@
           status = compare();
           return state();
         } catch (e) {
-          if (e && e.code === '40001') {
+          if (e && (e.code === '40001' || e.code === '23505')) {
             // Keep local draft even when reading the new remote version fails.
             try { remote = validRemote(await transport.read({companyId,moduleKey})); }
             catch (_) { status = 'offline-draft'; throw e; }
