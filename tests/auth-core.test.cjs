@@ -304,3 +304,31 @@ test('loopback Supabase Auth config is accepted only on loopback websites, never
   assert.match(browser('https://ladenfluss.de/konto',{url:'http://nzxtdrmdvqyvcbohplzt.supabase.co',publishableKey:'sb_publishable_demo'}).reason,/konfiguriert/);
   assert.equal(browser('https://ladenfluss.de/konto',{url:'https://nzxtdrmdvqyvcbohplzt.supabase.co',publishableKey:'sb_publishable_demo'}).passed,true);
 });
+
+
+test('account blocks form submissions until asynchronous Supabase SDK initialization is finished',async()=>{
+  const dom=new JSDOM(readFileSync(resolve(root,'konto.html'),'utf8'),{
+    url:'https://ladenfluss.de/konto',runScripts:'outside-only',
+  });
+  const w=dom.window;
+  const client=fakeClient();
+  let releaseClient;
+  w.LadenflussAuthCore=require('../assets/auth-core.js');
+  w.LadenflussSupabase={
+    isEnabled:()=>true,
+    getClient:()=>new Promise(resolve=>{releaseClient=()=>resolve(client);}),
+  };
+  w.eval(readFileSync(resolve(root,'assets/account.js'),'utf8'));
+  w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
+  const form=w.document.querySelector('[data-auth-form=login]');
+  assert.equal(form.querySelector('button[type=submit]').disabled,true);
+  form.querySelector('input[type=email]').value='user@example.org';
+  form.querySelector('input[type=password]').value='secure-password';
+  form.dispatchEvent(new w.Event('submit',{cancelable:true,bubbles:true}));
+  assert.equal(client.calls.length,0);
+  releaseClient();
+  for(let i=0;i<3;i++)await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(form.querySelector('button[type=submit]').disabled,false);
+  assert.match(w.document.getElementById('authStatus').textContent,/Sicher anmelden/);
+  dom.window.close();
+});
