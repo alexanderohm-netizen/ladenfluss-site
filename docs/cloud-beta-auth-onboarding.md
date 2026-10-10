@@ -10,6 +10,7 @@
 - `konto.html`/`assets/account.js`: Registrierung, Login, Passwort vergessen, eingeloggter Zustand und Logout. Passwörter werden nicht in eigenen LocalStorage-Werten gehalten.
 - `passwort-zuruecksetzen.html`/`assets/password-reset.js`: neue Passwortvergabe mit mindestens zwölf Zeichen; Sitzung nach erfolgreichem Reset abmelden.
 - `onboarding.html`/`assets/onboarding.js`: verifizierte Konten legen Unternehmen und erste Filiale über **eine** Datenbank-RPC an; bei deaktivierter Beta keine Writes.
+- `mein-laden.html`/`assets/cloud-profile.js`: **manueller Ladenprofil-Abgleich** im Reiter Datensicherung. Bestehende Daten werden erst nach bewusster Bestätigung hochgeladen oder lokal übernommen. Bei Cloud-Import wird eine Sicherung des vorherigen Profils im Browser erstellt, die über die Oberfläche zurückgespielt werden kann. Vor Import wird die Revision erneut gelesen.
 - `supabase/drafts/create_company_onboarding.sql`: SQL-Entwurf für atomare Einrichtung unter Nutzung des bereits vorhandenen Triggers `private.new_company`. Maximal ein Unternehmen pro Gründer während der Beta. Keine direkten INSERT-/UPDATE-Rechte auf den Tabellen erforderlich.
 
 ## Vor Aktivierung zwingend
@@ -28,7 +29,7 @@
 
 ## Designgrenzen und nächste Schritte
 
-- Die Fachmodule PEP/Urlaubsplaner/Warenfluss/Zahlenfluss speichern weiterhin **lokal**, bis die getestete Cloud-Synchronisationsschicht angebunden ist. Die Login-Funktion allein ist **noch keine** geräteübergreifende Synchronisation.
+- Im Entwicklungszweig ist der **erste, manuell ausgelöste Cloud-Abgleich für Ladenprofil und Richtwerte** integriert, aber deaktiviert. PEP/Urlaubsplaner/Warenfluss/Zahlenfluss speichern weiterhin **lokal**. Ohne erfolgreiche Auth-/RPC-Konfiguration erfolgt keine geräteübergreifende Synchronisierung.
 - Der Passwort-Reset benötigt freigegebene Redirects und funktionierende E-Mail-Verifizierung.
 - Dokument-Drafts werden bisher nach Company/Modul lokal gespeichert; vor sensiblen Personal-/HR-Daten auf gemeinsam genutzten Geräten zusätzlich Benutzertrennung, Logout-Verhalten und Löschkonzept festlegen.
 - Die erste Filiale wird atomar angelegt. Weitere Filialen, Einladungen, Mitarbeitendenprofile und Paywalls folgen nach Beta-Grundlage.
@@ -39,6 +40,7 @@
 - `.github/workflows/web-vacation-check.yml` startet JavaScript-/JSDOM-/Browserprüfungen.
 - `.github/workflows/cloud-sql-test.yml` prüft die SQL-Entwürfe in einem kurzlebigen PostgreSQL-Testcontainer.
 - `tests/auth-core.test.cjs` prüft Auth-Verhalten ohne echte Konten oder E-Mails.
+- `tests/cloud-profile-ui.test.cjs` prüft manuelle Profil-Uploads, ausdrückliche Importbestätigung, Wiederherstellung und Schutz vor veralteten Cloud-Versionen.
 - `tests/cloud-onboarding-assertions.sql` prüft Firmen- und Filialanlage mit simulierten Auth-Kontexten.
 
 **Aktivierungsentscheidung:** Bis alle Release-Gates erfüllt sind, bleiben echte Registrierungen im Frontend gesperrt und die produktive Supabase-Datenbank unverändert.
