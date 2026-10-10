@@ -141,3 +141,16 @@ test('concurrent first create conflict preserves the other local draft',async()=
   assert.equal(api.data.get(A+'/profile').payload.name,'Two');
   assert.equal(api.data.get(A+'/profile').revision,2);
 });
+
+test('explicit draft discard keeps confirmed remote revision and removes unsent content',async()=>{
+  const api=mockCloud(),storage=memoryStorage(),sync=open(api,storage);
+  await sync.load();
+  sync.edit({days:22});
+  assert.ok(storage.getItem(sync.draftKey));
+  const result=sync.discardDraft();
+  assert.equal(result.status,'synced');
+  assert.equal(result.draft,null);
+  assert.equal(result.remote.payload.days,2);
+  assert.equal(storage.getItem(sync.draftKey),null);
+  assert.equal(api.log.length,0);
+});
