@@ -17,10 +17,11 @@ async function setup(options={}){
   auth:{getUser:()=>Promise.resolve({data:{user}}),onAuthStateChange:fn=>{listener=fn;}},
   from(table){
    reads.push(table);let module='zahlenfluss';
-   const query={select(){return query},order(){return query},eq(column,value){if(column==='module_key')module=value;return query;},maybeSingle(){return query},abortSignal(){let data=null;
+   const query={select(){return query},order(){return query},limit(){return query},eq(column,value){if(column==='module_key')module=value;return query;},maybeSingle(){return query},abortSignal(){let data=null;
     if(table==='company_members')data=[{company_id:'c1',role:options.role||'owner',status:'active'}];
     if(table==='companies')data=[{id:'c1',name:'Unser Laden'}];
     if(table==='module_access')data=options.unpaid?null:{module_key:module,status:'trial',valid_until:'2030-01-01T00:00:00Z'};
+    if(table==='cloud_document_history')data=options.history||[];
     if(table==='cloud_documents')data=options.latestRevision&&query.revisionOnly?{revision:options.latestRevision}:remote;
     return Promise.resolve({data});
    }};
@@ -115,4 +116,24 @@ test('Missing or stale server receipt never reports a confirmed cloud save',asyn
  assert.equal(a.calls.length,1);
  assert.match(a.$('dataCloudStatus').textContent,/keine gültige Speicherbestätigung/);
  assert.equal(a.$('dataCloudWorkspace').hidden,true);
+});
+
+test('Earlier Cloud snapshot can be restored locally without overwriting the Cloud',async t=>{
+ const oldProfile={name:'Altes Ladenprofil',type:'Lebensmittel',state:'HE'};
+ const a=await setup({module:'profile',unpaid:true,history:[{revision:2,payload:oldProfile,saved_at:'2026-10-09T08:00:00Z'}]});
+ t.after(()=>a.dom.window.close());
+ assert.equal(a.$('dataCloudHistorySection').hidden,false);
+ assert.match(a.$('dataCloudHistory').textContent,/Version 2/);
+ const restore=a.$('dataCloudHistory').querySelector('[data-cloud-history-restore]');
+ assert.equal(restore.disabled,true,'History cannot be restored without consent');
+ a.agree();restore.click();await tick();
+ assert.equal(JSON.parse(a.w.localStorage.getItem('ladenfluss.store.v1')).name,'Altes Ladenprofil');
+ assert.equal(a.calls.length,0,'Historical restore does not write to cloud');
+ assert.match(a.$('dataCloudStatus').textContent,/Frühere Version 2/);
+});
+test('Cloud history refuses malformed or newer-than-current revisions',async t=>{
+ const a=await setup({history:[{revision:4,payload:NUMBERS,saved_at:'2026-10-09T08:00:00Z'}]});
+ t.after(()=>a.dom.window.close());
+ assert.equal(a.$('dataCloudWorkspace').hidden,true);
+ assert.match(a.$('dataCloudStatus').textContent,/Ungültige Version/);
 });
