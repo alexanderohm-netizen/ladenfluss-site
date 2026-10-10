@@ -18,6 +18,7 @@ async function makeUI({enabled=true,initialRemote=null}={}) {
     '<button id="cloudProfileUpload" hidden>Hochladen</button>',
     '<button id="cloudProfileDownload" hidden>Übernehmen</button>',
     '<button id="cloudProfileRestore" hidden>Zurück</button>',
+    '<button id="cloudProfileRecoverDraft" hidden>Entwurf wiederherstellen</button>',
   ].join('');
   const dom=new JSDOM('<!doctype html><html><body>'+html+'</body></html>',{
     url:'https://ladenfluss.de/mein-laden',runScripts:'outside-only',
@@ -25,6 +26,7 @@ async function makeUI({enabled=true,initialRemote=null}={}) {
   const w=dom.window;
   const calls=[];
   let remote=initialRemote && {revision:initialRemote.revision,payload:initialRemote.payload,updatedAt:'2026-10-10T00:00:00Z'};
+  let activeUserId=USER,failWrite=false;
   w.localStorage.setItem('ladenfluss.store.v1',JSON.stringify(defaultLocal));
   w.confirm=()=>true;
   w.LadenflussStoreSettings={
@@ -35,7 +37,7 @@ async function makeUI({enabled=true,initialRemote=null}={}) {
   const client={
     auth:{
       async getSession(){return {data:{session:{access_token:'fake'}},error:null};},
-      async getUser(){return {data:{user:{id:USER,email:'alex@example.org',email_confirmed_at:'2026-10-10T09:00:00Z'}},error:null};},
+      async getUser(){return {data:{user:{id:activeUserId,email:'alex@example.org',email_confirmed_at:'2026-10-10T09:00:00Z'}},error:null};},
       async signInWithPassword(){return {error:null};},
     },
     from(table) {
@@ -51,6 +53,7 @@ async function makeUI({enabled=true,initialRemote=null}={}) {
     },
     async rpc(name,args) {
       calls.push([name,args]);
+      if(failWrite)return {error:{code:'NETWORK_ERROR',message:'offline'}};
       if(name==='create_cloud_document_if_absent') {
         if(remote)return {error:{code:'23505'}};
         remote={revision:1,payload:args.p_payload,updatedAt:'now'};
@@ -71,7 +74,7 @@ async function makeUI({enabled=true,initialRemote=null}={}) {
     for(let i=0;i<4;i++)await new Promise(resolve=>setImmediate(resolve));
   };
   await flush();
-  return {w,client,calls,flush,remote:()=>remote,serverUpdate(payload){remote={revision:(remote?.revision||0)+1,payload,updatedAt:'later'};},close:()=>dom.window.close()};
+  return {w,client,calls,flush,remote:()=>remote,setActiveUser(id){activeUserId=id;},setFailWrite(value){failWrite=value;},serverUpdate(payload){remote={revision:(remote?.revision||0)+1,payload,updatedAt:'later'};},close:()=>dom.window.close()};
 }
 
 test('inactive cloud beta cannot inspect, upload or overwrite any data',async()=>{
@@ -108,7 +111,7 @@ test('cloud import protects previous profile via backup and can restore it',asyn
   await t.flush();
   assert.equal(t.w.LadenflussStoreSettings.read().name,'Cloud Profil');
   assert.equal(t.w.document.getElementById('cloudProfileRestore').hidden,false);
-  const backup=t.w.localStorage.getItem('ladenfluss.cloud.profile-backup.v1.'+COMPANY);
+  const backup=t.w.localStorage.getItem('ladenfluss.cloud.profile-backup.v2.'+USER+'.'+COMPANY);
   assert.equal(JSON.parse(backup).payload.name,'Lokales Profil');
   t.w.document.getElementById('cloudProfileRestore').click();
   await t.flush();
@@ -140,6 +143,54 @@ test('cloud import refuses a version changed since the last inspection',async()=
   await t.flush();
   assert.equal(t.w.LadenflussStoreSettings.read().name,'Lokales Profil');
   assert.match(t.w.document.getElementById('cloudProfileStatus').textContent,/seit der Prüfung geändert/);
-  assert.equal(t.w.localStorage.getItem('ladenfluss.cloud.profile-backup.v1.'+COMPANY),null);
+  assert.equal(t.w.localStorage.getItem('ladenfluss.cloud.profile-backup.v2.'+USER+'.'+COMPANY),null);
+  t.close();
+});
+
+
+test('an unsent draft is not overwritten when the local profile changes',async()=>{
+  const t=await makeUI();
+  const d=t.w.document;
+  d.getElementById('cloudProfileCheck').click();await t.flush();
+  t.setFailWrite(true);
+  d.getElementById('cloudProfileUpload').click();await t.flush();
+  const drafts=Object.keys(t.w.localStorage).filter(k=>k.startsWith('ladenfluss.cloud-draft.v2.'));
+  assert.equal(drafts.length,1);
+  assert.equal(JSON.parse(t.w.localStorage.getItem(drafts[0])).payload.name,'Lokales Profil');
+  t.w.localStorage.setItem('ladenfluss.store.v1',JSON.stringify({name:'Neues Profil',days:5,hours:7}));
+  d.getElementById('cloudProfileUpload').click();await t.flush();
+  assert.equal(JSON.parse(t.w.localStorage.getItem(drafts[0])).payload.name,'Lokales Profil');
+  assert.equal(t.remote(),null);
+  assert.equal(d.getElementById('cloudProfileRecoverDraft').hidden,false);
+  d.getElementById('cloudProfileRecoverDraft').click();await t.flush();
+  assert.equal(t.w.LadenflussStoreSettings.read().name,'Lokales Profil');
+  assert.equal(JSON.parse(t.w.localStorage.getItem('ladenfluss.cloud.profile-backup.v2.'+USER+'.'+COMPANY)).payload.name,'Neues Profil');
+  t.close();
+});
+
+test('changing authenticated user revokes manual cloud actions without losing original draft',async()=>{
+  const t=await makeUI();
+  const d=t.w.document;
+  d.getElementById('cloudProfileCheck').click();await t.flush();
+  t.setActiveUser('22222222-2222-4222-8222-222222222222');
+  d.getElementById('cloudProfileUpload').click();await t.flush();
+  assert.equal(t.remote(),null);
+  assert.equal(d.getElementById('cloudProfileUpload').hidden,true);
+  assert.match(d.getElementById('cloudProfileStatus').textContent,/Anmeldung hat sich geändert/);
+  t.close();
+});
+
+test('an older backup is not replaced when the user declines overwriting it',async()=>{
+  const t=await makeUI({initialRemote:{revision:3,payload:{name:'Cloud Profil',days:5,hours:8}}});
+  const d=t.w.document;
+  const key='ladenfluss.cloud.profile-backup.v2.'+USER+'.'+COMPANY;
+  t.w.localStorage.setItem(key,JSON.stringify({payload:{name:'Alte Sicherung'}}));
+  let count=0;
+  t.w.confirm=()=>++count===1;
+  d.getElementById('cloudProfileCheck').click();await t.flush();
+  d.getElementById('cloudProfileDownload').click();await t.flush();
+  assert.equal(JSON.parse(t.w.localStorage.getItem(key)).payload.name,'Alte Sicherung');
+  assert.equal(t.w.LadenflussStoreSettings.read().name,'Lokales Profil');
+  assert.equal(t.remote().revision,3);
   t.close();
 });
