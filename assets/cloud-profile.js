@@ -240,13 +240,26 @@ document.addEventListener('DOMContentLoaded', () => {
       const backup={at:new Date().toISOString(),payload:previous};
       window.localStorage.setItem(key,JSON.stringify(backup));
       settings.save(remoteProfile);
-      sync.discardDraft();
+      try {
+        sync.discardDraft();
+      } catch (error) {
+        // A second tab can change the draft between the backup and import.
+        // Undo the local import instead of leaving a half-committed UI state.
+        try { settings.save(previous); } catch (_) { /* Safety backup remains available. */ }
+        throw error;
+      }
       if (restore) restore.hidden = false;
       controls();
       setStatus('Cloud-Profil lokal übernommen. Das vorherige Ladenprofil wurde als Sicherheitskopie gesichert.');
       window.dispatchEvent(new Event('ladenfluss:profile-updated'));
-    } catch (_) {
-      setStatus('Übernahme nicht abgeschlossen. Prüfe deinen Browserspeicher; die Cloud-Version wurde nicht geändert.');
+    } catch (error) {
+      if (error?.code === 'DRAFT_CHANGED_EXTERNALLY') {
+        staleDraftInOtherTab = true;
+        controls({checkVisible:true,uploadVisible:false,downloadVisible:false});
+        setStatus('Eine andere Registerkarte hat während der Übernahme den Cloud-Entwurf verändert. Die lokalen Werte wurden soweit möglich wiederhergestellt; die Sicherheitskopie bleibt erhalten. Bitte neu prüfen.');
+      } else {
+        setStatus('Übernahme nicht abgeschlossen. Prüfe deinen Browserspeicher; die Cloud-Version wurde nicht geändert.');
+      }
     }
   });});
 
