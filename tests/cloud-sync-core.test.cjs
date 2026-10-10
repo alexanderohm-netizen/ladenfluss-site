@@ -166,3 +166,53 @@ test('drafts from different signed-in accounts are never automatically reused',a
   assert.equal(second.state().remote.payload.days,2);
   assert.ok(storage.getItem(first.draftKey));
 });
+
+
+test('two tabs on the same account cannot silently overwrite one another’s unsent draft',async()=>{
+  const api=mockCloud(),storage=memoryStorage();
+  const tabA=open(api,storage),tabB=open(api,storage);
+  await tabA.load();await tabB.load();
+  tabA.edit({days:44});
+  assert.throws(()=>tabB.edit({days:99}),{code:'DRAFT_CHANGED_EXTERNALLY'});
+  assert.equal(JSON.parse(storage.getItem(tabA.draftKey)).payload.days,44);
+  assert.equal(tabB.state().draft,null);
+  // A fresh check in the second tab intentionally picks up the original draft.
+  await tabB.load();
+  assert.equal(tabB.state().draft.payload.days,44);
+});
+
+test('stale tab cannot upload or delete a newer draft saved by another tab',async()=>{
+  const api=mockCloud(),storage=memoryStorage();
+  const tabA=open(api,storage),tabB=open(api,storage);
+  await tabA.load();tabA.edit({days:10});
+  await tabB.load();
+  tabA.edit({days:20});
+  await assert.rejects(tabB.save(),{code:'DRAFT_CHANGED_EXTERNALLY'});
+  assert.throws(()=>tabB.discardDraft(),{code:'DRAFT_CHANGED_EXTERNALLY'});
+  assert.equal(JSON.parse(storage.getItem(tabA.draftKey)).payload.days,20);
+  assert.equal(api.log.length,0);
+});
+
+test('second tab editing during an in-flight save survives even when the first RPC succeeded',async()=>{
+  const api=mockCloud(),storage=memoryStorage();
+  const first=open(api,storage);
+  await first.load();first.edit({days:11});
+  let release;
+  const realWrite=api.write.bind(api);
+  api.write=async(args)=>{
+    await new Promise(resolve=>{release=resolve;});
+    return realWrite(args);
+  };
+  const inflight=first.save();
+  const second=open(api,storage);
+  await second.load();second.edit({days:22});
+  release();
+  await assert.rejects(inflight,{code:'DRAFT_CHANGED_EXTERNALLY'});
+  assert.equal(first.state().status,'storage-error');
+  assert.equal(api.data.get(A+'/vacation').payload.days,11);
+  assert.equal(JSON.parse(storage.getItem(first.draftKey)).payload.days,22);
+  const recovered=open(api,storage);
+  await recovered.load();
+  assert.equal(recovered.state().status,'conflict');
+  assert.equal(recovered.state().draft.payload.days,22);
+});
