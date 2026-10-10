@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     user = error ? null : data.user;
     // A disabled confirmation requirement must not silently become a customer login.
-    if (user && !user.email_confirmed_at) {
+    if (user && user.email_confirmed_at === null) {
       const address = user.email || '';
       user = null;
       $('signedOut').hidden = false;
@@ -129,7 +129,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   bindForm('registerForm', async data => {
     const email = data.get('email').trim();
-    if (data.get('password') !== data.get('passwordConfirm')) throw { code: 'password_mismatch' };
     const result = await client.auth.signUp({ email, password: data.get('password'),
       options: { emailRedirectTo: location.origin + '/konto' } });
     if (result.error) throw result.error;
