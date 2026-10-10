@@ -70,15 +70,18 @@
     };
   }
 
-  function createCloudSync({transport, storage, companyId, moduleKey}) {
+  function createCloudSync({transport, storage, userId, companyId, moduleKey}) {
     if (!transport || typeof transport.read !== 'function' || typeof transport.write !== 'function')
       throw new TypeError('A cloud transport with read and write is required');
-    if (!UUID.test(companyId) || !MODULES.has(moduleKey))
-      throw new TypeError('Invalid company or module identifier');
+    if (!UUID.test(userId) || !UUID.test(companyId) || !MODULES.has(moduleKey))
+      throw new TypeError('Valid user, company and module identifiers are required');
     if (!storage || typeof storage.getItem !== 'function' || typeof storage.setItem !== 'function' || typeof storage.removeItem !== 'function')
       throw new TypeError('Browser storage is required to preserve unsaved drafts');
 
-    const draftKey = 'ladenfluss.cloud-draft.v1.' + companyId.toLowerCase() + '.' + moduleKey;
+    // Prevent one signed-in account from silently adopting another account's
+    // unsent drafts on a shared browser. The legacy v1 key is intentionally
+    // never auto-imported; any old data remains untouched for manual recovery.
+    const draftKey = 'ladenfluss.cloud-draft.v2.' + userId.toLowerCase() + '.' + companyId.toLowerCase() + '.' + moduleKey;
     let remote = null;
     let loaded = false;
     let draft = null;
