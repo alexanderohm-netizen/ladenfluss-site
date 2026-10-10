@@ -1,0 +1,55 @@
+name: Cloud SQL isolation tests
+
+on:
+  push:
+    branches: [plan/cloud-beta-hardening-20261010]
+    paths:
+      - 'supabase/drafts/**'
+      - 'tests/cloud-postgres-*.sql'
+      - '.github/workflows/cloud-sql-test.yml'
+  pull_request:
+    paths:
+      - 'supabase/drafts/**'
+      - 'tests/cloud-postgres-*.sql'
+      - '.github/workflows/cloud-sql-test.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-cloud-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cloudtest
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d cloudtest"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: cloudtest
+    steps:
+      - uses: actions/checkout@v4
+      - name: PostgreSQL command line
+        run: command -v psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+      - name: Create isolated test fixture
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/cloud-postgres-fixture.sql
+      - name: Install revision guard draft in test DB only
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/guard_cloud_document_revision.sql
+      - name: Install save RPC draft in test DB only
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/save_cloud_document_if_revision.sql
+      - name: Verify permissions, conflict rejection and history
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/cloud-postgres-assertions.sql
