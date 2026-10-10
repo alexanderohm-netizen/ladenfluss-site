@@ -12,19 +12,37 @@ document.addEventListener('DOMContentLoaded', () => {
   const upload = node('cloudProfileUpload');
   const download = node('cloudProfileDownload');
   const restore = node('cloudProfileRestore');
+  const recoverDraft = node('cloudProfileRecoverDraft');
   const settings = window.LadenflussStoreSettings;
   if (!status || !check || !upload || !download || !settings) return;
 
-  let sync = null, company = null, busy = false;
+  let sync = null, company = null, user = null, busy = false;
   let remoteProfile = null;
   let client = null;
-  const BACKUP_PREFIX = 'ladenfluss.cloud.profile-backup.v1.';
+  const BACKUP_PREFIX = 'ladenfluss.cloud.profile-backup.v2.';
+  function backupKey() { return BACKUP_PREFIX + user.id.toLowerCase() + '.' + company.id.toLowerCase(); }
+  async function verifyCurrentUser() {
+    if (!user || !client) return false;
+    try {
+      const auth = window.LadenflussAuthCore.createAuthCore(client,{origin:window.location.origin});
+      const verified = await auth.validatedUser();
+      if (verified?.id === user.id) return true;
+    } catch (_) { /* Authentication unavailable: fail closed. */ }
+    sync = null;
+    company = null;
+    user = null;
+    remoteProfile = null;
+    controls({checkVisible:false});
+    setStatus('Die Anmeldung hat sich geändert oder ist abgelaufen. Melde dich erneut an; lokale Daten bleiben unverändert.');
+    return false;
+  }
   const setStatus = text => { status.textContent = text; };
   function controls({checkVisible=true,uploadVisible=false,downloadVisible=false}={}) {
     check.hidden = !checkVisible;
     upload.hidden = !uploadVisible;
     download.hidden = !downloadVisible;
-    for (const button of [check, upload, download, restore]) if (button) button.disabled = busy;
+    if (recoverDraft) recoverDraft.hidden = !(sync && !!sync.state().draft);
+    for (const button of [check, upload, download, restore, recoverDraft]) if (button) button.disabled = busy;
   }
   async function run(task) {
     if (busy) return;
@@ -33,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try { await task(); }
     finally {
       busy = false;
-      for (const button of [check,upload,download,restore]) if (button) button.disabled = false;
+      for (const button of [check,upload,download,restore,recoverDraft]) if (button) button.disabled = false;
     }
   }
   function localProfile() { return settings.read(); }
@@ -72,12 +90,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function inspect() {
     await run(async () => {
-      if (!client || !company) return;
+      if (!client || !company || !await verifyCurrentUser()) return;
       setStatus('Die aktuelle Cloud-Version wird gelesen. Lokale Daten bleiben unverändert.');
       try {
         sync = window.LadenflussCloudSync.createCloudSync({
           transport:window.LadenflussCloudSync.createSupabaseTransport(client),
           storage:window.localStorage,
+          userId:user.id,
           companyId:company.id,
           moduleKey:'profile',
         });
@@ -93,10 +112,16 @@ document.addEventListener('DOMContentLoaded', () => {
   check.addEventListener('click', () => {void inspect();});
 
   upload.addEventListener('click', () => {void run(async () => {
-    if (!sync || !company) return;
+    if (!sync || !company || !await verifyCurrentUser()) return;
     let current;
     try { current=localProfile(); }
     catch (_) { setStatus('Das Ladenprofil konnte nicht gelesen werden. Keine Daten übertragen.');return; }
+    const persisted = sync.state().draft;
+    if (persisted && JSON.stringify(persisted.payload) !== JSON.stringify(current)) {
+      controls({uploadVisible:false,downloadVisible:!!remoteProfile});
+      setStatus('Ein noch nicht übertragener Cloud-Entwurf unterscheidet sich von deinem Ladenprofil. Er wurde NICHT überschrieben. Nutze „Gespeicherten Entwurf lokal übernehmen“ oder überprüfe ihn zuerst.');
+      return;
+    }
     if (!window.confirm('Lokales Profil "'+(current.name||'Mein Laden')+
       '" in die Cloud von "'+company.name+'" übertragen? Die dortige Version wird geändert.')) return;
     try {
@@ -117,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });});
 
   download.addEventListener('click', () => {void run(async () => {
-    if (!sync || !company || !remoteProfile) return;
+    if (!sync || !company || !remoteProfile || !await verifyCurrentUser()) return;
     if (!window.confirm('Cloud-Profil von "'+company.name+
       '" lokal übernehmen? Zuvor wird eine Kopie des bisherigen Profils in diesem Browser angelegt.')) return;
     try {
@@ -136,9 +161,14 @@ document.addEventListener('DOMContentLoaded', () => {
         setStatus('Ein gespeicherter Cloud-Entwurf weicht vom aktuellen lokalen Profil ab. Bitte löse diesen Konflikt zuerst, um keine Änderungen zu verlieren.');
         return;
       }
-      const backupKey=BACKUP_PREFIX+company.id;
+      const key=backupKey();
+      if (window.localStorage.getItem(key) !== null &&
+          !window.confirm('Eine frühere lokale Sicherheitskopie ist vorhanden. Soll sie durch die aktuelle Fassung ersetzt werden?')) {
+        setStatus('Die frühere Sicherheitskopie bleibt erhalten. Die Cloud wurde nicht übernommen.');
+        return;
+      }
       const backup={at:new Date().toISOString(),payload:previous};
-      window.localStorage.setItem(backupKey,JSON.stringify(backup));
+      window.localStorage.setItem(key,JSON.stringify(backup));
       settings.save(remoteProfile);
       sync.discardDraft();
       if (restore) restore.hidden = false;
@@ -151,16 +181,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });});
 
   restore?.addEventListener('click', () => {void run(async () => {
-    if (!company) return;
-    const backupKey=BACKUP_PREFIX+company.id;
+    if (!company || !await verifyCurrentUser()) return;
+    const key=backupKey();
     try {
-      const raw=window.localStorage.getItem(backupKey);
+      const raw=window.localStorage.getItem(key);
       if (!raw) return;
       const backup=JSON.parse(raw);
       const restored=settings.validate(backup.payload);
       if (!window.confirm('Lokales Ladenprofil aus der Sicherheitskopie wiederherstellen? Die Cloud bleibt unverändert.')) return;
       settings.save(restored);
-      window.localStorage.removeItem(backupKey);
+      window.localStorage.removeItem(key);
       restore.hidden = true;
       setStatus('Vorheriges lokales Ladenprofil wiederhergestellt. Die Cloud-Version blieb unverändert.');
       window.dispatchEvent(new Event('ladenfluss:profile-updated'));
@@ -169,6 +199,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });});
 
+  recoverDraft?.addEventListener('click', () => {void run(async () => {
+    if (!sync || !company || !await verifyCurrentUser()) return;
+    const draft=sync.state().draft;
+    if (!draft) return;
+    let validated;
+    try { validated=settings.validate(draft.payload); }
+    catch (_) { setStatus('Der gespeicherte Entwurf ist ungültig. Er wurde nicht überschrieben.'); return; }
+    if (!window.confirm('Gespeicherten Cloud-Entwurf lokal übernehmen? Zuvor wird das bestehende Profil gesichert. Es erfolgt kein Cloud-Upload.')) return;
+    try {
+      const current=localProfile();
+      const key=backupKey();
+      if (window.localStorage.getItem(key)!==null &&
+          !window.confirm('Vorhandene lokale Sicherheitskopie mit dem aktuellen Profil ersetzen?')) {
+        setStatus('Die vorhandene Sicherheitskopie bleibt unverändert.');
+        return;
+      }
+      window.localStorage.setItem(key,JSON.stringify({at:new Date().toISOString(),payload:current}));
+      settings.save(validated);
+      if (restore) restore.hidden=false;
+      setStatus('Gespeicherter Cloud-Entwurf lokal übernommen. Prüfe die Werte und bestätige den Cloud-Upload separat.');
+      window.dispatchEvent(new Event('ladenfluss:profile-updated'));
+      controls({uploadVisible:true,downloadVisible:!!remoteProfile});
+    } catch (_) {
+      setStatus('Entwurf konnte nicht lokal übernommen werden. Die Cloud wurde nicht verändert.');
+    }
+  });});
+  
   async function initialize() {
     try {
       if (!window.LadenflussSupabase?.isEnabled()) {
@@ -177,17 +234,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       client=await window.LadenflussSupabase.getClient();
       const auth=window.LadenflussAuthCore.createAuthCore(client,{origin:window.location.origin});
-      const user=await auth.validatedUser();
-      if (!user) {
+      const verifiedUser=await auth.validatedUser();
+      if (!verifiedUser) {
         setStatus('Für den Cloud-Abgleich bitte mit einer bestätigten E-Mail-Adresse anmelden.');
         return;
       }
+      user=verifiedUser;
       company=await auth.firstCompany();
       if (!company) {
         setStatus('Für den Cloud-Abgleich muss zuerst dein Unternehmen eingerichtet sein.');
         return;
       }
-      if (restore && window.localStorage.getItem(BACKUP_PREFIX+company.id)) restore.hidden=false;
+      if (restore && window.localStorage.getItem(backupKey())) restore.hidden=false;
       controls();
       setStatus('Angemeldet für "'+company.name+'". Klicke auf "Cloud-Profil prüfen", um den manuellen Abgleich zu starten.');
     } catch (_) {
