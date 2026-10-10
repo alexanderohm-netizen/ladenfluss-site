@@ -29,8 +29,18 @@
   function configuration() {
     const cfg = root.LadenflussCloudConfig;
     if (!cfg || cfg.enabled !== true) return null;
-    if (typeof cfg.url !== 'string' || !/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(cfg.url) ||
-        typeof cfg.publishableKey !== 'string' || !/^sb_publishable_[a-zA-Z0-9_-]+$/.test(cfg.publishableKey)) {
+    // Hosted: HTTPS Supabase project and publishable key only.
+    // Local E2E: loopback site + loopback DB and disposable CLI anon JWT.
+    const hosted = typeof cfg.url === 'string' &&
+      /^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(cfg.url) &&
+      typeof cfg.publishableKey === 'string' &&
+      /^sb_publishable_[a-zA-Z0-9_-]+$/.test(cfg.publishableKey);
+    const local = ['localhost','127.0.0.1'].includes(root.location?.hostname) &&
+      typeof cfg.url === 'string' &&
+      /^http:\/\/(?:127\.0\.0\.1|localhost):[0-9]{2,5}\/?$/.test(cfg.url) &&
+      typeof cfg.publishableKey === 'string' &&
+      /^eyJ[A-Za-z0-9_.-]{100,}$/.test(cfg.publishableKey);
+    if (!hosted && !local) {
       throw new Error('Cloud-Beta ist noch nicht korrekt konfiguriert.');
     }
     return cfg;
