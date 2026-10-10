@@ -45,5 +45,6 @@
 - `tests/auth-core.test.cjs` prüft Auth-Verhalten ohne echte Konten oder E-Mails.
 - `tests/cloud-profile-ui.test.cjs` prüft manuelle Profil-Uploads, ausdrückliche Importbestätigung, Wiederherstellung und Schutz vor veralteten Cloud-Versionen.
 - `tests/cloud-onboarding-assertions.sql` prüft Firmen- und Filialanlage mit simulierten Auth-Kontexten.
+- `tests/cloud-beta-release-gates.test.cjs` verhindert versehentliche Beta-Aktivierung (Konfigurationsschalter bleibt `false`), kontrolliert das Einbinden der erforderlichen Konto-/Cloud-Skripte und prüft explizite Gerätedatenlöschung und Abbruch bei fehlgeschlagener Abmeldung.
 
 **Aktivierungsentscheidung:** Bis alle Release-Gates erfüllt sind, bleiben echte Registrierungen im Frontend gesperrt und die produktive Supabase-Datenbank unverändert.
