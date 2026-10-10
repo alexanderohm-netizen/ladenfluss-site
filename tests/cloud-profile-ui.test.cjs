@@ -71,7 +71,7 @@ async function makeUI({enabled=true,initialRemote=null}={}) {
     for(let i=0;i<4;i++)await new Promise(resolve=>setImmediate(resolve));
   };
   await flush();
-  return {w,client,calls,flush,remote:()=>remote,close:()=>dom.window.close()};
+  return {w,client,calls,flush,remote:()=>remote,serverUpdate(payload){remote={revision:(remote?.revision||0)+1,payload,updatedAt:'later'};},close:()=>dom.window.close()};
 }
 
 test('inactive cloud beta cannot inspect, upload or overwrite any data',async()=>{
@@ -128,5 +128,18 @@ test('refused confirmation never uploads or overwrites a profile',async()=>{
   assert.equal(t.w.LadenflussStoreSettings.read().name,'Lokales Profil');
   assert.equal(t.remote().payload.name,'Cloud Profil');
   assert.equal(t.calls.filter(x=>Array.isArray(x)).length,0);
+  t.close();
+});
+
+test('cloud import refuses a version changed since the last inspection',async()=>{
+  const t=await makeUI({initialRemote:{revision:2,payload:{name:'Cloud old',days:5,hours:8}}});
+  t.w.document.getElementById('cloudProfileCheck').click();
+  await t.flush();
+  t.serverUpdate({name:'Cloud newer',days:6,hours:10});
+  t.w.document.getElementById('cloudProfileDownload').click();
+  await t.flush();
+  assert.equal(t.w.LadenflussStoreSettings.read().name,'Lokales Profil');
+  assert.match(t.w.document.getElementById('cloudProfileStatus').textContent,/seit der Prüfung geändert/);
+  assert.equal(t.w.localStorage.getItem('ladenfluss.cloud.profile-backup.v1.'+COMPANY),null);
   t.close();
 });
