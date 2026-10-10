@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let sync = null, company = null, user = null, busy = false;
   let remoteProfile = null;
   let client = null;
+  let staleDraftInOtherTab = false;
   const BACKUP_PREFIX = 'ladenfluss.cloud.profile-backup.v2.';
   function backupKey() { return BACKUP_PREFIX + user.id.toLowerCase() + '.' + company.id.toLowerCase(); }
   async function verifyCurrentUser() {
@@ -101,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
           moduleKey:'profile',
         });
         const result=await sync.load();
+        staleDraftInOtherTab = false;
         displayComparison(result);
       } catch (_) {
         controls();
@@ -109,10 +111,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  window.addEventListener('storage', event => {
+    // Another tab in the same browser changed this account's pending cloud draft.
+    // Disable stale actions, retain both copies, require a fresh manual check.
+    if (sync && event.key === sync.draftKey) {
+      staleDraftInOtherTab = true;
+      controls({checkVisible:true,uploadVisible:false,downloadVisible:false});
+      setStatus('Eine andere Ladenfluss-Registerkarte hat den ungespeicherten Cloud-Entwurf verändert. Bitte „Cloud-Profil prüfen“ wählen. Es wurde nichts automatisch überschrieben.');
+    }
+  });
+
   check.addEventListener('click', () => {void inspect();});
 
   upload.addEventListener('click', () => {void run(async () => {
     if (!sync || !company || !await verifyCurrentUser()) return;
+    if (staleDraftInOtherTab) {
+      setStatus('Der Cloud-Entwurf wurde in einer anderen Registerkarte geändert. Bitte erst neu prüfen.');
+      return;
+    }
     let current;
     try { current=localProfile(); }
     catch (_) { setStatus('Das Ladenprofil konnte nicht gelesen werden. Keine Daten übertragen.');return; }
@@ -131,7 +147,11 @@ document.addEventListener('DOMContentLoaded', () => {
       displayComparison(result);
       setStatus('Ladenprofil erfolgreich in der Cloud gespeichert (Version '+result.remote.revision+').');
     } catch (error) {
-      if (error?.code === '40001' || error?.code === '23505' ||
+      if (error?.code === 'DRAFT_CHANGED_EXTERNALLY') {
+        staleDraftInOtherTab = true;
+        controls({checkVisible:true,uploadVisible:false,downloadVisible:false});
+        setStatus('Eine andere Registerkarte hat deinen Cloud-Entwurf verändert. Falls bereits ein Cloud-Schreibvorgang erfolgreich war, bleibt die neue Version bestehen. Bitte neu prüfen; der fremde Entwurf wurde nicht gelöscht.');
+      } else if (error?.code === '40001' || error?.code === '23505' ||
           sync.state().status === 'conflict') {
         displayComparison(sync.state());
         setStatus('Speicherkonflikt: Eine andere Version liegt in der Cloud. Deine lokale Änderung bleibt erhalten; bitte den Abgleich erneut prüfen.');
@@ -142,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });});
 
   download.addEventListener('click', () => {void run(async () => {
-    if (!sync || !company || !remoteProfile || !await verifyCurrentUser()) return;
+    if (!sync || !company || !remoteProfile || !await verifyCurrentUser() || staleDraftInOtherTab) return;
     if (!window.confirm('Cloud-Profil von "'+company.name+
       '" lokal übernehmen? Zuvor wird eine Kopie des bisherigen Profils in diesem Browser angelegt.')) return;
     try {
@@ -200,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });});
 
   recoverDraft?.addEventListener('click', () => {void run(async () => {
-    if (!sync || !company || !await verifyCurrentUser()) return;
+    if (!sync || !company || !await verifyCurrentUser() || staleDraftInOtherTab) return;
     const draft=sync.state().draft;
     if (!draft) return;
     let validated;
