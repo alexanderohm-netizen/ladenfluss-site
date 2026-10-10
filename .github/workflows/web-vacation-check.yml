@@ -3,9 +3,9 @@ name: Web stability checks
 on:
   push:
     branches: [main, develop/v1.5, fix/v1.5.1-stability]
-    paths: ['assets/**', '**/*.html', 'tests/**', 'package*.json', '.github/workflows/web-vacation-check.yml']
+    paths: ['assets/**', '**/*.html', 'supabase/**', 'tests/**', 'package*.json', '.github/workflows/web-vacation-check.yml']
   pull_request:
-    paths: ['assets/**', '**/*.html', 'tests/**', 'package*.json', '.github/workflows/web-vacation-check.yml']
+    paths: ['assets/**', '**/*.html', 'supabase/**', 'tests/**', 'package*.json', '.github/workflows/web-vacation-check.yml']
   workflow_dispatch:
 
 permissions:
@@ -23,7 +23,7 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - name: Check JavaScript syntax
-        run: for file in assets/*.js; do node --check "$file"; done
+        run: for file in assets/*.js supabase/functions/_shared/*.mjs; do node --check "$file"; done
       - run: npm test
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser

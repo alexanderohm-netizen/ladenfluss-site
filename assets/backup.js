@@ -3,8 +3,8 @@
   // Explicit allowlist: never include credentials or unrelated application data.
   const keys=['ladenfluss.store.v1','ladenfluss.history.v1','ladenfluss.team.v1',
     'ladenfluss.pep.weeks.v2','ladenfluss.pep.shifts.v1','ladenfluss.pep.plan-status.v1',
-    'ladenfluss.pep.absences.v1','ladenfluss.urlaubsplaner.v1'];
-  function capture(storage=localStorage,now=new Date()) {
+    'ladenfluss.pep.absences.v1','ladenfluss.urlaubsplaner.v1','ladenfluss.zahlenfluss.v1','ladenfluss.warenfluss.v1'];
+  function capture(storage=(window.LadenflussLocal||localStorage),now=new Date()) {
     const records={};
     for(const key of keys){const raw=storage.getItem(key);if(raw!==null)records[key]=raw;}
     return {format:'ladenfluss-local-backup',version:1,createdAt:now.toISOString(),records};
