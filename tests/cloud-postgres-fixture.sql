@@ -61,7 +61,7 @@ CREATE TABLE public.branches (
 );
 CREATE FUNCTION private.new_company() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
-AS $
+AS $body$
 BEGIN
   IF auth.uid() IS NULL OR NEW.created_by <> auth.uid() THEN
     RAISE insufficient_privilege;
@@ -71,7 +71,7 @@ BEGIN
   INSERT INTO public.branches(company_id,name) VALUES(NEW.id,'Hauptfiliale');
   RETURN NEW;
 END;
-$;
+$body$;
 CREATE TRIGGER new_company AFTER INSERT ON public.companies
 FOR EACH ROW EXECUTE FUNCTION private.new_company();
 
