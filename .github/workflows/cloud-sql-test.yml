@@ -5,6 +5,7 @@ on:
     branches: [plan/cloud-beta-hardening-20261010]
     paths:
       - 'supabase/drafts/**'
+      - 'supabase/checks/**'
       - 'tests/cloud-postgres-*.sql'
       - 'tests/cloud-branch-precondition.sql'
       - 'tests/cloud-onboarding-assertions.sql'
@@ -12,6 +13,7 @@ on:
   pull_request:
     paths:
       - 'supabase/drafts/**'
+      - 'supabase/checks/**'
       - 'tests/cloud-postgres-*.sql'
       - '.github/workflows/cloud-sql-test.yml'
   workflow_dispatch:
@@ -65,3 +67,11 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f tests/cloud-onboarding-assertions.sql
       - name: Verify permissions, conflict rejection and history
         run: psql -X -v ON_ERROR_STOP=1 -f tests/cloud-postgres-assertions.sql
+      - name: Assert all 13 release gate SQL checks pass in isolated Postgres
+        run: |
+          results="$(psql -X -At -v ON_ERROR_STOP=1 -f supabase/checks/cloud-beta-readiness.sql)"
+          echo "$results"
+          printf '%s\n' "$results" | awk -F '|' '
+            { total++; if ($2 != "PASS") bad++ }
+            END { if (total != 13 || bad != 0) exit 1 }
+          '
