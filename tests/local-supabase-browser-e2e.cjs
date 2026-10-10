@@ -62,6 +62,8 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
   const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
   const errors=[];
   let page;
+  let phase='Initialisierung';
+  let secondPage=null;
   try {
     const ctx=await browser.newContext();
     page=await ctx.newPage();
@@ -82,6 +84,7 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
     });
     const email='lf-browser-'+Date.now().toString(36)+'@example.test';
     const password='Secure-browser-password-2026';
+    phase='A: Registrierung';
     await page.goto(base+'/konto',{waitUntil:'domcontentloaded'});
     await page.waitForFunction(() => document.getElementById('authStatus')?.textContent.includes('Sicher anmelden'),null,{timeout:30000});
     await page.locator('[data-account-tab=register]').click();
@@ -94,9 +97,11 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
     assert.equal(await page.locator('#signedInPanel').isVisible(),false);
     const confirmLink=await mailLink(email,'signup');
     const confirmedUrl=await redirectFromEmail(confirmLink);
+    phase='A: E-Mail-Bestätigung';
     await page.goto(confirmedUrl,{waitUntil:'domcontentloaded'});
     await page.locator('#signedInPanel').waitFor({state:'visible',timeout:30000});
     assert.equal(await page.locator('#accountEmail').textContent(),email);
+    phase='A: Unternehmen einrichten';
     await page.goto(base+'/onboarding',{waitUntil:'domcontentloaded'});
     await page.locator('#company_name').fill('Ladenfluss Browser Test');
     await page.locator('#company_type').selectOption('Lebensmittel');
@@ -107,6 +112,7 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
     await page.waitForFunction(()=>document.getElementById('onboardingStatus')?.textContent.includes('Unternehmen angelegt'),
       {timeout:20000});
     // DEVICE A: Save local Ladenprofil through the actual UI and RPC.
+    phase='A: Ladenprofil in Cloud speichern';
     await page.goto(base+'/mein-laden',{waitUntil:'domcontentloaded'});
     page.on('dialog',dialog=>{void dialog.accept();});
     await page.locator('[data-cockpit-tab=backup]').click();
@@ -123,7 +129,9 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
 
     // DEVICE B: Separate browser context, no shared localStorage/auth token.
     const otherContext=await browser.newContext();
+    phase='B: Cloud-Profil herunterladen';
     const other=await otherContext.newPage();
+    secondPage=other;
     other.on('pageerror',error=>errors.push('Device B: '+error.message));
     other.on('dialog',dialog=>{void dialog.accept();});
     await other.route('**/assets/cloud-config.js', async route=>{
@@ -156,6 +164,7 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
     }));
     await other.locator('#cloudProfileCheck').click();
     await other.locator('#cloudProfileUpload').waitFor({state:'visible',timeout:15000});
+    phase='A/B: parallele Profiländerungen';
     // A commits revision 2 first.
     await page.evaluate(() => window.LadenflussStoreSettings.save({
       name:'Browser A Neu',
@@ -178,6 +187,8 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
     assert.equal(draft?.payload?.name,'Browser B Entwurf');
     assert.equal(await other.evaluate(() => window.LadenflussStoreSettings.read().name),'Browser B Entwurf');
     await otherContext.close();
+    secondPage=null;
+    phase='A: Logout und Passwort-Reset';
 
     await page.goto(base+'/konto',{waitUntil:'domcontentloaded'});
     await page.locator('#accountLogout').click();
@@ -188,6 +199,7 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
     await page.waitForFunction(()=>document.getElementById('authStatus')?.textContent.includes('Posteingang prüfen'),
       {timeout:12000});
     const recoveryLink=await mailLink(email,'recovery');
+    phase='A: Passwort-Wiederherstellung';
     await page.goto(await redirectFromEmail(recoveryLink),{waitUntil:'domcontentloaded'});
     await page.locator('#passwordResetForm').waitFor({state:'visible',timeout:30000});
     const changedPassword='Changed-browser-password-2026';
@@ -196,6 +208,7 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
     await page.locator('#passwordResetForm button[type=submit]').click();
     await page.waitForFunction(()=>document.getElementById('passwordResetStatus')?.textContent.includes('Passwort geändert'),
       {timeout:20000});
+    phase='A: Erneut mit neuem Passwort anmelden';
     await page.goto(base+'/konto',{waitUntil:'domcontentloaded'});
     await page.locator('[data-auth-form=login] input[type=email]').fill(email);
     await page.locator('[data-auth-form=login] input[type=password]').fill(changedPassword);
@@ -205,8 +218,16 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
     assert.deepEqual(errors,[],'Browser runtime emitted JavaScript errors');
     await ctx.close();
   } catch(e){
-    let safeStatus='';
-    try {safeStatus=(await page?.locator('#authStatus').textContent())||'';}catch(_){ }
-    throw new Error(e.message+'\nAccount UI status: '+safeStatus.slice(0,300)+'\nBrowser errors: '+errors.join('; ').slice(0,1400));
+    const inspect=async p=>{
+      if(!p)return 'no page';
+      let data={url:p.url(),status:{}};
+      for(const id of ['authStatus','cloudProfileStatus','onboardingStatus','passwordResetStatus']){
+        try{data.status[id]=(await p.locator('#'+id).count())?(await p.locator('#'+id).textContent()).slice(0,240):null;}
+        catch(_){data.status[id]='unavailable';}
+      }
+      return JSON.stringify(data);
+    };
+    throw new Error(e.message+'\nPhase: '+phase+'\nPage A: '+await inspect(page)+
+      '\nPage B: '+await inspect(secondPage)+'\nBrowser errors: '+errors.join('; ').slice(0,1400));
   } finally{await browser.close();}
 });
