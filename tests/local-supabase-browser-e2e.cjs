@@ -106,6 +106,79 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
     await page.locator('#companyOnboarding button[type=submit]').click();
     await page.waitForFunction(()=>document.getElementById('onboardingStatus')?.textContent.includes('Unternehmen angelegt'),
       {timeout:20000});
+    // DEVICE A: Save local Ladenprofil through the actual UI and RPC.
+    await page.goto(base+'/mein-laden',{waitUntil:'domcontentloaded'});
+    page.on('dialog',dialog=>{void dialog.accept();});
+    await page.locator('[data-cockpit-tab=backup]').click();
+    await page.locator('#cloudProfileCheck').waitFor({state:'visible',timeout:20000});
+    await page.evaluate(() => window.LadenflussStoreSettings.save({
+      name:'Cloud Profil Filiale A',type:'Lebensmittel',
+    }));
+    await page.locator('#cloudProfileCheck').click();
+    await page.locator('#cloudProfileUpload').waitFor({state:'visible',timeout:15000});
+    await page.locator('#cloudProfileUpload').click();
+    await page.waitForFunction(
+      () => document.getElementById('cloudProfileStatus')?.textContent.includes('erfolgreich in der Cloud gespeichert'),
+      null,{timeout:20000});
+
+    // DEVICE B: Separate browser context, no shared localStorage/auth token.
+    const otherContext=await browser.newContext();
+    const other=await otherContext.newPage();
+    other.on('pageerror',error=>errors.push('Device B: '+error.message));
+    other.on('dialog',dialog=>{void dialog.accept();});
+    await other.route('**/assets/cloud-config.js', async route=>{
+      await route.fulfill({status:200,contentType:'application/javascript',
+        body:'window.LadenflussCloudConfig=Object.freeze('+JSON.stringify({
+          enabled:true,url:config.url,publishableKey:config.key,
+        })+');'});
+    });
+    await other.goto(base+'/konto',{waitUntil:'domcontentloaded'});
+    await other.waitForFunction(
+      () => document.getElementById('authStatus')?.textContent.includes('Sicher anmelden'),
+      null,{timeout:30000});
+    await other.locator('[data-auth-form=login] input[type=email]').fill(email);
+    await other.locator('[data-auth-form=login] input[type=password]').fill(password);
+    await other.locator('[data-auth-form=login] button[type=submit]').click();
+    await other.locator('#signedInPanel').waitFor({state:'visible',timeout:20000});
+    await other.goto(base+'/mein-laden',{waitUntil:'domcontentloaded'});
+    await other.locator('[data-cockpit-tab=backup]').click();
+    await other.locator('#cloudProfileCheck').waitFor({state:'visible',timeout:20000});
+    await other.locator('#cloudProfileCheck').click();
+    await other.locator('#cloudProfileDownload').waitFor({state:'visible',timeout:15000});
+    await other.locator('#cloudProfileDownload').click();
+    await other.waitForFunction(
+      () => window.LadenflussStoreSettings?.read().name==='Cloud Profil Filiale A',
+      null,{timeout:15000});
+
+    // Both devices read revision 1; B has an unsaved local change.
+    await other.evaluate(() => window.LadenflussStoreSettings.save({
+      name:'Browser B Entwurf',
+    }));
+    await other.locator('#cloudProfileCheck').click();
+    await other.locator('#cloudProfileUpload').waitFor({state:'visible',timeout:15000});
+    // A commits revision 2 first.
+    await page.evaluate(() => window.LadenflussStoreSettings.save({
+      name:'Browser A Neu',
+    }));
+    await page.locator('#cloudProfileCheck').click();
+    await page.locator('#cloudProfileUpload').waitFor({state:'visible',timeout:15000});
+    await page.locator('#cloudProfileUpload').click();
+    await page.waitForFunction(
+      () => document.getElementById('cloudProfileStatus')?.textContent.includes('Version 2'),
+      null,{timeout:20000});
+    // Stale B must fail without losing its local unsent draft.
+    await other.locator('#cloudProfileUpload').click();
+    await other.waitForFunction(
+      () => document.getElementById('cloudProfileStatus')?.textContent.includes('Speicherkonflikt'),
+      null,{timeout:15000});
+    const draft=await other.evaluate(() => {
+      const keys=Object.keys(localStorage).filter(key=>key.startsWith('ladenfluss.cloud-draft.v2.'));
+      return keys.length===1 ? JSON.parse(localStorage.getItem(keys[0])) : null;
+    });
+    assert.equal(draft?.payload?.name,'Browser B Entwurf');
+    assert.equal(await other.evaluate(() => window.LadenflussStoreSettings.read().name),'Browser B Entwurf');
+    await otherContext.close();
+
     await page.goto(base+'/konto',{waitUntil:'domcontentloaded'});
     await page.locator('#accountLogout').click();
     await page.waitForFunction(()=>document.getElementById('authStatus')?.textContent.includes('Abgemeldet'),
