@@ -20,6 +20,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (error?.code === 'invalid_credentials') return 'Anmeldung fehlgeschlagen. Prüfe E-Mail-Adresse und Passwort.';
     if (error?.code === 'email_not_confirmed') return 'Bitte bestätige zuerst deine E-Mail-Adresse.';
     if (error?.code === 'weak_password') return 'Bitte wähle ein stärkeres Passwort mit mindestens 12 Zeichen.';
+    if (error?.code === 'password_mismatch') return 'Die beiden Passwörter stimmen nicht überein.';
+    if (['otp_expired','token_expired','invalid_otp'].includes(error?.code)) return 'Der Bestätigungscode ist ungültig oder abgelaufen. Bitte fordere einen neuen Code an.';
+    if (error?.code === 'otp_disabled') return 'Die Bestätigung per E-Mail-Code ist derzeit nicht verfügbar. Nutze den Link oder fordere einen neuen Code an.';
     if (error?.code === 'same_password') return 'Bitte wähle ein anderes Passwort als dein bisheriges.';
     if (error?.code === 'recovery_required') return 'Fordere bitte einen neuen Link zum Zurücksetzen an.';
     if (error?.status === 429 || error?.code === 'over_email_send_rate_limit') return 'Zu viele Versuche. Bitte versuche es später erneut.';
@@ -44,6 +47,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   }
+  function showVerification(email = '') {
+    panel('verify');
+    for (const id of ['verifyForm','resendForm']) {
+      const input = $(id).elements.email;
+      if (email) input.value = email;
+    }
+  }
   function clearAccount() {
     ++generation;
     $('signedIn').hidden = true; $('companyDetails').hidden = true; $('recoveryPanel').hidden = true;
@@ -63,6 +73,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       throw error;
     }
     user = error ? null : data.user;
+    // A disabled confirmation requirement must not silently become a customer login.
+    if (user && !user.email_confirmed_at) {
+      const address = user.email || '';
+      user = null;
+      $('signedOut').hidden = false;
+      showVerification(address);
+      message('Bitte bestätige zuerst deine E-Mail-Adresse. Du kannst den sechsstelligen Code eingeben oder einen neuen anfordern.');
+      return;
+    }
     $('signedOut').hidden = !!user || recovery;
     $('recoveryPanel').hidden = !recovery || !user;
     if (!user) { recovery = false; $('signedOut').hidden = false; message('Melde dich an oder erstelle dein Konto.'); return; }
@@ -98,15 +117,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
   bindForm('loginForm', async data => {
-    const result = await client.auth.signInWithPassword({ email: data.get('email').trim(), password: data.get('password') });
+    const email = data.get('email').trim();
+    const result = await client.auth.signInWithPassword({ email, password: data.get('password') });
+    if (result.error?.code === 'email_not_confirmed') {
+      showVerification(email);
+      message('Deine E-Mail-Adresse ist noch nicht bestätigt. Gib den Code ein oder fordere eine neue E-Mail an.');
+      return;
+    }
     if (result.error) throw result.error;
     await refresh();
   });
   bindForm('registerForm', async data => {
-    const result = await client.auth.signUp({ email: data.get('email').trim(), password: data.get('password'), options: { emailRedirectTo: location.origin + '/konto' } });
+    const email = data.get('email').trim();
+    if (data.get('password') !== data.get('passwordConfirm')) throw { code: 'password_mismatch' };
+    const result = await client.auth.signUp({ email, password: data.get('password'),
+      options: { emailRedirectTo: location.origin + '/konto' } });
     if (result.error) throw result.error;
-    if (result.data.session) await refresh();
-    else message('Prüfe dein E-Mail-Postfach. Falls die Registrierung möglich ist, erhältst du einen Bestätigungslink. Öffne ihn in diesem Browser.');
+    if (result.data?.session && result.data?.user?.email_confirmed_at) {
+      await refresh();
+      return;
+    }
+    $('signedOut').hidden = false;
+    showVerification(email);
+    message('Wenn die Registrierung möglich ist, erhältst du einen Bestätigungslink und einen sechsstelligen Code per E-Mail.');
+  });
+  bindForm('verifyForm', async data => {
+    const email = data.get('email').trim(), token = String(data.get('token')).trim();
+    if (!/^[0-9]{6}$/.test(token)) throw { code: 'invalid_otp' };
+    const result = await client.auth.verifyOtp({ email, token, type: 'email' });
+    if (result.error) throw result.error;
+    await refresh();
+    if ($('signedIn').hidden) {
+      showVerification(email);
+      message('Die Bestätigung wurde verarbeitet. Bitte melde dich anschließend mit deinem Passwort an.');
+    } else message('Deine E-Mail-Adresse wurde bestätigt. Dein Kundenkonto ist jetzt angemeldet.');
+  });
+  bindForm('resendForm', async data => {
+    const email = data.get('email').trim();
+    const result = await client.auth.resend({ type: 'signup', email,
+      options: { emailRedirectTo: location.origin + '/konto' } });
+    if (result.error) throw result.error;
+    showVerification(email);
+    message('Falls die Adresse noch bestätigt werden muss, erhältst du eine neue E-Mail. Prüfe gegebenenfalls deinen Spamordner.');
   });
   bindForm('resetForm', async data => {
     const result = await client.auth.resetPasswordForEmail(data.get('email').trim(), { redirectTo: location.origin + '/konto?recovery=1' });
