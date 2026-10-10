@@ -7,3 +7,6 @@
 .account-form button:disabled,.account-session button:disabled{cursor:wait;opacity:.55}
 .account-form .check-row a{color:var(--wine);text-underline-offset:3px}
 .auth-status a{color:var(--wine);font-weight:800;margin-top:4px}
+
+.account-privacy-note{font-size:12px;line-height:1.6;color:var(--muted);max-width:38rem;margin:8px 0 0}
+#accountLogoutClear{display:inline-block;font-size:12px;text-decoration:underline;text-underline-offset:3px;color:var(--wine);width:max-content;max-width:100%}
