@@ -123,6 +123,14 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const previous=localProfile();
       const current=sync.state();
+      // Never import a stale cloud revision when someone else edited it after inspection.
+      const latest=await window.LadenflussCloudSync.createSupabaseTransport(client)
+        .read({companyId:company.id,moduleKey:'profile'});
+      if (!latest || !current.remote || latest.revision !== current.remote.revision) {
+        controls();
+        setStatus('Die Cloud-Version hat sich seit der Prüfung geändert. Bitte zunächst den Cloud-Abgleich erneut starten.');
+        return;
+      }
       const draft=current.draft && current.draft.payload;
       if (draft && !same(draft,previous)) {
         setStatus('Ein gespeicherter Cloud-Entwurf weicht vom aktuellen lokalen Profil ab. Bitte löse diesen Konflikt zuerst, um keine Änderungen zu verlieren.');
