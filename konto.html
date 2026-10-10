@@ -19,7 +19,7 @@
 <div class="account-tabs" role="tablist"><button class="active" type="button" data-account-tab="login">Anmelden</button><button type="button" data-account-tab="register">Konto erstellen</button></div>
 <div data-account-panel="login"><span class="eyebrow">Willkommen zurück</span><h2 id="accountTitle">Bei Ladenfluss anmelden</h2><form class="account-form" data-auth-form="login"><label>E-Mail-Adresse<input type="email" autocomplete="email" required placeholder="name@unternehmen.de"></label><label>Passwort<input type="password" autocomplete="current-password" required minlength="8" placeholder="••••••••"></label><button class="btn btn-primary" type="submit">Anmelden →</button><button class="text-button" type="button" data-reset>Passwort vergessen?</button></form></div>
 <div data-account-panel="register" hidden><span class="eyebrow">In wenigen Schritten starten</span><h2>Kundenkonto erstellen</h2><form class="account-form" data-auth-form="register"><label>E-Mail-Adresse<input type="email" autocomplete="email" required placeholder="name@unternehmen.de"></label><label>Passwort<input type="password" autocomplete="new-password" required minlength="8" placeholder="Mindestens 8 Zeichen"></label><label class="check-row"><input type="checkbox" required><span>Ich habe die <a href="/datenschutz" target="_blank" rel="noopener noreferrer">Datenschutzbestimmungen</a> gelesen und akzeptiere sie.</span></label><button class="btn btn-primary" type="submit">Konto erstellen →</button></form></div>
-<div id="signedInPanel" class="account-session" hidden><span class="eyebrow">Dein Ladenfluss-Konto</span><h2>Willkommen zurück!</h2><p id="accountEmail"></p><a class="btn btn-primary" id="accountNext" href="/onboarding">Unternehmen einrichten →</a><button class="text-button" id="accountLogout" type="button">Sicher abmelden</button></div>
+<div id="signedInPanel" class="account-session" hidden><span class="eyebrow">Dein Ladenfluss-Konto</span><h2>Willkommen zurück!</h2><p id="accountEmail"></p><a class="btn btn-primary" id="accountNext" href="/onboarding">Unternehmen einrichten →</a><button class="text-button" id="accountLogout" type="button">Sicher abmelden</button><p class="account-privacy-note">Auf gemeinsam genutzten Geräten bleiben lokale Ladenfluss-Daten auch nach dem normalen Abmelden erhalten. Du kannst sie bewusst vollständig löschen.</p><button class="text-button" id="accountLogoutClear" type="button">Abmelden und lokale Ladenfluss-Daten löschen</button></div>
 <div class="auth-status" id="authStatus" role="status" aria-live="polite"><strong>Cloud-Beta in Vorbereitung</strong><span>Die sichere Anmeldung wird erst aktiviert, wenn alle Beta-Voraussetzungen geprüft wurden.</span></div>
 </section>
 </main>
@@ -27,5 +27,6 @@
 <script src="/assets/site.js" defer></script><script src="/assets/cloud-config.js" defer></script>
 <script src="/assets/supabase-browser.js" defer></script>
 <script src="/assets/auth-core.js" defer></script>
+<script src="/assets/local-privacy.js" defer></script>
 <script src="/assets/account.js" defer></script>
 </body></html>
