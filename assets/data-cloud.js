@@ -70,9 +70,12 @@ async function action(direction){
   if(api.baseline(s.module,storage)!==s.baseline)throw Error('Lokale Daten wurden nach der Vorschau verändert. Bitte neu laden.');
   if(direction==='upload'){
    if(!s.local)throw Error('Keine Daten auf diesem Gerät zum Hochladen.');
-   await result(client.rpc('save_cloud_document',{target:s.companyId,requested:s.module,document:api.clean(s.module,s.local),expected_revision:s.remote?.revision||0}));
+   const expected=s.remote?.revision||0;
+   const saved=await result(client.rpc('save_cloud_document',{target:s.companyId,requested:s.module,document:api.clean(s.module,s.local),expected_revision:expected}));
    if(current!==generation)return;
+   if(!saved||saved.revision!==expected+1)throw Error('Die Cloud hat keine gültige Speicherbestätigung geliefert. Bitte vor einem erneuten Versuch den Stand neu laden.');
    if(await load(s.companyId))tell('Cloud-Sicherung gespeichert. Änderungen werden nicht automatisch synchronisiert.');
+   else tell('Die Cloud hat die Sicherung bestätigt (Stand '+saved.revision+'). Der neue Stand konnte anschließend nicht erneut geladen werden. Bitte lade ihn manuell zur Kontrolle.');
   }else{
    if(!s.remote)throw Error('Noch kein Cloud-Stand vorhanden.');
    const latest=await result(client.from('cloud_documents').select('revision').eq('company_id',s.companyId).eq('module_key',s.module).maybeSingle());
