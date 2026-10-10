@@ -10,8 +10,9 @@ async function setup(options={}){
  await tick();w.TextEncoder=TextEncoder;w.AbortSignal=AbortSignal;
  let user={id:'u1',email_confirmed_at:'2026-10-10'},listener,revision=3;
  const calls=[],reads=[];
- let remote=options.remote===undefined?{payload:NUMBERS,revision,updated_at:'2026-10-10T08:00:00Z'}:options.remote;
- if(options.local!==false)w.localStorage.setItem('ladenfluss.zahlenfluss.v1',JSON.stringify(NUMBERS));
+ let remote=options.remote===undefined?{payload:options.module==='profile'?{name:'Cloud-Shop',type:'Lebensmittel',state:'HE'}:NUMBERS,revision,updated_at:'2026-10-10T08:00:00Z'}:options.remote;
+ if(options.local!==false){w.localStorage.setItem('ladenfluss.zahlenfluss.v1',JSON.stringify(NUMBERS));if(options.module==='profile')w.localStorage.setItem('ladenfluss.store.v1',JSON.stringify({name:'Lokal-Shop',type:'Lebensmittel',state:'HE'}));}
+ w.document.getElementById('dataCloudModule').value=options.module||'zahlenfluss';
  const client={
   auth:{getUser:()=>Promise.resolve({data:{user}}),onAuthStateChange:fn=>{listener=fn;}},
   from(table){
@@ -31,7 +32,7 @@ async function setup(options={}){
   }
  };
  w.LadenflussCloud={getClient:()=>client};
- for(const file of ['zahlenfluss-store','warenfluss-store','restore-core','data-cloud-core','data-cloud'])w.eval(fs.readFileSync('assets/'+file+'.js','utf8'));
+ for(const file of ['planning-engine','de-holidays','store-settings','zahlenfluss-store','warenfluss-store','restore-core','data-cloud-core','data-cloud'])w.eval(fs.readFileSync('assets/'+file+'.js','utf8'));
  w.document.dispatchEvent(new w.Event('DOMContentLoaded'));await tick();
  const $=id=>w.document.getElementById(id);
  return {w,dom,$,calls,reads,agree(){ $('dataCloudConsent').checked=true;$('dataCloudConsent').dispatchEvent(new w.Event('change'));},
@@ -89,4 +90,21 @@ test('The core allowlists saved fields and forbids oversize or unknown modules',
  assert.throws(()=>api.clean('pep',NUMBERS),/Unbekannter/);
  assert.equal(api.clean('zahlenfluss',{...NUMBERS,privateField:'skip'}).privateField,undefined);
  assert.throws(()=>api.clean('warenfluss',{...STOCK,extra:'x'.repeat(600000)}),/500 KB/);
+});
+
+test('Free Ladenprofil Cloud works without paid entitlement and preserves other modules',async t=>{
+ const a=await setup({module:'profile',unpaid:true});t.after(()=>a.dom.window.close());
+ assert.equal(a.$('dataCloudWorkspace').hidden,false);
+ assert.equal(a.reads.includes('module_access'),false);
+ const before=a.w.localStorage.getItem('ladenfluss.zahlenfluss.v1');
+ a.agree();await a.click('dataCloudApply');
+ assert.equal(JSON.parse(a.w.localStorage.getItem('ladenfluss.store.v1')).name,'Cloud-Shop');
+ assert.equal(a.w.localStorage.getItem('ladenfluss.zahlenfluss.v1'),before);
+ assert.equal(a.calls.length,0);
+});
+test('Profile cloud drops unknown keys and rejects invalid values',async t=>{
+ const a=await setup({module:'profile',unpaid:true});t.after(()=>a.dom.window.close());
+ const c=a.w.LadenflussDataCloud;
+ assert.equal(c.clean('profile',{name:'Mein Laden',mystery:'nope'}).mystery,undefined);
+ assert.throws(()=>c.clean('profile',{name:'Mein Laden',days:999}),/Öffnungszeiten/);
 });
