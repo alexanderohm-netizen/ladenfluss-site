@@ -2,7 +2,30 @@
 (function (root) {
   'use strict';
   let clientPromise;
+  // Transient, in-memory only: a normal active session is NOT proof of
+  // a password-recovery link. Listen before the client handles redirect events.
+  let recoveryUserId = null;
+  const recoveryListeners = new Set();
   const SDK_URL = 'https://esm.sh/@supabase/supabase-js@2.117.2';
+
+  function applyAuthEvent(event, session) {
+    if (event === 'PASSWORD_RECOVERY') {
+      recoveryUserId = typeof session?.user?.id === 'string' ? session.user.id : null;
+    } else if (event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
+      recoveryUserId = null;
+    } else return;
+    for (const listener of recoveryListeners) listener(recoveryUserId);
+  }
+  function subscribeRecovery(listener) {
+    if (typeof listener !== 'function') throw new TypeError('Recovery listener must be a function');
+    recoveryListeners.add(listener);
+    return () => recoveryListeners.delete(listener);
+  }
+  function clearRecovery() {
+    recoveryUserId = null;
+    for (const listener of recoveryListeners) listener(null);
+  }
+
   function configuration() {
     const cfg = root.LadenflussCloudConfig;
     if (!cfg || cfg.enabled !== true) return null;
@@ -17,11 +40,17 @@
     const cfg = configuration();
     if (!cfg) throw new Error('Cloud-Beta ist noch nicht freigeschaltet.');
     if (!clientPromise) {
-      clientPromise = import(SDK_URL).then(({createClient}) => createClient(cfg.url, cfg.publishableKey, {
-        auth: {autoRefreshToken:true, persistSession:true, detectSessionInUrl:true, flowType:'pkce'},
-      })).catch(e => { clientPromise = null; throw e; });
+      clientPromise = import(SDK_URL).then(({createClient}) => {
+        const client = createClient(cfg.url, cfg.publishableKey, {
+          auth: {autoRefreshToken:true, persistSession:true, detectSessionInUrl:true, flowType:'pkce'},
+        });
+        // Register synchronously immediately after createClient, before its
+        // asynchronous redirect initialization can emit PASSWORD_RECOVERY.
+        client.auth.onAuthStateChange((event, session) => applyAuthEvent(event, session));
+        return client;
+      }).catch(e => { clientPromise = null; clearRecovery(); throw e; });
     }
     return clientPromise;
   }
-  root.LadenflussSupabase = Object.freeze({isEnabled,getClient});
+  root.LadenflussSupabase = Object.freeze({isEnabled,getClient,subscribeRecovery,clearRecovery,getRecoveryUserId:()=>recoveryUserId});
 })(window);
