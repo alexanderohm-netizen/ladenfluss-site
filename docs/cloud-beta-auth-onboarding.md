@@ -11,6 +11,8 @@
 - `passwort-zuruecksetzen.html`/`assets/password-reset.js`: neue Passwortvergabe mit mindestens zwölf Zeichen; Sitzung nach erfolgreichem Reset abmelden.
 - `onboarding.html`/`assets/onboarding.js`: verifizierte Konten legen Unternehmen und erste Filiale über **eine** Datenbank-RPC an; bei deaktivierter Beta keine Writes.
 - `mein-laden.html`/`assets/cloud-profile.js`: **manueller Ladenprofil-Abgleich** im Reiter Datensicherung. Bestehende Daten werden erst nach bewusster Bestätigung hochgeladen oder lokal übernommen. Bei Cloud-Import wird eine Sicherung des vorherigen Profils im Browser erstellt, die über die Oberfläche zurückgespielt werden kann. Vor Import wird die Revision erneut gelesen.
+- Cloud-Entwürfe liegen seit der Sicherheitsüberarbeitung ausschließlich unter `ladenfluss.cloud-draft.v2.<userId>.<companyId>.<moduleKey>`. Backup-Schlüssel enthalten ebenfalls Benutzer und Unternehmen; ein Benutzerwechsel sperrt die alte Cloud-Session-Oberfläche. Ein ungesendeter Entwurf wird nie automatisch von neuem lokalem Profilinhalt ersetzt. Der Händler kann den Entwurf bewusst lokal wiederherstellen und separat hochladen.
+- `konto.html`/`assets/local-privacy.js`: optionaler separater Befehl **Abmelden und lokale Ladenfluss-Daten löschen**. Nach ausdrücklicher Bestätigung werden alle lokalen Schlüssel mit `ladenfluss.`-Präfix gelöscht; fremde lokale Schlüssel bleiben unberührt. Normales Abmelden bewahrt lokale Daten.
 - `supabase/drafts/create_company_onboarding.sql`: SQL-Entwurf für atomare Einrichtung unter Nutzung des bereits vorhandenen Triggers `private.new_company`. Maximal ein Unternehmen pro Gründer während der Beta. Keine direkten INSERT-/UPDATE-Rechte auf den Tabellen erforderlich.
 
 ## Vor Aktivierung zwingend
@@ -31,7 +33,8 @@
 
 - Im Entwicklungszweig ist der **erste, manuell ausgelöste Cloud-Abgleich für Ladenprofil und Richtwerte** integriert, aber deaktiviert. PEP/Urlaubsplaner/Warenfluss/Zahlenfluss speichern weiterhin **lokal**. Ohne erfolgreiche Auth-/RPC-Konfiguration erfolgt keine geräteübergreifende Synchronisierung.
 - Der Passwort-Reset benötigt freigegebene Redirects und funktionierende E-Mail-Verifizierung.
-- Dokument-Drafts werden bisher nach Company/Modul lokal gespeichert; vor sensiblen Personal-/HR-Daten auf gemeinsam genutzten Geräten zusätzlich Benutzertrennung, Logout-Verhalten und Löschkonzept festlegen.
+- Browserdaten aus den frei nutzbaren Werkzeugen (`ladenfluss.store.v1`, PEP, Team, Urlaub) sind **weiterhin geräteweit im Origin** gespeichert und nicht automatisch nach Benutzer getrennt. Nutzer auf gemeinsam genutzten Geräten können solche Daten sehen, solange sie nicht explizit gelöscht wurden. Deshalb gibt es einen gesonderten, bestätigungspflichtigen vollständigen Löschweg. Vor Speicherung echter Personal-/HR-Daten in der Cloud ist eine durchgängige Mandantentrennung aller lokalen Fachmodule erforderlich.
+- Alte `ladenfluss.cloud-draft.v1.*`-Schlüssel werden bewusst **nicht automatisch in fremde neue Konten übernommen**. Sie bleiben lesbar im Browserspeicher, bis sie ausdrücklich exportiert oder über die bestätigte lokale Gerätedatenlöschung entfernt werden.
 - Die erste Filiale wird atomar angelegt. Weitere Filialen, Einladungen, Mitarbeitendenprofile und Paywalls folgen nach Beta-Grundlage.
 - Eine Staging-/Testumgebung kann zusätzliche Kosten verursachen; keine kostenpflichtige Ressource wurde ohne Zustimmung erstellt.
 
