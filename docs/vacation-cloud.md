@@ -23,3 +23,16 @@ Ein zusätzlicher Browser-Test mit echtem Supabase-SDK und CSP prüft Handy-/Des
 Die Tests ersetzen den Cloud-Dienst durch kontrollierte Antworten; sie beweisen keinen abgeschlossenen realen E-Mail-/Login-/Zweitgerätetest. Vor Freigabe: echte Registrierung/Bestätigung, Save auf Gerät A, Load auf Gerät B, paralleler Konflikt und Firmenisolation prüfen; Datenschutz-/Aufbewahrungs-/Löschprozess vervollständigen.
 
 Am 10. Oktober erneut geprüft: Supabase-Migrationsliste enthält nur `20261008061158 cloud_foundation`. Der abgebrochene Billing-Migrationsversuch hat laut Migrationsliste keine neue Migration registriert. Billing bleibt gesonderte Release-Voraussetzung.
+
+## Erweiterung: Sicherungsverlauf und Schutz vor veralteten Ständen (10. Oktober 2026)
+
+- Der Urlaubsplan nutzt jetzt die bereits vorhandene, RLS-geschützte Tabelle `cloud_document_history`. Bei neuen Uploads bewahrt der Server automatisch bis zu fünf frühere Revisionen auf. Der Client lädt diese Revisionen nur für die autorisierte Firma und das Modul `vacation`.
+- Frühere Revisionen können einzeln heruntergeladen oder **erst nach aktiver Zustimmung ausschließlich auf dieses Gerät** übernommen werden. Die Cloud wird beim lokalen Restore nicht zurückgesetzt.
+- Vor **jeder** lokalen Wiederherstellung, auch von einer älteren Revision, liest der Browser die aktuelle Remote-Revision erneut. Bei Abweichung wird die Operation gestoppt und die Vorschau muss neu geladen werden.
+- Der Cloud-Upload gilt nur bei einer eindeutig bestätigten Server-Antwort mit der exakt erwarteten Folge-Revision als bestätigt. Bei unklaren Antworten niemals unbesehen erneut speichern.
+- Auch bei einer fehlgeschlagenen Kontrollabfrage nach einer bestätigten Speicherung wird dieser Unterschied ausdrücklich angezeigt.
+- Zusätzliche Funktionstests prüfen historischen Restore, keine Remote-Schreiboperation, Revisionskonflikte und ungültige Bestätigungen. Der Browser-Test prüft den historischen Restore mit dem ausgelieferten Supabase-JavaScript-SDK und simulierten Serverantworten.
+- **Weiterhin bewusst keine automatische Synchronisierung:** Bis eine konfliktfeste gemeinsame Mitarbeiter-/Urlaubsdatenbasis besteht, bleiben die Übertragungen manuell. Nutzer müssen ausdrücklich wählen, welcher Stand übernommen wird.
+
+## Mailversand-Status
+Die Domain `ladenfluss.de` wurde im verbundenen Resend-Konto bestätigt: DKIM, SPF-TXT, send-MX und rsend-CNAME sind **verified**. Die Einbindung als SMTP in Supabase Auth und der echte Registrierungs-/Zweitgeräte-Livetest bleiben gesonderte Freigabebedingungen. Der SMTP-Schlüssel gehört ausschließlich ins geschützte Supabase-Dashboard, niemals in die Quelltexte.
