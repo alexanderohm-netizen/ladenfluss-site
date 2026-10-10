@@ -14,6 +14,7 @@ const defaultLocal={name:'Lokales Profil',days:6,hours:9};
 async function makeUI({enabled=true,initialRemote=null}={}) {
   const html=[
     '<p id="cloudProfileStatus"></p>',
+    '<div id="cloudProfileDiff" hidden></div>',
     '<button id="cloudProfileCheck" hidden>Prüfen</button>',
     '<button id="cloudProfileUpload" hidden>Hochladen</button>',
     '<button id="cloudProfileDownload" hidden>Übernehmen</button>',
@@ -228,5 +229,33 @@ test('silent cross-tab mutation is still detected synchronously before RPC uploa
   assert.equal(t.calls.filter(x=>Array.isArray(x)).length,0,'No RPC may fire');
   assert.equal(JSON.parse(t.w.localStorage.getItem(key)).payload.name,'Fremder Entwurf');
   assert.match(d.getElementById('cloudProfileStatus').textContent,/andere Registerkarte/);
+  t.close();
+});
+
+
+test('profile comparison shows changed fields with no HTML injection',async()=>{
+  const t=await makeUI({initialRemote:{revision:4,payload:{
+    name:'Cloud <img src=x onerror=alert(1)>',days:4,hours:9,
+  }}});
+  const d=t.w.document;
+  d.getElementById('cloudProfileCheck').click();await t.flush();
+  const cmp=d.getElementById('cloudProfileDiff');
+  assert.equal(cmp.hidden,false);
+  assert.match(cmp.textContent,/Profilvergleich · Cloud-Version 4/);
+  assert.match(cmp.textContent,/Ladenname/);
+  assert.match(cmp.textContent,/Öffnungstage/);
+  assert.match(cmp.textContent,/Cloud <img src=x onerror=alert\(1\)>/);
+  assert.equal(cmp.querySelector('img'),null);
+  assert.equal(cmp.querySelectorAll('tbody tr').length,2);
+  assert.equal(t.remote().revision,4);
+  t.close();
+});
+
+test('cloud comparison remains hidden before opt-in check and on absent document',async()=>{
+  const t=await makeUI();
+  const d=t.w.document;
+  assert.equal(d.getElementById('cloudProfileDiff').hidden,true);
+  d.getElementById('cloudProfileCheck').click();await t.flush();
+  assert.equal(d.getElementById('cloudProfileDiff').hidden,true);
   t.close();
 });
