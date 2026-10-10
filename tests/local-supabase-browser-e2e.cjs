@@ -95,8 +95,8 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
     await page.locator('#company_name').fill('Ladenfluss Browser Test');
     await page.locator('#company_type').selectOption('Lebensmittel');
     await page.locator('#branch_name').fill('Testfiliale');
-    await page.locator('#branch_days').selectOption('6');
-    await page.locator('#branch_hours').selectOption('9.5');
+    await page.locator('#branch_days').fill('6');
+    await page.locator('#branch_hours').fill('9.5');
     await page.locator('#companyOnboarding button[type=submit]').click();
     await page.waitForFunction(()=>document.getElementById('onboardingStatus')?.textContent.includes('Unternehmen angelegt'),
       {timeout:20000});
