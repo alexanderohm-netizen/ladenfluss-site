@@ -87,6 +87,7 @@
     let draft = null;
     let status = 'idle';
     let pendingSave = null;
+    let draftRaw = null;
 
     function validRemote(row) {
       if (row === null) return null;
@@ -96,20 +97,35 @@
     }
     function restoreDraft() {
       const raw = storage.getItem(draftKey);
-      if (raw === null) return null;
+      if (raw === null) { draftRaw = null; return null; }
       try {
         const item = JSON.parse(raw);
         if (!item || !Number.isSafeInteger(item.baseRevision) || item.baseRevision < 0)
           throw new Error('Invalid base revision');
-        return {baseRevision:item.baseRevision, payload:encodedPayload(item.payload)};
+        const restored = {baseRevision:item.baseRevision, payload:encodedPayload(item.payload)};
+        draftRaw = raw;
+        return restored;
       } catch (e) { throw cloudError('INVALID_LOCAL_DRAFT', 'Local draft is corrupt; it has not been overwritten', e); }
     }
+    function ensureDraftUnmodified() {
+      let stored;
+      try { stored = storage.getItem(draftKey); }
+      catch (e) { throw cloudError('DRAFT_PERSISTENCE_FAILED', 'Could not inspect local draft before saving', e); }
+      // The tab that last wrote this draft owns the current snapshot. If another
+      // tab has changed it, do NOT erase or replace its unsent data.
+      if (stored !== draftRaw)
+        throw cloudError('DRAFT_CHANGED_EXTERNALLY', 'Another tab changed the local draft; reload to review it');
+    }
     function persist(next) {
-      // NEVER mutate memory before successful local persistence.
+      // Browser localStorage has no cross-tab atomic compare-and-swap, but this
+      // synchronous fence prevents stale writes in the ordinary sequential case.
+      ensureDraftUnmodified();
+      const json = next ? JSON.stringify(next) : null;
       try {
-        if (next) storage.setItem(draftKey, JSON.stringify(next));
+        if (next) storage.setItem(draftKey, json);
         else storage.removeItem(draftKey);
       } catch (e) { throw cloudError('DRAFT_PERSISTENCE_FAILED', 'Could not safely persist local draft', e); }
+      draftRaw = json;
       draft = next;
     }
     function state() {
@@ -163,6 +179,8 @@
       const creating = !remote && snapshot.baseRevision === 0;
       if (creating && typeof transport.create !== 'function')
         throw cloudError('CREATE_UNAVAILABLE', 'Cloud document creation API is unavailable');
+      // Reject stale tabs BEFORE sending a network write.
+      ensureDraftUnmodified();
       status = 'saving';
       pendingSave = (async () => {
         try {
@@ -187,7 +205,7 @@
             try { remote = validRemote(await transport.read({companyId,moduleKey})); }
             catch (_) { status = 'offline-draft'; throw e; }
             status = compare();
-          } else if (e && e.code === 'DRAFT_PERSISTENCE_FAILED') {
+          } else if (e && (e.code === 'DRAFT_PERSISTENCE_FAILED' || e.code === 'DRAFT_CHANGED_EXTERNALLY')) {
             status = 'storage-error';
           } else {
             status = draft ? 'offline-draft' : 'offline';
