@@ -21,3 +21,14 @@
 .cloud-profile-actions .btn{font-size:12px}
 .cloud-profile-actions .btn:disabled{opacity:.55;cursor:wait}
 .cloud-profile-actions [hidden]{display:none!important}
+
+/* Cloud-Beta profile comparison. The values are rendered via textContent, never HTML. */
+.cloud-profile-diff{padding:15px 0 8px;max-width:100%;overflow-x:auto}
+.cloud-profile-diff[hidden]{display:none!important}
+.cloud-profile-diff h4{font-size:15px;margin:0 0 6px;color:var(--wine)}
+.cloud-profile-diff p{font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 12px}
+.cloud-profile-diff table{width:100%;border-collapse:collapse;min-width:410px;font-size:12px;text-align:left}
+.cloud-profile-diff th{background:#f3ebe5;color:#4d2d30;font-weight:800;padding:10px}
+.cloud-profile-diff td{border-bottom:1px solid #e9ded7;padding:9px 10px;overflow-wrap:anywhere;max-width:180px}
+.cloud-profile-diff td:first-child{font-weight:700;color:#4f3b35}
+.cloud-profile-diff tbody tr:nth-child(even){background:#fcf9f6}
