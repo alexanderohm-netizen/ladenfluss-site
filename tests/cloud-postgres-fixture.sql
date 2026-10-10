@@ -55,9 +55,9 @@ CREATE TABLE public.companies (
 CREATE TABLE public.branches (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id uuid NOT NULL REFERENCES public.companies(id),
-  name text NOT NULL,
-  opening_days smallint CHECK(opening_days BETWEEN 1 AND 7),
-  opening_hours numeric(4,1) CHECK(opening_hours > 0 AND opening_hours <= 24)
+  name text NOT NULL
+  -- opening_days/opening_hours are deliberately ABSENT here, matching
+  -- the hosted schema before the reviewed add_branch_opening_settings draft.
 );
 CREATE FUNCTION private.new_company() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
