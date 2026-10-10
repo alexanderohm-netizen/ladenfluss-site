@@ -280,3 +280,27 @@ test('declining device cleanup preserves data and authenticated account',async()
   assert.equal(t.client.calls.filter(x=>x[0]==='signOut').length,0);
   t.close();
 });
+
+
+test('loopback Supabase Auth config is accepted only on loopback websites, never hosted domains',()=>{
+  const sdk=readFileSync(resolve(root,'assets/supabase-browser.js'),'utf8');
+  const localKey='eyJ'+('A'.repeat(140));
+  function browser(origin,config){
+    const dom=new JSDOM('<!doctype html><title>Beta</title>',{url:origin,runScripts:'outside-only'});
+    const w=dom.window;
+    w.LadenflussCloudConfig={enabled:true,...config};
+    w.eval(sdk);
+    let passed,reason;
+    try{passed=w.LadenflussSupabase.isEnabled();}catch(error){reason=error.message;}
+    dom.window.close();
+    return {passed,reason};
+  }
+  const local={url:'http://127.0.0.1:54321',publishableKey:localKey};
+  assert.equal(browser('http://127.0.0.1:54330/konto',local).passed,true);
+  assert.match(browser('https://ladenfluss.de/konto',local).reason,/konfiguriert/);
+  assert.match(browser('https://staging.ladenfluss.de/konto',local).reason,/konfiguriert/);
+  assert.match(browser('http://example.com/konto',local).reason,/konfiguriert/);
+  assert.match(browser('http://127.0.0.1:54330/konto',{...local,url:'http://api.example.com:54321'}).reason,/konfiguriert/);
+  assert.match(browser('https://ladenfluss.de/konto',{url:'http://nzxtdrmdvqyvcbohplzt.supabase.co',publishableKey:'sb_publishable_demo'}).reason,/konfiguriert/);
+  assert.equal(browser('https://ladenfluss.de/konto',{url:'https://nzxtdrmdvqyvcbohplzt.supabase.co',publishableKey:'sb_publishable_demo'}).passed,true);
+});
