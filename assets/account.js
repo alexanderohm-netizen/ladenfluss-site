@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('companySave').textContent = company ? 'Name speichern' : 'Unternehmen anlegen';
     $('companyDetails').hidden = !company;
     if (!company) { message('Angemeldet. Lege jetzt dein Unternehmen an.'); return; }
-    $('cloudSaved').textContent = 'Dein Unternehmensprofil ist in der Cloud gespeichert.';
+    $('cloudSaved').textContent = 'Dein Unternehmen ist in der Cloud registriert. Das Ladenprofil und deine Planungsdaten kannst du separat sichern.';
     const access = await client.from('module_access').select('module_key,status,valid_until').eq('company_id', company.id);
     if (current !== generation) return;
     if (access.error) throw access.error;
