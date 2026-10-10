@@ -84,7 +84,13 @@ document.addEventListener('DOMContentLoaded', () => {
         message('E-Mail prüfen', 'Falls die Registrierung angenommen wurde, erhältst du eine Bestätigungs-E-Mail. Bitte öffne den Link.');
       } else {
         const user = await core.signIn(email, password);
-        const company = await core.firstCompany();
+        let company;
+        try { company = await core.firstCompany(); }
+        catch (_) {
+          showUser(user, {id:'lookup-unavailable'});
+          message('Angemeldet', 'Dein Zugang ist aktiv. Unternehmensdaten sind vorübergehend nicht abrufbar.');
+          return;
+        }
         showUser(user, company);
       }
     } catch (error) {
@@ -135,8 +141,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const client = await window.LadenflussSupabase.getClient();
       core = window.LadenflussAuthCore.createAuthCore(client, {origin:window.location.origin});
       const user = await core.validatedUser();
-      if (user) showUser(user, await core.firstCompany());
-      else message('Sicher anmelden', 'Melde dich an oder erstelle ein Konto. Neue Konten benötigen eine bestätigte E-Mail-Adresse.');
+      if (user) {
+        let company;
+        try { company = await core.firstCompany(); }
+        catch (_) {
+          showUser(user, {id:'lookup-unavailable'});
+          message('Angemeldet', 'Dein Zugang ist aktiv. Unternehmensdaten sind vorübergehend nicht abrufbar.');
+          return;
+        }
+        showUser(user, company);
+      } else {
+        message('Sicher anmelden', 'Melde dich an oder erstelle ein Konto. Neue Konten benötigen eine bestätigte E-Mail-Adresse.');
+      }
     } catch (_) {
       core = null;
       message('Verbindung nicht verfügbar', 'Die sichere Kontoanmeldung ist momentan nicht erreichbar. Bitte versuche es später erneut.');
