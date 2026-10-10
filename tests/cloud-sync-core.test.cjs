@@ -12,6 +12,13 @@ function mockCloud() {
   const data=new Map([[A+'/vacation',{revision:1,payload:{days:2},updatedAt:'2026-10-10T00:00:00Z'}]]);
   const log=[];
   return {data, log,
+    async create({companyId,moduleKey,payload}) {
+      const key=companyId+'/'+moduleKey;
+      if(companyId!==A) throw Object.assign(new Error('forbidden'),{code:'42501'});
+      if(data.has(key)) throw Object.assign(new Error('duplicate'),{code:'23505'});
+      data.set(key,{revision:1,payload,updatedAt:'2026-10-10T01:00:00Z'});
+      return {revision:1,updatedAt:'2026-10-10T01:00:00Z'};
+    },
     async read({companyId,moduleKey}) {return data.get(companyId+'/'+moduleKey)||null;},
     async write({companyId,moduleKey,expectedRevision,payload}) {
       log.push({companyId,moduleKey,expectedRevision,payload});
@@ -114,4 +121,23 @@ test('Supabase adapter binds company, module, version and payload, maps response
   assert.equal((await api.read({companyId:A,moduleKey:'vacation'})).revision,4);
   assert.deepEqual(await api.write({companyId:A,moduleKey:'vacation',expectedRevision:4,payload:{x:2}}),{revision:5,updatedAt:'later'});
   assert.equal(calls.at(-1)[1].p_expected_revision,4);
+});
+test('initial cloud document create uses revision 1 and does not overwrite existing data',async()=>{
+  const api=mockCloud(),storage=memoryStorage();
+  const s=createCloudSync({transport:api,storage,companyId:A,moduleKey:'profile'});
+  assert.equal((await s.load()).status,'missing');
+  s.edit({name:'First'});assert.equal(s.state().status,'dirty');
+  await s.save();assert.equal(s.state().remote.revision,1);
+  assert.equal(api.data.get(A+'/profile').payload.name,'First');
+});
+
+test('concurrent first create conflict preserves the other local draft',async()=>{
+  const api=mockCloud(),one=createCloudSync({transport:api,storage:memoryStorage(),companyId:A,moduleKey:'profile'}),
+  two=createCloudSync({transport:api,storage:memoryStorage(),companyId:A,moduleKey:'profile'});
+  await one.load();await two.load();one.edit({name:'One'});two.edit({name:'Two'});
+  await one.save();await assert.rejects(two.save(),{code:'23505'});
+  assert.equal(two.state().status,'conflict');assert.equal(two.state().draft.payload.name,'Two');
+  two.resolveConflict('keep-local');await two.save();
+  assert.equal(api.data.get(A+'/profile').payload.name,'Two');
+  assert.equal(api.data.get(A+'/profile').revision,2);
 });
