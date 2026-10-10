@@ -1,4 +1,4 @@
--- Execute AFTER the disposable fixture and both draft SQL files.
+-- Execute AFTER the disposable fixture and all three draft SQL files.
 -- This script fails the CI job on any unexpected result.
 DO $$
 BEGIN
@@ -10,6 +10,12 @@ BEGIN
  END IF;
  IF has_function_privilege('anon','public.save_cloud_document_if_revision(uuid,text,integer,jsonb)','EXECUTE') THEN
    RAISE EXCEPTION 'Anon can execute cloud save RPC';
+ END IF;
+ IF has_function_privilege('anon','public.create_cloud_document_if_absent(uuid,text,jsonb)','EXECUTE') THEN
+   RAISE EXCEPTION 'Anon can execute cloud creation RPC';
+ END IF;
+ IF NOT has_function_privilege('authenticated','public.create_cloud_document_if_absent(uuid,text,jsonb)','EXECUTE') THEN
+   RAISE EXCEPTION 'Authenticated cannot execute cloud creation RPC';
  END IF;
  IF NOT has_function_privilege('authenticated','public.save_cloud_document_if_revision(uuid,text,integer,jsonb)','EXECUTE') THEN
    RAISE EXCEPTION 'Authenticated cannot execute cloud save RPC';
@@ -65,6 +71,21 @@ BEGIN
   IF (SELECT count(*) FROM public.cloud_document_history
       WHERE company_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa') <> 1
   THEN RAISE EXCEPTION 'Failed writes modified history'; END IF;
+
+  SELECT saved_revision INTO saved FROM public.create_cloud_document_if_absent(
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','profile','{"name":"Testshop"}'::jsonb);
+  IF saved <> 1 THEN RAISE EXCEPTION 'Initial create must be revision 1'; END IF;
+
+  caught := false;
+  BEGIN
+    PERFORM * FROM public.create_cloud_document_if_absent(
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','profile','{"name":"Overwritten"}'::jsonb);
+  EXCEPTION WHEN SQLSTATE '23505' THEN caught := true;
+  END;
+  IF NOT caught THEN RAISE EXCEPTION 'Existing cloud document was overwritten on create'; END IF;
+  IF (SELECT payload->>'name' FROM public.cloud_documents
+      WHERE company_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' AND module_key='profile') <> 'Testshop'
+  THEN RAISE EXCEPTION 'Duplicate create changed existing document'; END IF;
 END $$;
 
 -- Cross-tenant access and privilege denial.
@@ -78,6 +99,14 @@ BEGIN
   EXCEPTION WHEN SQLSTATE '42501' THEN caught := true;
   END;
   IF NOT caught THEN RAISE EXCEPTION 'Cross-tenant write was accepted'; END IF;
+
+  caught := false;
+  BEGIN
+    PERFORM * FROM public.create_cloud_document_if_absent(
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','warenfluss','{"items":1}'::jsonb);
+  EXCEPTION WHEN SQLSTATE '42501' THEN caught := true;
+  END;
+  IF NOT caught THEN RAISE EXCEPTION 'Cross-tenant document creation was accepted'; END IF;
 
   IF EXISTS(SELECT 1 FROM public.cloud_documents
       WHERE company_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')
@@ -94,6 +123,14 @@ BEGIN
   EXCEPTION WHEN SQLSTATE '42501' THEN caught := true;
   END;
   IF NOT caught THEN RAISE EXCEPTION 'Employee role was allowed to write'; END IF;
+
+  caught := false;
+  BEGIN
+    PERFORM * FROM public.create_cloud_document_if_absent(
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','profile','{"name":"unauthorized"}'::jsonb);
+  EXCEPTION WHEN SQLSTATE '42501' THEN caught := true;
+  END;
+  IF NOT caught THEN RAISE EXCEPTION 'Employee role was allowed to create'; END IF;
 END $$;
 
 SELECT set_config('request.jwt.claim.sub','44444444-4444-4444-8444-444444444444',false);
