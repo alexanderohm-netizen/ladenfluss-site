@@ -78,6 +78,7 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
     const email='lf-browser-'+Date.now().toString(36)+'@example.test';
     const password='Secure-browser-password-2026';
     await page.goto(base+'/konto',{waitUntil:'domcontentloaded'});
+    await page.waitForFunction(() => document.getElementById('authStatus')?.textContent.includes('Sicher anmelden'),null,{timeout:30000});
     await page.locator('[data-account-tab=register]').click();
     await page.locator('[data-auth-form=register] input[type=email]').fill(email);
     await page.locator('[data-auth-form=register] input[type=password]').fill(password);
