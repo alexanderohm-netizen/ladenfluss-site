@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const accountEmail = document.getElementById('accountEmail');
   const accountNext = document.getElementById('accountNext');
   const logout = document.getElementById('accountLogout');
+  const logoutAndClear = document.getElementById('accountLogoutClear');
   let core = null;
   let busy = false;
 
@@ -35,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const reset = document.querySelector('[data-reset]');
     if (reset) reset.disabled = value;
     if (logout) logout.disabled = value;
+    if (logoutAndClear) logoutAndClear.disabled = value;
   }
   function showUser(user, company) {
     tabs.forEach(b => { b.hidden = true; });
@@ -128,6 +130,29 @@ document.addEventListener('DOMContentLoaded', () => {
       message('Abgemeldet', 'Deine Sitzung wurde beendet. Lokale Entwürfe werden nicht automatisch gelöscht.');
     } catch (error) {
       message('Abmeldung fehlgeschlagen', explain(error, 'logout'));
+    } finally { setBusy(false); }
+  });
+
+  logoutAndClear?.addEventListener('click', async () => {
+    if (busy || !core) return;
+    if (!window.LadenflussLocalPrivacy) {
+      message('Nicht verfügbar', 'Die lokale Datenlöschung ist momentan nicht verfügbar.');
+      return;
+    }
+    const keys = window.LadenflussLocalPrivacy.listLocalKeys(window.localStorage);
+    const warning = 'Dieses Gerät enthält ' + keys.length +
+      ' lokale Ladenfluss-Datenbereiche. Wirklich abmelden und ALLE lokalen Ladenfluss-Daten dieses Browsers löschen? ' +
+      'Dazu gehören auch Team, Urlaub, PEP, lokale Cloud-Entwürfe und Sicherungskopien. Cloud-Daten bleiben erhalten. ' +
+      'Diese Aktion kann nicht rückgängig gemacht werden.';
+    if (!window.confirm(warning)) return;
+    setBusy(true);
+    try {
+      await core.signOut();
+      const removed = window.LadenflussLocalPrivacy.clearLadenflussData(window.localStorage);
+      showGuest();
+      message('Abgemeldet und bereinigt', removed + ' lokale Ladenfluss-Datenbereiche wurden auf diesem Gerät entfernt. Cloud-Daten sind davon nicht betroffen.');
+    } catch (_) {
+      message('Aktion nicht vollständig abgeschlossen', 'Die Abmeldung oder Löschung ist fehlgeschlagen. Bitte prüfe den Gerätespeicher und melde dich gegebenenfalls erneut ab.');
     } finally { setBusy(false); }
   });
 
