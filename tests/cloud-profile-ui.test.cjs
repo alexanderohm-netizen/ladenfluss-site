@@ -259,3 +259,31 @@ test('cloud comparison remains hidden before opt-in check and on absent document
   assert.equal(d.getElementById('cloudProfileDiff').hidden,true);
   t.close();
 });
+
+
+test('mid-import draft change from another tab rolls local profile back and preserves both safety copies',async()=>{
+  const t=await makeUI({initialRemote:{revision:3,payload:{name:'Cloud Profil',days:5,hours:8}}});
+  const d=t.w.document;
+  const key='ladenfluss.cloud-draft.v2.'+USER+'.'+COMPANY+'.profile';
+  const backupKey='ladenfluss.cloud.profile-backup.v2.'+USER+'.'+COMPANY;
+  d.getElementById('cloudProfileCheck').click();await t.flush();
+  const originalSave=t.w.LadenflussStoreSettings.save;
+  t.w.LadenflussStoreSettings.save=profile=>{
+    const result=originalSave(profile);
+    if (profile.name==='Cloud Profil') {
+      // Simulates another tab editing exactly after local import but before draft discard.
+      t.w.localStorage.setItem(key,JSON.stringify({
+        baseRevision:3,payload:{name:'Andere Tab-Änderung',days:6,hours:9},
+      }));
+    }
+    return result;
+  };
+  d.getElementById('cloudProfileDownload').click();await t.flush();
+  assert.equal(t.w.LadenflussStoreSettings.read().name,'Lokales Profil');
+  assert.equal(JSON.parse(t.w.localStorage.getItem(backupKey)).payload.name,'Lokales Profil');
+  assert.equal(JSON.parse(t.w.localStorage.getItem(key)).payload.name,'Andere Tab-Änderung');
+  assert.equal(t.remote().payload.name,'Cloud Profil');
+  assert.match(d.getElementById('cloudProfileStatus').textContent,/während der Übernahme/);
+  assert.equal(d.getElementById('cloudProfileDownload').hidden,true);
+  t.close();
+});
