@@ -194,3 +194,39 @@ test('an older backup is not replaced when the user declines overwriting it',asy
   assert.equal(t.remote().revision,3);
   t.close();
 });
+
+
+test('cross-tab storage event blocks stale upload until the other draft is checked',async()=>{
+  const t=await makeUI({initialRemote:{revision:2,payload:{name:'Cloud A',days:5,hours:8}}});
+  const d=t.w.document;
+  d.getElementById('cloudProfileCheck').click();await t.flush();
+  assert.equal(d.getElementById('cloudProfileUpload').hidden,false);
+  const key='ladenfluss.cloud-draft.v2.'+USER+'.'+COMPANY+'.profile';
+  const incoming={baseRevision:2,payload:{name:'Andere Registerkarte',days:6,hours:9}};
+  t.w.localStorage.setItem(key,JSON.stringify(incoming));
+  t.w.dispatchEvent(new t.w.StorageEvent('storage',{
+    key,newValue:JSON.stringify(incoming),storageArea:t.w.localStorage,
+  }));
+  await t.flush();
+  assert.equal(d.getElementById('cloudProfileUpload').hidden,true);
+  assert.match(d.getElementById('cloudProfileStatus').textContent,/andere Ladenfluss-Registerkarte/);
+  assert.equal(t.calls.filter(x=>Array.isArray(x)).length,0);
+  d.getElementById('cloudProfileCheck').click();await t.flush();
+  assert.equal(d.getElementById('cloudProfileRecoverDraft').hidden,false);
+  assert.equal(JSON.parse(t.w.localStorage.getItem(key)).payload.name,'Andere Registerkarte');
+  assert.equal(t.remote().revision,2);
+  t.close();
+});
+
+test('silent cross-tab mutation is still detected synchronously before RPC upload',async()=>{
+  const t=await makeUI({initialRemote:{revision:1,payload:{name:'Remote alt'}}});
+  const d=t.w.document;
+  d.getElementById('cloudProfileCheck').click();await t.flush();
+  const key='ladenfluss.cloud-draft.v2.'+USER+'.'+COMPANY+'.profile';
+  t.w.localStorage.setItem(key,JSON.stringify({baseRevision:1,payload:{name:'Fremder Entwurf'}}));
+  d.getElementById('cloudProfileUpload').click();await t.flush();
+  assert.equal(t.calls.filter(x=>Array.isArray(x)).length,0,'No RPC may fire');
+  assert.equal(JSON.parse(t.w.localStorage.getItem(key)).payload.name,'Fremder Entwurf');
+  assert.match(d.getElementById('cloudProfileStatus').textContent,/andere Registerkarte/);
+  t.close();
+});
