@@ -43,6 +43,47 @@ REVOKE ALL ON FUNCTION private.module_allowed(uuid,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION private.is_verified_account() TO authenticated;
 GRANT EXECUTE ON FUNCTION private.module_allowed(uuid,text) TO authenticated;
 
+
+-- The production onboarding trigger is reproduced with just the fields used by the RPC.
+CREATE TABLE public.companies (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  retail_type text,
+  created_by uuid NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE public.branches (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id uuid NOT NULL REFERENCES public.companies(id),
+  name text NOT NULL,
+  opening_days smallint CHECK(opening_days BETWEEN 1 AND 7),
+  opening_hours numeric(4,1) CHECK(opening_hours > 0 AND opening_hours <= 24)
+);
+CREATE FUNCTION private.new_company() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $
+BEGIN
+  IF auth.uid() IS NULL OR NEW.created_by <> auth.uid() THEN
+    RAISE insufficient_privilege;
+  END IF;
+  INSERT INTO private.test_members(company_id,user_id,role,active)
+  VALUES(NEW.id,NEW.created_by,'owner',true);
+  INSERT INTO public.branches(company_id,name) VALUES(NEW.id,'Hauptfiliale');
+  RETURN NEW;
+END;
+$;
+CREATE TRIGGER new_company AFTER INSERT ON public.companies
+FOR EACH ROW EXECUTE FUNCTION private.new_company();
+
+ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.branches ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.companies,public.branches FROM PUBLIC,anon,authenticated;
+GRANT SELECT ON public.companies,public.branches TO authenticated;
+CREATE POLICY "read owned company" ON public.companies FOR SELECT TO authenticated
+  USING(private.module_allowed(id,'profile'));
+CREATE POLICY "read owned branch" ON public.branches FOR SELECT TO authenticated
+  USING(private.module_allowed(company_id,'profile'));
+
 CREATE TABLE public.cloud_documents (
   company_id uuid NOT NULL,
   module_key text NOT NULL CHECK (module_key IN ('profile','vacation','pep','zahlenfluss','warenfluss')),
@@ -92,7 +133,8 @@ CREATE POLICY "authorized history read"
 INSERT INTO private.test_verified(user_id) VALUES
  ('11111111-1111-4111-8111-111111111111'),
  ('22222222-2222-4222-8222-222222222222'),
- ('33333333-3333-4333-8333-333333333333');
+ ('33333333-3333-4333-8333-333333333333'),
+ ('55555555-5555-4555-8555-555555555555');
 INSERT INTO private.test_members(company_id,user_id,role,active) VALUES
  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','11111111-1111-4111-8111-111111111111','owner',true),
  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','33333333-3333-4333-8333-333333333333','employee',true),
