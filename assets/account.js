@@ -163,6 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       message('Sicherer Zugang', 'Die Verbindung zu deinem Ladenfluss-Konto wird geprüft.');
+      setBusy(true);
       const client = await window.LadenflussSupabase.getClient();
       core = window.LadenflussAuthCore.createAuthCore(client, {origin:window.location.origin});
       const user = await core.validatedUser();
@@ -181,6 +182,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (_) {
       core = null;
       message('Verbindung nicht verfügbar', 'Die sichere Kontoanmeldung ist momentan nicht erreichbar. Bitte versuche es später erneut.');
+    } finally {
+      setBusy(false);
     }
   }
   void initialize();
