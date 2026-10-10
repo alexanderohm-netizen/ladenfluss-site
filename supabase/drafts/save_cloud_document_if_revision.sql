@@ -1,7 +1,9 @@
 -- DRAFT ONLY. Requires staging tests and coordinated client rollout.
 -- Atomic compare-and-swap for existing cloud documents.
 -- Exposed as a public RPC, with authorization checked against auth.uid().
--- Do not grant direct UPDATE on cloud_documents once clients migrate.
+-- Current production grant audit (2026-10-10): authenticated has SELECT only;
+-- direct INSERT/UPDATE/DELETE privileges are not granted. Keep it that way.
+-- SECURITY DEFINER RPC can perform the write after explicit authorization.
 
 CREATE OR REPLACE FUNCTION public.save_cloud_document_if_revision(
   p_company_id uuid,
@@ -53,6 +55,7 @@ $$;
 REVOKE ALL ON FUNCTION public.save_cloud_document_if_revision(uuid,text,integer,jsonb) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.save_cloud_document_if_revision(uuid,text,integer,jsonb) TO authenticated;
 
--- Follow-up migration required: remove direct UPDATE policy from
--- cloud_documents after all clients use this RPC. Until then,
--- direct client UPDATE can bypass compare-and-swap.
+-- Keep authenticated table privileges SELECT-only. RLS UPDATE policies
+-- exist but do not by themselves confer UPDATE privileges.
+-- Do not grant authenticated direct INSERT/UPDATE/DELETE privileges.
+-- SECURITY DEFINER privileges and RPC authorization require staging tests.
