@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   'use strict';
+  if (window.__ladenflussAccountInitialized) return;
+  window.__ladenflussAccountInitialized = true;
   const tabs = [...document.querySelectorAll('[data-account-tab]')];
   const panels = [...document.querySelectorAll('[data-account-panel]')];
   const forms = [...document.querySelectorAll('[data-auth-form]')];
