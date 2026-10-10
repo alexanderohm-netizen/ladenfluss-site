@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const node = id => document.getElementById(id);
   const status = node('cloudProfileStatus');
+  const comparison = node('cloudProfileDiff');
   const check = node('cloudProfileCheck');
   const upload = node('cloudProfileUpload');
   const download = node('cloudProfileDownload');
@@ -57,8 +58,55 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   function localProfile() { return settings.read(); }
   function same(left,right) { return JSON.stringify(left) === JSON.stringify(right); }
+  const PROFILE_FIELDS = Object.freeze([
+    ['name','Ladenname'],['type','Sortiment'],['days','Öffnungstage/Woche'],
+    ['open','Öffnet'],['close','Schließt'],['minStaff','Mindestbesetzung'],
+    ['state','Bundesland'],['productivity','Ziel-Stundenleistung'],
+    ['labor','Personalkostenquote'],['margin','Handelsspanne'],
+    ['lead','Lieferzeit'],['buffer','Planungspuffer'],['hourly','Personalkosten/Stunde'],
+  ]);
+  function displayValue(value) {
+    if (value === null || value === undefined || value === '') return '–';
+    return String(value).slice(0,140);
+  }
+  function clearComparison() {
+    if (comparison) {
+      comparison.hidden = true;
+      comparison.replaceChildren();
+    }
+  }
+  function displayDifferences(local,cloud,revision) {
+    if (!comparison) return;
+    clearComparison();
+    const rows=PROFILE_FIELDS.filter(([key])=>!same(local[key],cloud[key]));
+    if (!rows.length) return;
+    const header=document.createElement('h4');
+    header.textContent='Profilvergleich · Cloud-Version '+revision;
+    const summary=document.createElement('p');
+    summary.textContent=rows.length+' abweichende '+(rows.length===1?'Angabe':'Angaben')+
+      '. Vergleiche beide Fassungen, bevor du Daten übernimmst oder hochlädst.';
+    const table=document.createElement('table');
+    const thead=document.createElement('thead');
+    const tr=document.createElement('tr');
+    for(const label of ['Angabe','Auf diesem Gerät','In der Cloud']){
+      const th=document.createElement('th');th.textContent=label;tr.append(th);
+    }
+    thead.append(tr);table.append(thead);
+    const tbody=document.createElement('tbody');
+    for(const [key,label] of rows){
+      const line=document.createElement('tr');
+      for(const value of [label,displayValue(local[key]),displayValue(cloud[key])]){
+        const cell=document.createElement('td');cell.textContent=value;line.append(cell);
+      }
+      tbody.append(line);
+    }
+    table.append(tbody);
+    comparison.append(header,summary,table);
+    comparison.hidden=false;
+  }
   function displayComparison(state) {
     remoteProfile = null;
+    clearComparison();
     let local;
     try { local=localProfile(); }
     catch (_) {
@@ -74,6 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
     }
+    if (remoteProfile) displayDifferences(local,remoteProfile,state.remote.revision);
     if (state.status === 'conflict') {
       controls({uploadVisible:true,downloadVisible:!!remoteProfile});
       setStatus('Änderungskonflikt erkannt: In Cloud und Browser liegen unterschiedliche Fassungen. Entscheide ausdrücklich, welche Version übernommen wird.');
@@ -117,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sync && event.key === sync.draftKey) {
       staleDraftInOtherTab = true;
       controls({checkVisible:true,uploadVisible:false,downloadVisible:false});
+      clearComparison();
       setStatus('Eine andere Ladenfluss-Registerkarte hat den ungespeicherten Cloud-Entwurf verändert. Bitte „Cloud-Profil prüfen“ wählen. Es wurde nichts automatisch überschrieben.');
     }
   });
