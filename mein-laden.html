@@ -66,6 +66,21 @@
 <div class="form-actions"><button type="submit" class="btn btn-primary">Richtwerte speichern</button><span id="targetState" role="status"></span></div></form></section>
 <section data-cockpit-panel="backup" hidden><div class="section-line"><div><span class="eyebrow">Deine Daten</span><h2>Eine Kopie für dich</h2><p>Browserdaten können verloren gehen. Lade deinen Arbeitsstand als Datei herunter.</p></div></div>
 <div class="backup-card"><h3>Lokalen Arbeitsstand sichern</h3><p>Enthalten sind Ladenprofil, Richtwerte, Team, Dienstpläne, Abwesenheiten, Urlaubsplan und Rechenverlauf, soweit auf diesem Gerät vorhanden.</p><p class="workspace-note">Die Datei enthält unverschlüsselte Daten. Bewahre sie geschützt auf. Sie wird nicht an Ladenfluss übertragen.</p><button type="button" class="btn btn-primary" id="downloadBackup">Sicherung herunterladen</button><p id="backupStatus" role="status"></p><small>Exportformat JSON · Die Wiederherstellung über die Oberfläche ist noch nicht freigeschaltet.</small></div>
+<div class="backup-card cloud-profile-card">
+  <span class="eyebrow">Cloud-Beta · Ladenprofil</span>
+  <h3>Dein Ladenprofil sicher synchronisieren</h3>
+  <p>Der Abgleich startet nur auf deinen Wunsch. Lokale Daten und Cloud-Daten werden niemals automatisch überschrieben.</p>
+  <p id="cloudProfileStatus" role="status" aria-live="polite">Die Cloud-Beta ist noch nicht freigeschaltet.</p>
+  <div id="cloudProfileDiff" class="cloud-profile-diff" hidden aria-label="Unterschiede zwischen lokalem Ladenprofil und Cloud-Version"></div>
+  <div class="cloud-profile-actions">
+    <button class="btn btn-secondary" id="cloudProfileCheck" type="button" hidden>Cloud-Profil prüfen</button>
+    <button class="btn btn-primary" id="cloudProfileUpload" type="button" hidden>Lokales Profil in Cloud speichern</button>
+    <button class="btn btn-secondary" id="cloudProfileDownload" type="button" hidden>Cloud-Profil lokal übernehmen</button>
+    <button class="btn btn-secondary" id="cloudProfileRestore" type="button" hidden>Letzte lokale Version wiederherstellen</button>
+    <button class="btn btn-secondary" id="cloudProfileRecoverDraft" type="button" hidden>Gespeicherten Entwurf lokal übernehmen</button>
+  </div>
+  <small>Beta: zunächst nur Ladenprofil und Richtwerte. Team, PEP und Urlaub bleiben lokal. Vor dem Import wird eine lokale Sicherheitskopie angelegt.</small>
+</div>
 </section>
 <section data-cockpit-panel="modules" hidden><div class="section-line"><div><span class="eyebrow">Heute & morgen</span><h2>Was du bereits nutzen kannst</h2><p>Ein klarer Stand für jeden Bereich.</p></div></div>
 <div class="module-grid">
@@ -80,4 +95,9 @@
 <div class="workspace-footer">Daten nur in diesem Browser · keine Gerätesynchronisierung · <a href="#backup" data-open-panel="backup">Arbeitsstand sichern</a></div>
 </main>
 <script src="/assets/site.js" defer></script><script src="/assets/signals.js" defer></script><script src="/assets/planning-engine.js" defer></script><script src="/assets/team-store.js" defer></script><script src="/assets/de-holidays.js" defer></script><script src="/assets/urlaubsplaner-store.js" defer></script><script src="/assets/store-settings.js" defer></script><script src="/assets/pep-signals.js" defer></script><script src="/assets/business-signals.js" defer></script><script src="/assets/backup.js" defer></script><script src="/assets/cockpit.js" defer></script>
+<script src="/assets/cloud-config.js" defer></script>
+<script src="/assets/supabase-browser.js" defer></script>
+<script src="/assets/auth-core.js" defer></script>
+<script src="/assets/cloud-sync-core.js" defer></script>
+<script src="/assets/cloud-profile.js" defer></script>
 </body></html>

@@ -1,0 +1,77 @@
+name: Cloud SQL isolation tests
+
+on:
+  push:
+    branches: [plan/cloud-beta-hardening-20261010]
+    paths:
+      - 'supabase/drafts/**'
+      - 'supabase/checks/**'
+      - 'tests/cloud-postgres-*.sql'
+      - 'tests/cloud-branch-precondition.sql'
+      - 'tests/cloud-onboarding-assertions.sql'
+      - '.github/workflows/cloud-sql-test.yml'
+  pull_request:
+    paths:
+      - 'supabase/drafts/**'
+      - 'supabase/checks/**'
+      - 'tests/cloud-postgres-*.sql'
+      - '.github/workflows/cloud-sql-test.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-cloud-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cloudtest
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d cloudtest"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: cloudtest
+    steps:
+      - uses: actions/checkout@v4
+      - name: PostgreSQL command line
+        run: command -v psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+      - name: Create isolated test fixture
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/cloud-postgres-fixture.sql
+      - name: Install revision guard draft in test DB only
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/guard_cloud_document_revision.sql
+      - name: Install save RPC draft in test DB only
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/save_cloud_document_if_revision.sql
+      - name: Install initial create RPC in test DB only
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/create_cloud_document_if_absent.sql
+      - name: Assert actual pre-migration branch schema is represented
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/cloud-branch-precondition.sql
+      - name: Install missing branch opening fields in disposable database only
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/add_branch_opening_settings.sql
+      - name: Install atomic company onboarding draft in test DB only
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/create_company_onboarding.sql
+      - name: Verify company and branch onboarding
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/cloud-onboarding-assertions.sql
+      - name: Verify permissions, conflict rejection and history
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/cloud-postgres-assertions.sql
+      - name: Assert all 13 release gate SQL checks pass in isolated Postgres
+        run: |
+          results="$(psql -X -At -v ON_ERROR_STOP=1 -f supabase/checks/cloud-beta-readiness.sql)"
+          echo "$results"
+          printf '%s\n' "$results" | awk -F '|' '
+            { total++; if ($2 != "PASS") bad++ }
+            END { if (total != 13 || bad != 0) exit 1 }
+          '

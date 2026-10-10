@@ -50,14 +50,7 @@
 </select>
 </label>
 
-<label>Wie viele Standorte hast du aktuell?
-<select id="company_locations" required>
-<option value="1">1 Standort</option>
-<option value="2-5">2–5 Standorte</option>
-<option value="6-20">6–20 Standorte</option>
-<option value="20+">Mehr als 20 Standorte</option>
-</select>
-</label>
+<p class="field-hint">Wir richten zunächst deine erste Filiale ein. Weitere Standorte kannst du später hinzufügen.</p>
 
 <div class="onboarding-divider"><span>Erste Filiale</span></div>
 
@@ -74,10 +67,13 @@
 
 <button class="btn btn-primary" type="submit">Unternehmen einrichten →</button>
 </form>
-<div class="auth-status" id="onboardingStatus"><strong>v1.4 Entwicklung</strong><span>Die Oberfläche ist vorbereitet. Dauerhaft gespeichert werden Unternehmensdaten erst, sobald die sichere Kontodatenbank angebunden ist.</span></div>
+<div class="auth-status" id="onboardingStatus" role="status" aria-live="polite"><strong>Cloud-Beta in Vorbereitung</strong><span>Die Speicherung wird erst nach den Sicherheitsprüfungen aktiviert.</span></div>
 </section>
 </main>
 
 <footer class="site-footer"><div class="container"><div class="footer-bottom"><span>© 2026 Ladenfluss · betrieben durch AO-Shop</span><span>v1.4 · Kundenbereich</span></div></div></footer>
-<script src="/assets/site.js" defer></script><script src="/assets/onboarding.js" defer></script>
+<script src="/assets/site.js" defer></script><script src="/assets/cloud-config.js" defer></script>
+<script src="/assets/supabase-browser.js" defer></script>
+<script src="/assets/auth-core.js" defer></script>
+<script src="/assets/onboarding.js" defer></script>
 </body></html>
