@@ -6,6 +6,7 @@ on:
     paths:
       - 'supabase/drafts/**'
       - 'tests/cloud-postgres-*.sql'
+      - 'tests/cloud-onboarding-assertions.sql'
       - '.github/workflows/cloud-sql-test.yml'
   pull_request:
     paths:
@@ -53,5 +54,9 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/save_cloud_document_if_revision.sql
       - name: Install initial create RPC in test DB only
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/create_cloud_document_if_absent.sql
+      - name: Install atomic company onboarding draft in test DB only
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/create_company_onboarding.sql
+      - name: Verify company and branch onboarding
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/cloud-onboarding-assertions.sql
       - name: Verify permissions, conflict rejection and history
         run: psql -X -v ON_ERROR_STOP=1 -f tests/cloud-postgres-assertions.sql
