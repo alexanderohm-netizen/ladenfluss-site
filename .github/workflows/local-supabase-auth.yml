@@ -7,11 +7,17 @@ on:
       - '.github/workflows/local-supabase-auth.yml'
       - 'supabase/config.toml'
       - 'tests/local-supabase-auth-e2e.cjs'
+      - 'tests/local-supabase-cloud-e2e.cjs'
+      - 'tests/local-supabase-cloud-schema.sql'
+      - 'supabase/drafts/**'
   pull_request:
     paths:
       - '.github/workflows/local-supabase-auth.yml'
       - 'supabase/config.toml'
       - 'tests/local-supabase-auth-e2e.cjs'
+      - 'tests/local-supabase-cloud-e2e.cjs'
+      - 'tests/local-supabase-cloud-schema.sql'
+      - 'supabase/drafts/**'
   workflow_dispatch:
 
 permissions:
@@ -40,8 +46,30 @@ jobs:
             exit 1
           fi
           echo "Local Supabase services started."
+      - name: Install PostgreSQL client
+        run: command -v psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+      - name: Install hosted-parity RLS schema and reviewed drafts in LOCAL Postgres only
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '54322'
+          PGDATABASE: postgres
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: |
+          set -e
+          psql -X -v ON_ERROR_STOP=1 -f tests/local-supabase-cloud-schema.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/add_branch_opening_settings.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/guard_cloud_document_revision.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/save_cloud_document_if_revision.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/create_cloud_document_if_absent.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/create_company_onboarding.sql
+          psql -X -v ON_ERROR_STOP=1 -c "NOTIFY pgrst, 'reload schema';"
+      - name: Allow local PostgREST schema cache to update
+        run: sleep 2
       - name: Real local Auth, confirmation and recovery HTTP tests
         run: node --test tests/local-supabase-auth-e2e.cjs
+      - name: Verify real Supabase JWTs, tenant isolation, permissions and CAS
+        run: node --test tests/local-supabase-cloud-e2e.cjs
       - name: Stop disposable local Supabase
         if: always()
         run: supabase stop >/dev/null 2>&1 || true
