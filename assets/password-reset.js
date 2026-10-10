@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   'use strict';
+  if (window.__ladenflussResetInitialized) return;
+  window.__ladenflussResetInitialized = true;
   const form = document.getElementById('passwordResetForm');
   const status = document.getElementById('passwordResetStatus');
   const pass = document.getElementById('newPassword');
