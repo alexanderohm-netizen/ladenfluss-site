@@ -10,13 +10,14 @@ async function setup(options={}){
  await tick();w.TextEncoder=TextEncoder;w.AbortSignal=AbortSignal;
  let user={id:'u1',email_confirmed_at:'2026-10-01'},listener;const calls=[];
  let remote=options.remote===undefined?{payload:sample(),revision:3,updated_at:'2026-10-10T08:00:00Z'}:options.remote;
+ let history=options.history||[];
  if(options.local!==false)w.localStorage.setItem(key,JSON.stringify(sample()));
- const client={auth:{getUser:()=>options.getUser?options.getUser():Promise.resolve({data:{user}}),onAuthStateChange:fn=>{listener=fn;}},from(table){const q={select(){return q},eq(){return q},order(){return q},maybeSingle(){return q},abortSignal(){return Promise.resolve({data:table==='company_members'?[{company_id:'c1',role:options.role||'owner',status:'active'}]:table==='companies'?[{id:'c1',name:'Unser Laden'}]:remote});}};return q;},rpc(name,args){calls.push([name,args]);if(!options.rpcError)remote={payload:args.document,revision:args.expected_revision+1,updated_at:'2026-10-10T09:00:00Z'};return {abortSignal:async()=>({data:remote,error:options.rpcError})};}};
+ const client={auth:{getUser:()=>options.getUser?options.getUser():Promise.resolve({data:{user}}),onAuthStateChange:fn=>{listener=fn;}},from(table){const q={select(){return q},eq(){return q},order(){return q},limit(){return q},maybeSingle(){return q},abortSignal(){return Promise.resolve({data:table==='company_members'?[{company_id:'c1',role:options.role||'owner',status:'active'}]:table==='companies'?[{id:'c1',name:'Unser Laden'}]:table==='cloud_document_history'?history:remote});}};return q;},rpc(name,args){calls.push([name,args]);if(!options.rpcError){if(remote)history.unshift({payload:remote.payload,revision:remote.revision,saved_at:remote.updated_at});remote={payload:args.document,revision:args.expected_revision+1,updated_at:'2026-10-10T09:00:00Z'};}return {abortSignal:async()=>({data:options.saveReceipt||remote,error:options.rpcError})};}};
  w.LadenflussCloud={getClient:()=>client};
  for(const file of ['team-storage','urlaubsplaner-store','vacation-cloud-core','vacation-cloud'])w.eval(fs.readFileSync('assets/'+file+'.js','utf8'));
  w.document.dispatchEvent(new w.Event('DOMContentLoaded'));await tick();
  const $=id=>w.document.getElementById(id);
- return {dom,w,$,calls,client,agree(){ $('cloudConsent').checked=true;$('cloudConsent').dispatchEvent(new w.Event('change'));},emit(event,u){user=u;listener(event,u?{user:u}:null);},async click(id){$(id).click();await tick();}};
+ return {dom,w,$,calls,client,setRemote(x){remote=x;},agree(){ $('cloudConsent').checked=true;$('cloudConsent').dispatchEvent(new w.Event('change'));},emit(event,u){user=u;listener(event,u?{user:u}:null);},async click(id){$(id).click();await tick();}};
 }
 test('Cloud preview reads without auto-upload; explicit upload uses expected revision',async t=>{
  const a=await setup();t.after(()=>a.dom.window.close());assert.equal(a.calls.length,0);assert.equal(a.$('cloudUpload').disabled,true);assert.match(a.$('cloudRemote').textContent,/Stand 3/);
@@ -53,4 +54,46 @@ test('Restore writes through canonical team envelope, storage failure does not p
 });
 test('Malformed remote payload never enables transfer; bounded validation strips extra fields',async t=>{
  const a=await setup({remote:{payload:{version:99},revision:2}});t.after(()=>a.dom.window.close());assert.equal(a.$('cloudWorkspace').hidden,true);const raw=sample();raw.secret='extra';assert.equal(a.w.LadenflussVacationCloud.clean(raw).secret,undefined);raw.employees[0].name='x'.repeat(121);assert.throws(()=>a.w.LadenflussVacationCloud.clean(raw));
+});
+
+test('Vacation Cloud: history can restore a former local version without overwriting current cloud',async t=>{
+ const prior=sample();prior.entries[0].note='Älterer genehmigter Stand';
+ const a=await setup({history:[{revision:2,payload:prior,saved_at:'2026-10-09T08:00:00Z'}]});
+ t.after(()=>a.dom.window.close());
+ assert.equal(a.$('cloudHistorySection').hidden,false);
+ assert.equal(a.w.document.querySelectorAll('[data-vacation-history-restore]').length,1);
+ assert.equal(a.w.document.querySelector('[data-vacation-history-restore]').disabled,true);
+ const beforeCalls=a.calls.length;
+ a.agree();a.w.document.querySelector('[data-vacation-history-restore]').click();await tick();
+ assert.equal(a.calls.length,beforeCalls,'History restore must never write to server');
+ assert.equal(JSON.parse(a.w.LadenflussLocal.getItem(key)).entries[0].note,'Älterer genehmigter Stand');
+ assert.match(a.$('cloudStatus').textContent,/Cloud blieb unverändert/);
+ assert.equal(a.$('cloudConsent').checked,false);
+});
+test('Vacation Cloud: remote version change blocks current and historical local restoration',async t=>{
+ for(const restoreOld of [false,true]){
+  const prior={revision:2,payload:sample(),saved_at:'2026-10-09T08:00:00Z'};
+  const a=await setup({history:[prior]});t.after(()=>a.dom.window.close());
+  const original=a.w.LadenflussLocal.getItem(key);
+  a.setRemote({payload:sample(),revision:4,updated_at:'2026-10-10T09:00:00Z'});
+  a.agree();
+  if(restoreOld)a.w.document.querySelector('[data-vacation-history-restore]').click();
+  else await a.click('cloudApply');
+  await tick();
+  assert.equal(a.w.LadenflussLocal.getItem(key),original,'Stale cloud must not replace local data');
+  assert.equal(a.$('cloudWorkspace').hidden,true);
+  assert.match(a.$('cloudStatus').textContent,/Cloud wurde auf einem anderen Gerät verändert/);
+ }
+});
+test('Vacation Cloud: malformed server save receipt is not reported as successful',async t=>{
+ const a=await setup({saveReceipt:{revision:77}});
+ t.after(()=>a.dom.window.close());a.agree();await a.click('cloudUpload');
+ assert.equal(a.calls.length,1);assert.equal(a.$('cloudWorkspace').hidden,true);
+ assert.match(a.$('cloudStatus').textContent,/keine gültige Speicherbestätigung/);
+});
+test('Vacation Cloud: invalid historical data fails closed without enabling overwrite',async t=>{
+ const a=await setup({history:[{revision:4,payload:sample(),saved_at:'2026-10-09T08:00:00Z'}]});
+ t.after(()=>a.dom.window.close());
+ assert.equal(a.$('cloudWorkspace').hidden,true);
+ assert.match(a.$('cloudStatus').textContent,/Ungültige Revision im Sicherungsverlauf/);
 });
