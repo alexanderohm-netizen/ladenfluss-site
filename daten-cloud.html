@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><meta name="theme-color" content="#6d2434">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://nzxtdrmdvqyvcbohplzt.supabase.co; base-uri 'none'; object-src 'none'; form-action 'self'">
+<title>Cloud-Sicherung für Zahlenfluss &amp; Warenfluss | Ladenfluss</title>
+<link rel="icon" href="/assets/logo.svg" type="image/svg+xml"><link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/account.css"><link rel="stylesheet" href="/assets/vacation-cloud.css">
+</head><body><a class="skip-link" href="#main">Zum Inhalt</a>
+<header class="container cloud-header"><a class="brand" href="/">Ladenfluss</a><nav aria-label="Navigation"><a href="/konto">Mein Konto</a><a href="/zahlenfluss">Zahlenfluss</a><a href="/warenfluss">Warenfluss</a></nav></header>
+<main id="main" class="account-shell">
+<section class="account-intro"><span class="eyebrow">Ladenfluss Cloud · Entwicklung</span><h1>Deine Daten.<br>Deine Entscheidung.</h1>
+<p>Übertrage deinen Zahlenfluss- oder Warenfluss-Stand sicher zwischen Geräten. Die Daten gehören zu deinem Unternehmen. Die Cloudfunktion steht nur für freigeschaltete Module zur Verfügung.</p>
+<div class="onboarding-promise"><strong>Manuelle Sicherung statt stiller Überschreibung.</strong><span>Es gibt noch keine automatische Synchronisation. Keine Daten werden ohne deine Bestätigung übertragen. Vor dem Ersetzen eine lokale Sicherung herunterladen und andere geöffnete Tabs schließen.</span></div>
+<p>Die lokale Handelssoftware wird noch nicht mit diesem Cloud-Bereich synchronisiert. <a href="/datenschutz">Datenschutzhinweise</a></p></section>
+<section class="account-card" aria-label="Unternehmensdaten in der Cloud sichern">
+<h2>Cloud-Daten verwalten</h2>
+<p id="dataCloudStatus" class="auth-status" role="status" aria-live="polite">Verbindung wird geprüft …</p>
+<label class="cloud-company" for="dataCloudCompany">Unternehmen<select id="dataCloudCompany" aria-label="Unternehmen auswählen"></select></label>
+<label class="cloud-company" for="dataCloudModule">Modul<select id="dataCloudModule"><option value="zahlenfluss">Zahlenfluss</option><option value="warenfluss">Warenfluss</option></select></label>
+<button type="button" id="dataCloudReload" class="text-button">Stände neu laden</button>
+<noscript><p>Aktiviere JavaScript. Deine vorhandenen Daten bleiben lokal erhalten.</p></noscript>
+<div id="dataCloudWorkspace" hidden>
+<section class="cloud-snapshot"><h3>Auf diesem Gerät</h3><p id="dataCloudLocal"></p><button id="dataLocalDownload" type="button" class="text-button">Lokalen Stand herunterladen</button></section>
+<section class="cloud-snapshot"><h3>In deiner Cloud</h3><p id="dataCloudRemote"></p><button id="dataCloudDownload" type="button" class="text-button">Cloud-Stand herunterladen</button></section>
+<label class="cloud-consent"><input id="dataCloudConsent" type="checkbox"><span>Ich habe Unternehmen, Modul und beide Datenstände geprüft. Die gewählte Übertragung ersetzt den Zielstand vollständig und führt keine Daten zusammen.</span></label>
+<div class="cloud-actions"><button id="dataCloudUpload" type="button" class="btn btn-primary" disabled>Gerät → Cloud sichern</button><button id="dataCloudApply" type="button" class="btn btn-secondary" disabled>Cloud → Gerät übernehmen</button></div>
+</div>
+<p>Du brauchst ein bestätigtes Konto und die Rolle Inhaber, Admin oder Leitung. <a href="/konto">Konto verwalten</a></p>
+</section></main>
+<script src="/assets/vendor/supabase.js" defer></script><script src="/assets/cloud-config.js" defer></script><script src="/assets/cloud-client.js" defer></script>
+<script src="/assets/zahlenfluss-store.js" defer></script><script src="/assets/warenfluss-store.js" defer></script>
+<script src="/assets/restore-core.js" defer></script><script src="/assets/data-cloud-core.js" defer></script><script src="/assets/data-cloud.js" defer></script>
+</body></html>
