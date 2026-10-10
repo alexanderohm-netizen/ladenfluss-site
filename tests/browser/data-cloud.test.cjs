@@ -27,6 +27,7 @@ test('Data Cloud: actual SDK + strict CSP, second-device profile, entitlement an
  const token=enc({alg:'HS256',typ:'JWT'})+'.'+enc({sub:user.id,exp:issued+3600,iat:issued,role:'authenticated'})+'.test';
  const session={access_token:token,refresh_token:'test-only',token_type:'bearer',expires_in:3600,expires_at:issued+3600,user};
  let remote=null;
+ let history=[];
  const requests=[];
  async function openDevice(width,localProfile){
   const context=await browser.newContext({viewport:{width,height:900}});
@@ -47,9 +48,11 @@ test('Data Cloud: actual SDK + strict CSP, second-device profile, entitlement an
    if(pathname==='/rest/v1/companies')return send([{id:'c1',name:'Testunternehmen'}]);
    if(pathname==='/rest/v1/module_access')return send(null); // paid products remain locked
    if(pathname==='/rest/v1/cloud_documents')return send(remote);
+   if(pathname==='/rest/v1/cloud_document_history')return send(history);
    if(pathname==='/rest/v1/rpc/save_cloud_document'){
     const args=req.postDataJSON();requests.push(args);
     if(args.expected_revision!==(remote?.revision||0))return send({code:'40001',message:'revision_conflict_or_no_access'},409);
+    if(remote)history.unshift({payload:remote.payload,revision:remote.revision,saved_at:remote.updated_at});
     remote={payload:args.document,revision:(remote?.revision||0)+1,updated_at:new Date().toISOString()};
     return send(remote);
    }
@@ -78,6 +81,16 @@ test('Data Cloud: actual SDK + strict CSP, second-device profile, entitlement an
  assert.equal(await first.page.locator('#dataCloudWorkspace').isHidden(),true);
  await first.page.locator('#dataCloudModule').selectOption('profile');
  await first.page.locator('#dataCloudWorkspace').waitFor({state:'visible'});
+ // Show one historical revision; explicitly restoring it only changes this browser.
+ history=[{payload:{name:'Altbestand',type:'Lebensmittel',state:'HE'},revision:1,saved_at:'2026-10-09T08:00:00Z'}];
+ remote.revision=2;
+ await first.page.locator('#dataCloudReload').click();
+ await first.page.locator('#dataCloudHistorySection').waitFor({state:'visible'});
+ await first.page.locator('#dataCloudConsent').check();
+ await first.page.locator('[data-cloud-history-restore]').click();
+ await first.page.getByText('Frühere Version 1 auf diesem Gerät übernommen.',{exact:false}).waitFor();
+ assert.equal(await first.page.evaluate(()=>JSON.parse(localStorage.getItem('ladenfluss.store.v1')).name),'Altbestand');
+ assert.equal(remote.payload.name,'Laden A','Restoring older revision must not change the Cloud');
  // Another device changes the cloud row while the first device has a preview.
  remote.revision++;
  await first.page.locator('#dataCloudConsent').check();
