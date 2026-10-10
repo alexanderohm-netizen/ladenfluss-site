@@ -31,7 +31,7 @@ function mockCloud() {
     },
   };
 }
-const open=(transport,storage=memoryStorage(),companyId=A)=>createCloudSync({transport,storage,companyId,moduleKey:'vacation'});
+const open=(transport,storage=memoryStorage(),companyId=A)=>createCloudSync({transport,storage,userId:A,companyId,moduleKey:'vacation'});
 
 test('successful save increments revision, removes draft, and sends expected revision',async()=>{
   const api=mockCloud(),store=memoryStorage(),s=open(api,store);
@@ -124,7 +124,7 @@ test('Supabase adapter binds company, module, version and payload, maps response
 });
 test('initial cloud document create uses revision 1 and does not overwrite existing data',async()=>{
   const api=mockCloud(),storage=memoryStorage();
-  const s=createCloudSync({transport:api,storage,companyId:A,moduleKey:'profile'});
+  const s=createCloudSync({transport:api,storage,userId:A,companyId:A,moduleKey:'profile'});
   assert.equal((await s.load()).status,'missing');
   s.edit({name:'First'});assert.equal(s.state().status,'dirty');
   await s.save();assert.equal(s.state().remote.revision,1);
@@ -132,8 +132,8 @@ test('initial cloud document create uses revision 1 and does not overwrite exist
 });
 
 test('concurrent first create conflict preserves the other local draft',async()=>{
-  const api=mockCloud(),one=createCloudSync({transport:api,storage:memoryStorage(),companyId:A,moduleKey:'profile'}),
-  two=createCloudSync({transport:api,storage:memoryStorage(),companyId:A,moduleKey:'profile'});
+  const api=mockCloud(),one=createCloudSync({transport:api,storage:memoryStorage(),userId:A,companyId:A,moduleKey:'profile'}),
+  two=createCloudSync({transport:api,storage:memoryStorage(),userId:A,companyId:A,moduleKey:'profile'});
   await one.load();await two.load();one.edit({name:'One'});two.edit({name:'Two'});
   await one.save();await assert.rejects(two.save(),{code:'23505'});
   assert.equal(two.state().status,'conflict');assert.equal(two.state().draft.payload.name,'Two');
@@ -153,4 +153,16 @@ test('explicit draft discard keeps confirmed remote revision and removes unsent 
   assert.equal(result.remote.payload.days,2);
   assert.equal(storage.getItem(sync.draftKey),null);
   assert.equal(api.log.length,0);
+});
+
+test('drafts from different signed-in accounts are never automatically reused',async()=>{
+  const transport=mockCloud(),storage=memoryStorage();
+  const first=createCloudSync({transport,storage,userId:A,companyId:A,moduleKey:'vacation'});
+  await first.load();first.edit({days:42});
+  const second=createCloudSync({transport,storage,userId:B,companyId:A,moduleKey:'vacation'});
+  assert.notEqual(first.draftKey,second.draftKey);
+  await second.load();
+  assert.equal(second.state().draft,null);
+  assert.equal(second.state().remote.payload.days,2);
+  assert.ok(storage.getItem(first.draftKey));
 });
