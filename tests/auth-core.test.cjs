@@ -156,3 +156,95 @@ test('password reset UI remains disabled without cloud and displays no form',asy
   assert.match(w.document.getElementById('passwordResetStatus').textContent,/Beta/);
   dom.window.close();
 });
+
+async function renderOnboarding({enabled=true,verified=true}={}) {
+  const dom=new JSDOM(readFileSync(resolve(root,'onboarding.html'),'utf8'),{
+    url:'https://ladenfluss.de/onboarding',runScripts:'outside-only',
+  });
+  const w=dom.window,client=fakeClient();
+  const user=verified
+    ? {id:'u1',email:'test@example.de',email_confirmed_at:'2026-10-10T00:00:00Z'}
+    : null;
+  client.changeUser(user);
+  client.rpc=async(fn,args)=>{
+    client.calls.push(['rpc',fn,args]);
+    return {data:[{company_id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      branch_id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'}],error:null};
+  };
+  w.LadenflussAuthCore=require('../assets/auth-core.js');
+  w.LadenflussSupabase={isEnabled:()=>enabled,getClient:async()=>client};
+  w.eval(readFileSync(resolve(root,'assets/onboarding.js'),'utf8'));
+  w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
+  const flush=async()=>{await new Promise(resolve=>setImmediate(resolve));await new Promise(resolve=>setImmediate(resolve));};
+  await flush();
+  return {dom,w,client,flush,close:()=>dom.window.close()};
+}
+
+test('onboarding is read-only when cloud beta is disabled',async()=>{
+  const t=await renderOnboarding({enabled:false});
+  t.w.document.getElementById('companyOnboarding')
+    .dispatchEvent(new t.w.Event('submit',{cancelable:true,bubbles:true}));
+  await t.flush();
+  assert.equal(t.client.calls.length,0);
+  assert.match(t.w.document.getElementById('onboardingStatus').textContent,/noch geschlossen|Vorbereitung/);
+  t.close();
+});
+
+test('verified user creates company and branch with one atomic RPC',async()=>{
+  const t=await renderOnboarding();
+  const w=t.w;
+  w.document.getElementById('company_name').value='Testunternehmen';
+  w.document.getElementById('company_type').value='Lebensmittel';
+  w.document.getElementById('branch_name').value='Innenstadt';
+  w.document.getElementById('branch_days').value='6';
+  w.document.getElementById('branch_hours').value='9.5';
+  w.document.getElementById('companyOnboarding')
+    .dispatchEvent(new w.Event('submit',{cancelable:true,bubbles:true}));
+  await t.flush();
+  const r=t.client.calls.filter(x=>x[0]==='rpc');
+  assert.equal(r.length,1);
+  assert.equal(r[0][1],'create_company_onboarding');
+  assert.deepEqual(JSON.parse(JSON.stringify(r[0][2])),{
+    p_company_name:'Testunternehmen',p_retail_type:'Lebensmittel',p_branch_name:'Innenstadt',
+    p_opening_days:6,p_opening_hours:9.5,
+  });
+  assert.equal(w.document.getElementById('companyOnboarding').hidden,true);
+  assert.match(w.document.getElementById('onboardingStatus').textContent,/gemeinsam gespeichert/);
+  t.close();
+});
+
+test('invalid hours and unverified sessions never invoke company RPC',async()=>{
+  const t=await renderOnboarding();
+  const w=t.w;
+  w.document.getElementById('company_name').value='Testunternehmen';
+  w.document.getElementById('company_type').value='Lebensmittel';
+  w.document.getElementById('branch_name').value='Innenstadt';
+  w.document.getElementById('branch_days').value='9';
+  w.document.getElementById('companyOnboarding')
+    .dispatchEvent(new w.Event('submit',{cancelable:true,bubbles:true}));
+  await t.flush();
+  assert.equal(t.client.calls.filter(x=>x[0]==='rpc').length,0);
+  t.close();
+
+  const unverified=await renderOnboarding({verified:false});
+  const uw=unverified.w;
+  uw.document.getElementById('company_name').value='Testunternehmen';
+  uw.document.getElementById('company_type').value='Lebensmittel';
+  uw.document.getElementById('branch_name').value='Innenstadt';
+  uw.document.getElementById('companyOnboarding')
+    .dispatchEvent(new uw.Event('submit',{cancelable:true,bubbles:true}));
+  await unverified.flush();
+  assert.equal(unverified.client.calls.filter(x=>x[0]==='rpc').length,0);
+  unverified.close();
+});
+
+test('Supabase bootstrap refuses disabled and secret-key configurations',()=>{
+  const dom=new JSDOM('<body></body>',{url:'https://ladenfluss.de/konto',runScripts:'outside-only'});
+  const w=dom.window;
+  w.LadenflussCloudConfig={enabled:false,url:'',publishableKey:''};
+  w.eval(readFileSync(resolve(root,'assets/supabase-browser.js'),'utf8'));
+  assert.equal(w.LadenflussSupabase.isEnabled(),false);
+  w.LadenflussCloudConfig={enabled:true,url:'https://nzxtdrmdvqyvcbohplzt.supabase.co',publishableKey:'sb_secret_NOT_ALLOWED'};
+  assert.throws(()=>w.LadenflussSupabase.isEnabled(),/konfiguriert/);
+  dom.window.close();
+});
