@@ -28,7 +28,7 @@ async function setup(options={}){
    return query;
   },
   rpc(name,args){calls.push({name,args});if(!options.rpcError)remote={payload:args.document,revision:args.expected_revision+1,updated_at:'2026-10-10T09:00:00Z'};
-   return {abortSignal:async()=>({data:remote,error:options.rpcError||null})};
+   return {abortSignal:async()=>({data:options.badReceipt?{revision:args.expected_revision}:remote,error:options.rpcError||null})};
   }
  };
  w.LadenflussCloud={getClient:()=>client};
@@ -107,4 +107,12 @@ test('Profile cloud drops unknown keys and rejects invalid values',async t=>{
  const c=a.w.LadenflussDataCloud;
  assert.equal(c.clean('profile',{name:'Mein Laden',mystery:'nope'}).mystery,undefined);
  assert.throws(()=>c.clean('profile',{name:'Mein Laden',days:999}),/Öffnungszeiten/);
+});
+
+test('Missing or stale server receipt never reports a confirmed cloud save',async t=>{
+ const a=await setup({badReceipt:true});t.after(()=>a.dom.window.close());
+ a.agree();await a.click('dataCloudUpload');
+ assert.equal(a.calls.length,1);
+ assert.match(a.$('dataCloudStatus').textContent,/keine gültige Speicherbestätigung/);
+ assert.equal(a.$('dataCloudWorkspace').hidden,true);
 });
