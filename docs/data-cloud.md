@@ -35,3 +35,12 @@ Die lokalen Zahlenfluss- und Warenfluss-Werkzeuge bleiben ohne Konto nutzbar. Ei
 - Nachweis nach ROLLBACK: keine dauerhaften Testkunden, Firmen oder Dokumente.
 - Kostenloses Ladenprofil über eigene strikte Feldauswahl und bestehende Profilvalidierung ergänzt. Dazu zwei Regressionstests in der Suite.
 - GitHub Actions CI für Unit-Tests und Browser-Tests unter `.github/workflows/cloud-regression.yml` eingerichtet; vollständiges Testergebnis zum Zeitpunkt dieser Dokumentation noch nicht bestätigt.
+
+## Versionsverlauf für Cloud-Sicherungen (10. Oktober 2026)
+- Supabase-Migration `cloud_document_history` erfolgreich angewandt; SQL-Quelle: `supabase/cloud-document-history.sql`.
+- Jede bestätigte Aktualisierung eines Cloud-Dokuments archiviert die vorherige Revision. Maximal fünf ältere Revisionen je Unternehmen und Modul bleiben gespeichert.
+- Die Tabelle `cloud_document_history` erlaubt Browsern ausschließlich `SELECT`, geschützt durch dieselbe Modul-/Rollen-RLS wie das aktuelle Cloud-Dokument. Historie kann nicht direkt vom Browser verändert werden.
+- `/daten-cloud` zeigt ältere Versionen und erlaubt einen JSON-Download oder die **ausdrücklich bestätigte lokale Übernahme**. Das Wiederherstellen älterer Versionen schreibt nicht automatisch in die Cloud. Die aktuelle Cloud-Revision wird zuvor erneut geprüft.
+- Transaktionaler Remote-Test: Acht Versionen geschrieben, fünf ältere Revisionen (3–7) archiviert; ein fremdes Händlerkonto sah keine Historie. Der gesamte Test wurde zurückgerollt. Security Advisor meldete anschließend keine Befunde.
+- Zusätzlicher Playwright-Test prüft historischen lokalen Restore, Cloud-Unverändertheit, Revisionskonflikt und Zweitgerät mit der tatsächlichen lokal ausgelieferten Supabase-Clientbibliothek (HTTP-Antworten simuliert).
+- Ein erfolgreicher Test ersetzt keine echte SMTP-/PKCE-Kundenvalidierung; die öffentliche Version bleibt daher unangetastet.
