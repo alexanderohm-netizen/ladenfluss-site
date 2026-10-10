@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded',()=>{
 'use strict';
-const $=id=>document.getElementById(id), api=window.LadenflussDataCloud, storage=window.localStorage;
+const $=id=>document.getElementById(id), api=window.LadenflussDataCloud;
+// Defer storage access: restricted-browser modes can throw SecurityError on property access.
+const storage={getItem:key=>window.localStorage.getItem(key),setItem:(key,value)=>window.localStorage.setItem(key,value)};
 let client, generation=0, snapshot=null, busy=false, userId=null;
 const tell=text=>{$('dataCloudStatus').textContent=text;};
 function invalidate(){++generation;snapshot=null;$('dataCloudWorkspace').hidden=true;$('dataCloudConsent').checked=false;}
@@ -15,7 +17,8 @@ function deadline(promise){let timer;return Promise.race([promise,new Promise((_
 async function result(query){const response=await query.abortSignal(AbortSignal.timeout(15000));if(response.error)throw response.error;return response.data;}
 async function authenticated(){
  const response=await deadline(client.auth.getUser());
- if(response.error||!response.data?.user||response.data.user.is_anonymous||!response.data.user.email_confirmed_at)throw Error('Bitte zuerst mit einem bestätigten Kundenkonto anmelden.');
+ if(response.error&&response.error.name!=='AuthSessionMissingError')throw Error('Dein Login konnte gerade nicht geprüft werden. Bitte die Verbindung prüfen und neu laden.');
+ if(!response.data?.user||response.data.user.is_anonymous||!response.data.user.email_confirmed_at)throw Error('Bitte zuerst mit einem bestätigten Kundenkonto anmelden.');
  return response.data.user;
 }
 function fail(error){
