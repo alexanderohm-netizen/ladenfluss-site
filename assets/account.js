@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       try { await action(data, form); }
       catch (error) { failed(error); }
       finally {
-        form.querySelectorAll('input[type=password]').forEach(input => { input.value = ''; });
+        form.querySelectorAll('input[type=password],input[autocomplete="one-time-code"]').forEach(input => { input.value = ''; });
         delete form.dataset.busy;
         buttons.forEach(b => { b.disabled = false; });
       }
