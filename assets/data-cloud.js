@@ -42,9 +42,11 @@ async function load(companyId){
   if(!companies.length)throw Error('Bitte zuerst ein Unternehmen im Kundenkonto anlegen. Nur Inhaber, Admins und Leitungen können Daten sichern.');
   choose($('dataCloudCompany'),companies,companyId);
   const company=$('dataCloudCompany').value,module=$('dataCloudModule').value;
-  const access=await result(client.from('module_access').select('module_key,status,valid_until').eq('company_id',company).eq('module_key',module).maybeSingle());
-  if(current!==generation)return false;
-  if(!allowed(access)){tell('Die Cloud für '+api.MODULES[module].label+' ist noch nicht freigeschaltet. Deine lokalen Daten bleiben erhalten.');return false;}
+  if(module!=='profile'){
+   const access=await result(client.from('module_access').select('module_key,status,valid_until').eq('company_id',company).eq('module_key',module).maybeSingle());
+   if(current!==generation)return false;
+   if(!allowed(access)){tell('Die Cloud für '+api.MODULES[module].label+' ist noch nicht freigeschaltet. Deine lokalen Daten bleiben erhalten.');return false;}
+  }
   const remote=await result(client.from('cloud_documents').select('payload,revision,updated_at').eq('company_id',company).eq('module_key',module).maybeSingle());
   if(current!==generation)return false;
   if(remote&&(!Number.isSafeInteger(remote.revision)||remote.revision<1))throw Error('Der Cloud-Stand hat eine ungültige Revision.');
