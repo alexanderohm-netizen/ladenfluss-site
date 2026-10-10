@@ -2,6 +2,14 @@
 
 Professionelle statische Website für Ladenfluss.
 
+## Aktueller verbindlicher Produktfahrplan (Beta + Personalfluss)
+
+Die abgestimmte Reihenfolge aus Cloud, neuem Layout, Beta-Start, PEP,
+Urlaubsplaner sowie Mitarbeiterprofilen und Bewerbermanagement ist in
+[Produktfahrplan: Beta, PEP, Urlaub & Personalfluss](docs/produktfahrplan-beta-personalfluss.md)
+festgehalten. Dieser Plan beschreibt die **Ziele**, nicht den gegenwärtigen
+Funktions- oder Release-Status.
+
 ## Betrieb
 - Domain: ladenfluss.de
 - E-Mail: info@ladenfluss.de
