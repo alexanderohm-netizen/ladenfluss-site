@@ -499,6 +499,7 @@ test('Rechner-Vorlage behält korrekte Euro-Ergebnisse für Marge, Rabatt und Br
   await page.locator('#b_fixed').fill('12000');
   await page.locator('#b_rate').fill('40');
   await page.locator('#b_days').fill('24');
+  await page.locator('.advanced-options summary').click();
   await page.locator('#b_profit').fill('0');
   await page.locator('#b_buffer').fill('0');
   await page.evaluate(()=>window.calcBreakEven(false));
@@ -513,10 +514,10 @@ test('Kombi-Rechner: alle acht Kategorien zugänglich, aktive Auswahl hervorgeho
  assert.equal(await page.locator('[data-ref-calc-mode]').count(),8);
  assert.equal(await page.locator('[data-ref-calc-mode][aria-current=true]').count(),1);
  await page.locator('[data-ref-calc-mode="rabattrechner"]').click();
- assert.equal(await page.locator('#modeTitle').innerText(),'Rabattwirkung');
+ await page.waitForFunction(()=>document.getElementById('modeTitle')?.textContent==='Rabattwirkung');
  assert.equal(await page.locator('[data-ref-calc-mode="rabattrechner"]').getAttribute('aria-current'),'true');
  await page.locator('[data-ref-calc-mode="margenrechner"]').click();
- assert.equal(await page.locator('#modeTitle').innerText(),'Verkaufspreis');
+ await page.waitForFunction(()=>document.getElementById('modeTitle')?.textContent==='Verkaufspreis');
  assert.equal(await page.locator('[data-ref-calc-mode="margenrechner"]').getAttribute('aria-current'),'true');
  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
  assert.ok(overflow<=2,'Kombi-Rechner: unexpected horizontal overflow '+overflow);
