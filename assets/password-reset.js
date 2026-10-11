@@ -19,7 +19,30 @@ document.addEventListener('DOMContentLoaded', () => {
     recoveryAuthorized = false;
     if (form) form.hidden = true;
   }
+  // Supabase exchanges a one-time PKCE code after the redirect. An early
+  // PASSWORD_RECOVERY event can arrive before the browser URL is cleaned up.
+  // Never unlock the form while that exchange is still in progress.
+  function hasUnprocessedCode() {
+    return new URLSearchParams(window.location.search).has('code');
+  }
+  async function waitForCodeExchange() {
+    for (let i = 0; i < 120 && hasUnprocessedCode(); i++) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    return !hasUnprocessedCode();
+  }
+  let recoveryCheckRun = 0;
   async function checkRecoveryLink() {
+    const run = ++recoveryCheckRun;
+    if (hasUnprocessedCode()) {
+      lock();
+      message('Link wird geprüft','Die sichere Anmeldung wird abgeschlossen. Der Wiederherstellungscode wird geprüft.');
+      if (!await waitForCodeExchange()) {
+        if (run === recoveryCheckRun) message('Wiederherstellung nicht abgeschlossen','Bitte fordere einen neuen Passwort-Link an, falls dieser Vorgang nicht abgeschlossen wird.');
+        return;
+      }
+      if (run !== recoveryCheckRun) return;
+    }
     // A regular login/session is NOT a password recovery grant.
     const expectedUserId = api?.getRecoveryUserId?.();
     if (!expectedUserId || !core) {
