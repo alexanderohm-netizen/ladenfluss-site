@@ -2,7 +2,7 @@ name: Local Supabase Auth end-to-end
 
 on:
   push:
-    branches: [plan/cloud-beta-hardening-20261010]
+    branches: [plan/cloud-beta-hardening-20261010, release/cloud-beta-integration-20261011]
     paths:
       - '.github/workflows/local-supabase-auth.yml'
       - 'supabase/config.toml'
@@ -76,13 +76,14 @@ jobs:
         run: |
           set -e
           psql -X -v ON_ERROR_STOP=1 -f tests/local-supabase-cloud-schema.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/add_company_retail_type.sql
           psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/add_branch_opening_settings.sql
           psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/guard_cloud_document_revision.sql
           psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/save_cloud_document_if_revision.sql
           psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/create_cloud_document_if_absent.sql
           psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/create_company_onboarding.sql
           psql -X -v ON_ERROR_STOP=1 -c "NOTIFY pgrst, 'reload schema';"
-      - name: Assert all 13 SQL release gates in local real-auth database
+      - name: Assert all 14 SQL release gates in local real-auth database
         env:
           PGHOST: 127.0.0.1
           PGPORT: '54322'
@@ -94,7 +95,7 @@ jobs:
           echo "$results"
           printf '%s\n' "$results" | awk -F '|' '
             { total++; if ($2 != "PASS") bad++ }
-            END { if (total != 13 || bad != 0) exit 1 }
+            END { if (total != 14 || bad != 0) exit 1 }
           '
       - name: Allow local PostgREST schema cache to update
         run: sleep 2
