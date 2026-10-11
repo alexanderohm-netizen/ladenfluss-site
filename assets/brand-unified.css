@@ -1,0 +1,59 @@
+/* Ladenfluss Design 2.1 – sitewide details based on the approved reference:
+   wine-red, warm cream, crisp cards, editorial headings, quiet interactions.
+   Pure presentation – no routing or storage changes. */
+:root{
+ --wine:#7c101c;--wine-dark:#520e18;--wine-soft:#f7e9e7;
+ --paper:#f9f3ec;--paper-soft:#fffaf5;--white:#fffdfa;
+ --ink:#382c29;--muted:#79675f;--line:#e8d9d0;--line-dark:#c9b7ac;
+ --lf-brand:#7c101c;--lf-brand-dark:#520e18;
+}
+html{scroll-padding-top:92px}
+body{background:#f9f3ec;color:#382c29}
+body .site-header{background:rgba(255,251,246,.98);border-bottom:1px solid #eadcd1;backdrop-filter:blur(12px)}
+body .site-header .header-row{min-height:75px}
+body .desktop-nav a{font-weight:650}
+body .desktop-nav a:hover,body .desktop-nav a[aria-current="page"]{color:#7c101c}
+body .btn,body .nav-cta{border-radius:7px!important;min-height:44px;letter-spacing:.005em}
+body .btn-primary,body .nav-cta{background:#7c101c;border-color:#7c101c;color:#fff;box-shadow:0 6px 16px #531f2818!important}
+body .btn-primary:hover,body .nav-cta:hover{background:#5a0f1a;border-color:#5a0f1a}
+body .btn-secondary{background:#fffcf8;border-color:#d6bcb6;color:#76242e}
+body .btn-secondary:hover{background:#fdf0ec}
+body :is(a,button,input,select,textarea,summary):focus-visible{outline:3px solid #bf7e89;outline-offset:3px}
+body input:not([type=checkbox]):not([type=radio]),body select,body textarea{border-radius:7px}
+body .page-hero{background:linear-gradient(113deg,#fff9f2,#f2e3da);border-bottom:1px solid #eadbd0;padding:66px 0 50px}
+body .page-hero h1{font-family:Georgia,"Times New Roman",serif;color:#74202d;letter-spacing:-.06em}
+body .page-lead{font-size:clamp(14px,1.55vw,17px);line-height:1.72;color:#63524d;max-width:760px}
+body :is(.section-head h2,.calculator h2,.product-entry h2,.workspace-heading h1,.pep-head h1){
+ letter-spacing:-.05em}
+body :is(.tool-card,.calculator,.module-grid article,.product-catalog>a,.product-entry-grid a,
+ .contact-card,.hero-panel,.advanced-options,.account-card,.account-tabs,.staff-card,.pep-panel){
+ border-radius:10px!important;border-color:#e6d6ca}
+body :is(.tool-card,.product-catalog>a,.product-entry-grid a,.module-grid article){
+ background:#fffdf9;box-shadow:0 7px 19px #4c2c1c0b!important}
+body :is(.tool-card,.product-catalog>a,.product-entry-grid a):hover{
+ background:#fff9f4;box-shadow:0 12px 30px #4c2c1c14!important;border-color:#cfada8}
+body .calculator{background:#fffefa;box-shadow:0 10px 28px #4c2c1c0d!important}
+body .tool-card h3,body .product-catalog h3{color:#732333}
+body .eyebrow{color:#873343}
+body .account-card{border-top:4px solid #7c101c;box-shadow:0 15px 42px rgba(66,35,36,.07)}
+body .account-tabs button.active{color:#7c101c}
+body .site-footer:not(.ref-footer){background:#fff9f4;border-top:1px solid #eadad1;color:#473532}
+body .site-footer:not(.ref-footer) :is(h4,strong,.footer-brand p){color:#583334}
+body .site-footer:not(.ref-footer) :is(a,.footer-bottom){color:#765f57}
+body .site-footer:not(.ref-footer) a:hover{color:#7c101c}
+body .workspace-nav{background:#462d32;border-color:#462d32}
+body .workspace-nav button.active{background:#7c263b!important}
+body .workspace-nav :is(button,a):hover{background:#603942!important}
+body .workspace-heading h1{color:#66313c}
+body .pep-head{background:linear-gradient(112deg,#fffaf5,#f4e7df);border-color:#e8d8cc}
+body .pep-head h1{color:#5d2e36}
+body .staff-head h1{color:#4c2428}
+@media(max-width:780px){
+ body .page-hero{padding:47px 0 35px}
+ body .site-header{backdrop-filter:none}
+ body .container{width:min(100% - 30px,1240px)}
+ body .btn{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){
+ body .btn,body .tool-card,body .product-catalog>a{transition:none!important;transform:none!important}
+}
