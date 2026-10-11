@@ -1,0 +1,129 @@
+name: Local Supabase Auth end-to-end
+
+on:
+  push:
+    branches: [plan/cloud-beta-hardening-20261010]
+    paths:
+      - '.github/workflows/local-supabase-auth.yml'
+      - 'supabase/config.toml'
+      - 'tests/local-supabase-auth-e2e.cjs'
+      - 'tests/local-supabase-cloud-e2e.cjs'
+      - 'tests/local-supabase-cloud-schema.sql'
+      - 'tests/local-supabase-browser-e2e.cjs'
+      - 'tests/helpers/local-site-server.cjs'
+      - 'assets/supabase-browser.js'
+      - 'assets/account.js'
+      - 'assets/password-reset.js'
+      - 'assets/auth-core.js'
+      - 'konto.html'
+      - 'onboarding.html'
+      - 'supabase/drafts/**'
+      - 'supabase/checks/**'
+  pull_request:
+    paths:
+      - '.github/workflows/local-supabase-auth.yml'
+      - 'supabase/config.toml'
+      - 'tests/local-supabase-auth-e2e.cjs'
+      - 'tests/local-supabase-cloud-e2e.cjs'
+      - 'tests/local-supabase-cloud-schema.sql'
+      - 'tests/local-supabase-browser-e2e.cjs'
+      - 'tests/helpers/local-site-server.cjs'
+      - 'assets/supabase-browser.js'
+      - 'assets/account.js'
+      - 'assets/password-reset.js'
+      - 'assets/auth-core.js'
+      - 'konto.html'
+      - 'onboarding.html'
+      - 'supabase/drafts/**'
+      - 'supabase/checks/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  auth-email-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Inspect CLI compatibility
+        run: |
+          supabase --version
+          supabase start --help >/dev/null
+      - name: Start local Supabase Auth and Mailpit (NO hosted project)
+        run: |
+          if ! supabase start > /tmp/ladenfluss-local-supabase-start.log 2>&1; then
+            echo "The isolated local Supabase stack did not start. See CLI/Docker compatibility."
+            exit 1
+          fi
+          echo "Local Supabase services started."
+      - name: Install PostgreSQL client
+        run: command -v psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+      - name: Install hosted-parity RLS schema and reviewed drafts in LOCAL Postgres only
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '54322'
+          PGDATABASE: postgres
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: |
+          set -e
+          psql -X -v ON_ERROR_STOP=1 -f tests/local-supabase-cloud-schema.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/add_branch_opening_settings.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/guard_cloud_document_revision.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/save_cloud_document_if_revision.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/create_cloud_document_if_absent.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/drafts/create_company_onboarding.sql
+          psql -X -v ON_ERROR_STOP=1 -c "NOTIFY pgrst, 'reload schema';"
+      - name: Assert all 13 SQL release gates in local real-auth database
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '54322'
+          PGDATABASE: postgres
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: |
+          results="$(psql -X -At -v ON_ERROR_STOP=1 -f supabase/checks/cloud-beta-readiness.sql)"
+          echo "$results"
+          printf '%s\n' "$results" | awk -F '|' '
+            { total++; if ($2 != "PASS") bad++ }
+            END { if (total != 13 || bad != 0) exit 1 }
+          '
+      - name: Allow local PostgREST schema cache to update
+        run: sleep 2
+      - name: Real local Auth, confirmation and recovery HTTP tests
+        run: node --test tests/local-supabase-auth-e2e.cjs
+      - name: Verify real Supabase JWTs, tenant isolation, permissions and CAS
+        run: node --test tests/local-supabase-cloud-e2e.cjs
+      - name: Install browser dependencies and Chromium
+        run: |
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+      - name: Start disposable local Ladenfluss website
+        run: |
+          node tests/helpers/local-site-server.cjs > /tmp/ladenfluss-local-site.log 2>&1 &
+          echo $! > /tmp/ladenfluss-local-site.pid
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:54330/konto > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/ladenfluss-local-site.log
+          exit 1
+      - name: Verify actual Chromium signup, onboarding, PKCE recovery
+        run: node --test tests/local-supabase-browser-e2e.cjs
+      - name: Stop disposable local website
+        if: always()
+        run: |
+          if [ -f /tmp/ladenfluss-local-site.pid ]; then
+            kill "$(cat /tmp/ladenfluss-local-site.pid)" || true
+          fi
+      - name: Stop disposable local Supabase
+        if: always()
+        run: supabase stop >/dev/null 2>&1 || true
