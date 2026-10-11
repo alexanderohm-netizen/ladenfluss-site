@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     const raw=$('staffHourlyGross').value.trim();
     if(!raw){status('Für einen neuen Stundenlohn bitte einen Betrag eingeben. Zum Löschen „Betrag entfernen“ verwenden.',true);return;}
     const rate=Number(raw);
-    if(!Number.isFinite(rate)||rate<0||rate>250||Math.round(rate*100)!==rate*100){
+    if(!Number.isFinite(rate)||rate<0||rate>250||Math.abs(Math.round(rate*100)-rate*100)>1e-6){
       status('Stundenlohn bitte mit maximal zwei Nachkommastellen zwischen 0 und 250 € eingeben.',true);return;
     }
     busy=true;wageForm.querySelector('button[type=submit]').disabled=true;
