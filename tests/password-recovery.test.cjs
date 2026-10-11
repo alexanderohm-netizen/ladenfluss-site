@@ -11,9 +11,9 @@ const USER_ID='11111111-1111-4111-8111-111111111111';
 const OTHER_ID='22222222-2222-4222-8222-222222222222';
 const flush=async()=>{for(let i=0;i<4;i++)await new Promise(done=>setImmediate(done));};
 
-async function createPage({enabled=true, userId=USER_ID, recoveryUserId=null}={}) {
+async function createPage({enabled=true, userId=USER_ID, recoveryUserId=null, url='https://ladenfluss.de/passwort-zuruecksetzen'}={}) {
   const dom=new JSDOM(read('passwort-zuruecksetzen.html'),{
-    url:'https://ladenfluss.de/passwort-zuruecksetzen',runScripts:'outside-only',
+    url,runScripts:'outside-only',
   });
   const win=dom.window, calls=[];
   let verifiedId=userId, recoveryId=recoveryUserId;
@@ -44,6 +44,21 @@ async function createPage({enabled=true, userId=USER_ID, recoveryUserId=null}={}
     close:()=>dom.window.close(),
   };
 }
+
+test('PKCE reset page stays locked until one-time code is consumed',async()=>{
+  const x=await createPage({
+    recoveryUserId:USER_ID,
+    url:'https://ladenfluss.de/passwort-zuruecksetzen?code=one-time-test-code',
+  });
+  const form=x.win.document.getElementById('passwordResetForm');
+  assert.equal(form.hidden,true);
+  assert.match(x.win.document.getElementById('passwordResetStatus').textContent,/Link wird geprüft/);
+  x.win.history.replaceState(null,'','/passwort-zuruecksetzen');
+  await new Promise(done=>setTimeout(done,160));
+  await flush();
+  assert.equal(form.hidden,false);
+  x.close();
+});
 
 test('ordinary authenticated users cannot reset password without recovery link',async()=>{
   const x=await createPage();
