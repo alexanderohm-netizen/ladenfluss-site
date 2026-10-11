@@ -8,13 +8,13 @@ const vm = require('node:vm');
 const root=path.resolve(__dirname,'..');
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 
-test('Cloud beta remains disabled until the real Supabase release gates pass',()=>{
+test('SSO-protected staging preview is explicitly configured for hosted login testing',()=>{
   const context={window:{}};
   vm.runInNewContext(read('assets/cloud-config.js'),context,{filename:'assets/cloud-config.js'});
-  assert.equal(context.window.LadenflussCloudConfig.enabled,false,
-    'Do not activate Cloud Beta before Supabase Auth/SMTP/RLS E2E and an approved release');
-  assert.equal(context.window.LadenflussCloudConfig.url,'');
-  assert.equal(context.window.LadenflussCloudConfig.publishableKey,'');
+  assert.equal(context.window.LadenflussCloudConfig.enabled,true);
+  assert.equal(context.window.LadenflussCloudConfig.url,'https://nzxtdrmdvqyvcbohplzt.supabase.co');
+  assert.match(context.window.LadenflussCloudConfig.publishableKey,/^sb_publishable_[A-Za-z0-9_-]+$/,
+    'Use only a Supabase publishable browser key. This staging branch must not merge to main.');
 });
 
 test('public browser source contains no Supabase secret or service-role key',()=>{
