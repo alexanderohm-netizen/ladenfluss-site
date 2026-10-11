@@ -29,6 +29,12 @@ async function load(file, initial = {}) {
   for (const script of w.document.querySelectorAll('script[src]')) {
     const src = path.join(root,script.getAttribute('src'));
     w.eval(fs.readFileSync(src,'utf8'));
+    // Generic jsdom smoke tests are offline: do not initialize asynchronous
+    // hosted auth against a real account API in a temporary test window.
+    // Dedicated browser Auth E2E covers the enabled Cloud Beta separately.
+    if (script.getAttribute('src') === '/assets/cloud-config.js') {
+      w.LadenflussCloudConfig = Object.freeze({enabled:false,url:'',publishableKey:''});
+    }
   }
   w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
   return {
