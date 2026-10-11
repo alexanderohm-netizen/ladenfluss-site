@@ -389,3 +389,60 @@ test('Personalfluss v2 – genehmigte Urlaubszeiträume sind im selben Teamprofi
   assert.match(labels,/Bestätigte Urlaubszeiträume\s*1/);
   assert.equal(await page.locator('#staffProfile').isVisible(),true);
 });
+
+
+test('Referenz-Cockpit zeigt echte PEP-, Urlaubs- und Teamdaten statt fiktiver Geschäftszahlen',async t=>{
+  const page=await session(t,{width:1440,height:920});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base+'/mein-laden');
+  assert.equal(await page.locator('#refKpiTeam').innerText(),'2 / 3');
+  assert.equal(await page.locator('#refKpiSales').innerText(),'–');
+  assert.equal(await page.locator('#refKpiStock').innerText(),'–');
+  assert.equal(await page.locator('#refKpiApplicants').innerText(),'–');
+  assert.equal(await page.locator('#refKpiCloud').innerText(),'Lokal');
+  assert.match(await page.locator('#refPepBody').innerText(),/Anna Müller/);
+  assert.equal(await page.locator('.ref-hour-col').count(),7);
+  await page.locator('#refDashboardQuery').fill('Urlaub');
+  assert.ok(await page.locator('#refDashboardResults a').count()>=1);
+  assert.equal(await page.locator('#refDashboardResults').isVisible(),true);
+  await page.locator('#refDashboardQuery').fill('');
+  assert.equal(await page.locator('#refDashboardResults').isVisible(),false);
+  await page.evaluate(()=>{
+    const profile=window.LadenflussStoreSettings.read();
+    window.LadenflussStoreSettings.save({...profile,name:'Blütenzauber'});
+  });
+  await page.reload();
+  assert.equal(await page.locator('#refSidebarShop').innerText(),'Blütenzauber');
+  assert.equal(await page.locator('#refTopShop').innerText(),'Blütenzauber');
+  await page.goto(base+'/tools/urlaubsplaner');
+  await page.locator('[data-vac-view=team]').click();
+  await page.locator('#vacImportPep').click();
+  await page.locator('[data-vac-view=entry]').click();
+  await page.locator('#vacPerson').selectOption('e1');
+  await page.locator('#vacFrom').fill('2026-10-12');
+  await page.locator('#vacTo').fill('2026-10-13');
+  await page.locator('#vacStatus').selectOption('approved');
+  await page.locator('#vacSaveEntry').click();
+  await page.goto(base+'/mein-laden');
+  assert.equal(await page.locator('#refKpiVacation').innerText(),'1');
+  assert.equal(await page.locator('.ref-vacation-item').count(),1);
+  assert.match(await page.locator('#refVacationList').innerText(),/Anna Müller/);
+  assert.match(await page.locator('#refVacationList').innerText(),/Bestätigt/);
+  assert.deepEqual(errors,[]);
+});
+
+test('Referenz-Cockpit Suche öffnet echte Module und mobile Menü-Tabs bleiben nutzbar',async t=>{
+  const page=await session(t,{width:390,height:820});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base+'/mein-laden');
+  assert.equal(await page.locator('#refMobileMenu').isVisible(),true);
+  await page.locator('#refMobileMenu').click();
+  assert.equal(await page.locator('.workspace-nav').isVisible(),true);
+  await page.locator('[data-cockpit-tab=profile]').click();
+  assert.equal(await page.locator('[data-cockpit-panel=profile]').isVisible(),true);
+  assert.equal(await page.locator('.workspace-nav').isVisible(),false);
+  await page.locator('#refDashboardQuery').fill('Personalfluss');
+  await page.locator('#refDashboardResults a[href="/mitarbeiter"]').click();
+  assert.match(page.url(),/\/mitarbeiter$/);
+  assert.deepEqual(errors,[]);
+});
