@@ -1,7 +1,9 @@
 -- READ-ONLY Cloud Beta deployment preflight. Safe on hosted Supabase.
 -- This checks SQL objects/privileges only, NOT Auth SMTP, redirects or real logins.
 WITH checks AS (
-  SELECT 'Branches: opening_days' AS check_name,
+  SELECT 'Companies: retail_type' AS check_name,
+    EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='companies' AND column_name='retail_type') AS passed
+  UNION ALL SELECT 'Branches: opening_days' AS check_name,
     EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='branches' AND column_name='opening_days') AS passed
   UNION ALL SELECT 'Branches: opening_hours',
     EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='branches' AND column_name='opening_hours')
