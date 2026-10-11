@@ -148,13 +148,38 @@ document.addEventListener('DOMContentLoaded',()=> {
     renderDayCheck();
     renderPlanState();
     body.innerHTML=employees.map(e=>{
-      const total=e.shifts.reduce((a,s)=>a+hours(s),0);
-      const cells=e.shifts.map((s,i)=>{const a=absenceAt(e,i);return s
-        ? `<td class="${a?'has-conflict':''}"><button class="shift-chip" data-e="${escape(e.id)}" data-d="${i}" title="Schicht bearbeiten"><strong>${escape(s[0])}–${escape(s[1])}</strong><span>${hours(s).toLocaleString('de-DE',{maximumFractionDigits:1})} h · ${escape(s[2])} Min Pause</span></button></td>`
-        : a ? `<td><button class="absence-chip" data-ae="${escape(e.id)}" data-ad="${i}"><strong>${escape(a)}</strong><span>Abwesend</span></button></td>` : `<td><button class="empty-shift" data-e="${escape(e.id)}" data-d="${i}" aria-label="Schicht hinzufügen">+</button></td>`}).join('');
-      const state=total>e.target+5?'high':total<Math.max(0,e.target-8)?'low':'ok';
-      return `<tr data-employee-id="${escape(e.id)}"><th scope="row"><strong>${escape(e.name)}</strong><span>${escape(e.role)} · Ziel ${e.target} h</span></th>${cells}<td class="week-total ${state}"><strong>${total.toLocaleString('de-DE',{maximumFractionDigits:1})} h</strong><span>${state==='ok'?'passt':state==='high'?'zu hoch':'zu niedrig'}</span></td></tr>`;
+      const count=dayCount();
+      const total=Array.from({length:count},(_,i)=>hours(rowShift(e,i))).reduce((a,b)=>a+b,0);
+      const target=e.target*(count/7);
+      const difference=total-target;
+      const fmt=n=>n.toLocaleString('de-DE',{maximumFractionDigits:1});
+      const cells=Array.from({length:count},(_,i)=>{
+        const shift=rowShift(e,i),absence=absenceAt(e,i);
+        const vacation=absence==='Urlaub'&&!rowManualAbsence(e,i);
+        const title=escape(e.name+', '+String(i+1)+'. Tag: ');
+        if(shift){
+          return `<td class="pep-grid-slot ${absence?'has-conflict':''}"><button type="button" class="shift-chip pep-grid-trigger" data-grid-e="${escape(e.id)}" data-grid-d="${i}" aria-label="${title}Schicht ${escape(shift[0])} bis ${escape(shift[1])}, direkt bearbeiten" title="Klicken und Schichtzeit eintippen"><strong>${escape(shift[0])}–${escape(shift[1])}</strong><span>${fmt(hours(shift))} h · ${escape(String(shift[2]))} Min Pause</span></button></td>`;
+        }
+        if(absence){
+          const before=i>0&&absenceAt(e,i-1)===absence;
+          const after=i<count-1&&absenceAt(e,i+1)===absence;
+          const group=absence==='Urlaub'?(' pep-vacation '+(before?'run-mid':'run-first')+(after?' run-cont':' run-last')):'';
+          return `<td class="pep-grid-slot pep-absence-slot"><button type="button" class="absence-chip${group}${vacation?' pep-approved-vacation':' pep-grid-trigger'}" ${vacation?`data-ae="${escape(e.id)}" data-ad="${i}"`:`data-grid-e="${escape(e.id)}" data-grid-d="${i}"`} aria-label="${title}${escape(absence)}${vacation?', im Urlaubsplaner ändern':', direkt bearbeiten'}"><strong>${escape(absence)}</strong><span>${vacation?'Genehmigt':'Abwesend'}</span></button></td>`;
+        }
+        return `<td class="pep-grid-slot"><button type="button" class="empty-shift pep-grid-trigger" data-grid-e="${escape(e.id)}" data-grid-d="${i}" aria-label="${title}Schicht eingeben"><span aria-hidden="true">+</span><small>Eintragen</small></button></td>`;
+      }).join('');
+      const deltaClass=difference>5?'high':difference< -8?'low':'ok';
+      const signed=(difference>0?'+':'')+fmt(difference)+' h';
+      return `<tr data-employee-id="${escape(e.id)}"><th scope="row" class="pep-employee"><strong>${escape(e.name)}</strong><span>${escape(e.role)}</span></th><td class="pep-compare pep-target">${fmt(target)} h</td><td class="pep-compare pep-planned">${fmt(total)} h</td><td class="pep-compare pep-delta ${deltaClass}">${signed}</td>${cells}</tr>`;
     }).join('');
+    const totals=document.getElementById('pepTotals');
+    if(totals){
+      const count=dayCount();
+      const sums=Array.from({length:count},(_,i)=>employees.reduce((sum,e)=>
+        sum+(absenceAt(e,i)?0:hours(rowShift(e,i))),0));
+      const fmt=n=>n.toLocaleString('de-DE',{maximumFractionDigits:1});
+      totals.innerHTML=`<tr class="pep-totals-row"><th scope="row">Besetzte Stunden</th><td class="pep-compare">–</td><td class="pep-compare">${fmt(sums.reduce((a,b)=>a+b,0))} h</td><td class="pep-compare">–</td>${sums.map((v,i)=>`<td aria-label="Tag ${i+1}: ${fmt(v)} Stunden besetzt">${fmt(v)} h</td>`).join('')}</tr>`;
+    }
 
     const total=employees.reduce((a,e)=>a+e.shifts.reduce((x,s)=>x+hours(s),0),0);
     const issues=getIssues();
