@@ -161,7 +161,7 @@ test('Personalbedarf führt zum gewählten Tag und zeigt den gespeicherten Vergl
   await page.getByRole('button',{name:'Team-Bedarf anzeigen'}).click();
   await page.locator('.planning-transfer').click();
   assert.match(page.url(),/week=2026-10-05&day=2026-10-08/);
-  assert.equal(await page.locator('#planningReference').isVisible(),true);
+  await page.locator('#planningReference').waitFor({state:'visible',timeout:10000});
   assert.match(await page.locator('#planningReference').innerText(),/Donnerstag/);
   await page.locator('#nextWeek').click();
   assert.equal(await page.locator('#planningReference').isVisible(),false);
