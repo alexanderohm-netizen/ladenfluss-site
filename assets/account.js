@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const passwordField = form.querySelector('input[type=password]');
     const password = passwordField?.value || '';
     if (kind === 'register' && !form.querySelector('input[type=checkbox]')?.checked) {
-      message('Datenschutz bestätigen', 'Bitte lies und akzeptiere die Datenschutzbestimmungen.');
+      message('Datenschutz bestätigen', 'Bitte lies die Datenschutzhinweise und bestätige, dass du sie zur Kenntnis genommen hast.');
       return;
     }
     setBusy(true);
