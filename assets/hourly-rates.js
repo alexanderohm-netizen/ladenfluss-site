@@ -20,7 +20,7 @@
     if(entries.length>MAX_PEOPLE)throw new Error('Zu viele Stundenlohneinträge.');
     const rates=Object.create(null);
     for(const [id,rate] of entries){
-      if(!VALID_ID.test(id)||!Number.isFinite(rate)||rate<0||rate>MAX_RATE||Math.round(rate*100)!==rate*100)
+      if(!VALID_ID.test(id)||!Number.isFinite(rate)||rate<0||rate>MAX_RATE||Math.abs(rate*100-Math.round(rate*100))>1e-7)
         throw new Error('Ungültige Stundenlohndaten. Nichts wurde überschrieben.');
       rates[id]=rate;
     }
@@ -39,7 +39,7 @@
     if(!rates||typeof rates!=='object'||Array.isArray(rates))throw new Error('Ungültige Stundenlöhne.');
     const normalized=Object.create(null);
     for(const [id,rate] of Object.entries(rates)){
-      if(!VALID_ID.test(id)||!Number.isFinite(rate)||rate<0||rate>MAX_RATE||Math.round(rate*100)!==rate*100)
+      if(!VALID_ID.test(id)||!Number.isFinite(rate)||rate<0||rate>MAX_RATE||Math.abs(rate*100-Math.round(rate*100))>1e-7)
         throw new Error('Stundenlohn muss zwischen 0 und 250 € liegen (max. zwei Nachkommastellen).');
       normalized[id]=rate;
     }
