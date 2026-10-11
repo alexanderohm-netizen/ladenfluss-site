@@ -161,3 +161,38 @@ body:has(.pep-shell){background:#f7f0e9}
  .pep-table th,.pep-table td{position:static!important;box-shadow:none!important}
  .pep-grid-slot .empty-shift{color:transparent}
 }
+
+/* Reusable shift clipboard: a visible copy action and an explicit paste target.
+ * Keeps working after pasting the same shift into several cells. */
+.pep-clipboard-bar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 11px;
+  padding:12px 21px;background:#f4e9ed;border-bottom:1px solid #ddc5cb;
+  font-size:12px;color:#64303d;line-height:1.4}
+.pep-clipboard-bar[hidden]{display:none!important}
+.pep-clipboard-bar>span:first-child{font-size:21px;line-height:1;color:#7c2030}
+.pep-clipboard-bar strong{font-weight:850}
+.pep-clipboard-bar #pepClipboardLabel{font-variant-numeric:tabular-nums;font-weight:850;color:#792538}
+.pep-clipboard-help{flex:1 1 210px;color:#7f5e64;font-size:11px}
+#pepClipboardClear{border:1px solid #cbafb8;border-radius:6px;min-height:32px;
+ padding:6px 11px;background:#fffdfa;color:#713346;font-weight:750;cursor:pointer}
+#pepClipboardClear:hover{background:#fdf4f3}
+.pep-cell-actions{position:relative;min-width:0;width:100%;display:flex;flex-direction:column}
+.pep-cell-actions .shift-chip{padding-right:30px}
+.pep-copy-btn{position:absolute;right:4px;top:4px;min-width:24px;min-height:25px;
+ border:1px solid #a9bfd8;border-radius:5px;background:#f9fcff;color:#40648d;
+ padding:0;display:grid;place-items:center;font-size:16px;cursor:pointer}
+.pep-copy-btn:hover{background:#d7e7fa;border-color:#7796b7}
+.pep-paste-btn{width:100%;min-height:27px;margin-top:4px;border-radius:5px;
+ background:#f3e5ec;border:1px solid #ccabb7;color:#70273c;font-size:10px;
+ font-weight:850;cursor:pointer;text-align:center}
+.pep-paste-btn:hover{background:#e8cfda;border-color:#ab7488}
+.pep-copy-btn:focus-visible,.pep-paste-btn:focus-visible,#pepClipboardClear:focus-visible{
+ outline:2px solid #7c101c;outline-offset:2px}
+@media(max-width:650px){
+ .pep-clipboard-bar{padding:10px 12px;gap:7px;font-size:11px}
+ .pep-clipboard-help{flex-basis:100%;order:2}
+ .pep-cell-actions .shift-chip{padding-right:29px}
+}
+@media print{
+ .pep-clipboard-bar,.pep-copy-btn,.pep-paste-btn{display:none!important}
+ .pep-cell-actions .shift-chip{padding-right:8px}
+}
