@@ -114,7 +114,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     const rate=api.get(employee.id);
     $('staffPayRate').textContent=rate===null?'Nicht hinterlegt':money(rate)+' / h';
     $('staffPayTarget').textContent=rate===null?'–':money(rate*employee.hours);
+    // Contractual average monthly gross, not an actual payroll payslip:
+    // individual gross hourly rate × agreed weekly hours × 52 / 12.
     $('staffPayMonth').textContent=rate===null?'–':money(rate*employee.hours*52/12);
+    $('staffPayContractBasis').textContent=Number(employee.hours).toLocaleString('de-DE',{
+      maximumFractionDigits:1
+    })+' Vertragsstunden/Woche × 52 ÷ 12 · ohne Zuschläge';
     $('staffPayPlanned').textContent=rate===null?'–':money(rate*employee.plannedHours);
     $('staffHourlyGross').value=rate===null?'':String(rate);
     $('staffPayRemove').disabled=rate===null;
