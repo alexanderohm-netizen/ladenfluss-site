@@ -296,3 +296,64 @@ test('Urlaubsansichten zeigen nur die benötigten Bereiche und öffnen Bearbeitu
   assert.equal(p.$('vacEntryForm').closest('section').hidden,false);
   assert.deepEqual(p.errors,[]);p.close();
 });
+
+
+test('Personalfluss lädt Profile, bearbeitet Stammdaten und behält Mitarbeiter-IDs',async()=>{
+  const p=await load('mitarbeiter.html');
+  assert.equal(p.$('activeEmployees').textContent,'3');
+  p.w.document.querySelector('[data-profile-id="e2"]').click();
+  assert.equal(p.$('staffProfileTitle').textContent,'Ben Weber');
+  assert.match(p.$('staffProfileContent').textContent,/Geplante Stunden/);
+  p.$('editStaffProfile').click();
+  p.$('employeeName').value='Ben Weber (Teamleitung)';
+  p.$('employeeHours').value='32.5';
+  p.submit('employeeForm');
+  const team=JSON.parse(p.w.localStorage.getItem('ladenfluss.team.v1'));
+  assert.equal(team.length,3);
+  assert.equal(team.find(m=>m.id==='e2').name,'Ben Weber (Teamleitung)');
+  assert.equal(team.find(m=>m.id==='e2').hours,32.5);
+  assert.equal(p.$('staffProfileTitle').textContent,'Ben Weber (Teamleitung)');
+  assert.deepEqual(p.errors,[]);
+  p.close();
+});
+
+test('Personalfluss verwirft bei Speicherfehler Änderungen ohne stillen Datenverlust',async()=>{
+  const p=await load('mitarbeiter.html');
+  const original=p.w.localStorage.getItem('ladenfluss.team.v1');
+  const proto=p.w.Storage.prototype,save=proto.setItem;
+  proto.setItem=function(key,value){
+    if(key==='ladenfluss.team.v1')throw new Error('Storage quota exceeded');
+    return save.call(this,key,value);
+  };
+  p.$('addEmployee').click();
+  p.$('employeeName').value='Nicht speichern';
+  p.submit('employeeForm');
+  assert.equal(p.w.localStorage.getItem('ladenfluss.team.v1'),original);
+  assert.equal(p.$('activeEmployees').textContent,'3');
+  assert.match(p.$('staffError').textContent,/nicht gespeichert/);
+  assert.equal(p.$('employeeDialog').open,true);
+  proto.setItem=save;
+  assert.deepEqual(p.errors,[]);
+  p.close();
+});
+
+test('Personalfluss schützt beschädigtes Team und rendert gefährliche Namen nur als Text',async()=>{
+  const corrupt='[null,{"id":"e1","name":"Doppelt"}]';
+  const bad=await load('mitarbeiter.html',{'ladenfluss.team.v1':corrupt});
+  assert.equal(bad.w.localStorage.getItem('ladenfluss.team.v1'),corrupt);
+  assert.equal(bad.$('addEmployee').disabled,true);
+  assert.match(bad.$('staffError').textContent,/nicht überschrieben/);
+  assert.deepEqual(bad.errors,[]);bad.close();
+
+  const p=await load('mitarbeiter.html');
+  p.$('addEmployee').click();
+  p.$('employeeName').value='<img src=x onerror=alert(1)>';
+  p.submit('employeeForm');
+  const team=JSON.parse(p.w.localStorage.getItem('ladenfluss.team.v1'));
+  const injected=team.find(m=>m.name.includes('<img'));
+  assert.ok(injected);
+  p.w.document.querySelector('[data-profile-id="'+injected.id+'"]').click();
+  assert.equal(p.$('staffProfileContent').querySelectorAll('img,script').length,0);
+  assert.match(p.$('staffProfileContent').textContent,/<img src=x onerror=alert\(1\)>/);
+  assert.deepEqual(p.errors,[]);p.close();
+});
