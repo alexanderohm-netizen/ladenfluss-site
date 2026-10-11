@@ -446,3 +446,89 @@ test('Referenz-Cockpit Suche öffnet echte Module und mobile Menü-Tabs bleiben 
   assert.match(page.url(),/\/mitarbeiter$/);
   assert.deepEqual(errors,[]);
 });
+
+
+for(const width of [1440,768,390,320]){
+  test('Einheitliches Ladenfluss-Design: Rechner, Fachtools und Navigation ('+width+'px)',async t=>{
+    const page=await session(t,{width,height:960});
+    const errors=[];page.on('pageerror',e=>errors.push(e.message));
+    const routes=['/tools','/tools/rabattrechner','/tools/margenrechner','/tools/kpi-dashboard','/rechner','/produkte','/ueber-uns'];
+    for(const route of routes){
+      const resp=await page.goto(base+route);
+      assert.equal(resp.status(),200,route);
+      const style=await page.evaluate(()=>({
+        wine:getComputedStyle(document.documentElement).getPropertyValue('--lf-brand').trim(),
+        overflow:document.documentElement.scrollWidth-innerWidth,
+        body:getComputedStyle(document.body).backgroundColor,
+        header:document.querySelector('.site-header, .calc-topbar')?.tagName||'',
+      }));
+      assert.equal(style.wine,'#7c101c',route+': palette');
+      assert.ok(style.overflow<=2,route+': horizontal overflow '+style.overflow);
+      assert.equal(style.header,'HEADER',route+': persistent branded navigation');
+      if(route.startsWith('/tools/')&&route!=='/tools/urlaubsplaner'){
+        assert.equal(await page.locator('link[href="/assets/reference-calculator.css"]').count(),1,route);
+        assert.match(await page.locator('.tool-page .calculator').evaluate(el=>getComputedStyle(el).backgroundColor),/rgb\(255, 253, 250\)/,route);
+      }
+    }
+    await page.goto(base+'/tools');
+    assert.equal(await page.locator('.ref-tool-choice').count(),8);
+    const href=await page.locator('.ref-tool-choice').first().getAttribute('href');
+    assert.equal(href,'/tools/personalbedarf');
+    await page.locator('.ref-tool-choice[href="/tools/margenrechner"]').click();
+    assert.match(page.url(),/\/tools\/margenrechner$/);
+    assert.deepEqual(errors,[]);
+  });
+}
+
+test('Rechner-Vorlage behält korrekte Euro-Ergebnisse für Marge, Rabatt und Break-even',async t=>{
+  const page=await session(t,{width:390,height:900});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base+'/tools/margenrechner');
+  await page.locator('#m_cost').fill('10');
+  await page.locator('#m_margin').fill('50');
+  await page.locator('#m_vat').fill('19');
+  await page.evaluate(()=>window.calcMargin(false));
+  assert.match(await page.locator('#m_result').innerText(),/23,80/);
+  assert.equal(await page.locator('#m_result').isVisible(),true);
+  await page.goto(base+'/tools/rabattrechner');
+  await page.locator('#d_price').fill('100');
+  await page.locator('#d_discount').fill('20');
+  await page.evaluate(()=>window.calcDiscount(false));
+  assert.match(await page.locator('#d_result').innerText(),/80,00/);
+  await page.goto(base+'/tools/break-even');
+  await page.locator('#b_fixed').fill('12000');
+  await page.locator('#b_rate').fill('40');
+  await page.locator('#b_days').fill('24');
+  await page.locator('#b_profit').fill('0');
+  await page.locator('#b_buffer').fill('0');
+  await page.evaluate(()=>window.calcBreakEven(false));
+  assert.match(await page.locator('#b_result').innerText(),/30.000/);
+  assert.match(await page.locator('#b_result').innerText(),/1.250/);
+  assert.deepEqual(errors,[]);
+});
+
+test('Kombi-Rechner: alle acht Kategorien zugänglich, aktive Auswahl hervorgehoben',async t=>{
+ const page=await session(t,{width:390,height:880});
+ await page.goto(base+'/rechner');
+ assert.equal(await page.locator('[data-ref-calc-mode]').count(),8);
+ assert.equal(await page.locator('[data-ref-calc-mode][aria-current=true]').count(),1);
+ await page.locator('[data-ref-calc-mode="rabattrechner"]').click();
+ assert.equal(await page.locator('#modeTitle').innerText(),'Rabattwirkung');
+ assert.equal(await page.locator('[data-ref-calc-mode="rabattrechner"]').getAttribute('aria-current'),'true');
+ await page.locator('[data-ref-calc-mode="margenrechner"]').click();
+ assert.equal(await page.locator('#modeTitle').innerText(),'Verkaufspreis');
+ assert.equal(await page.locator('[data-ref-calc-mode="margenrechner"]').getAttribute('aria-current'),'true');
+ const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+ assert.ok(overflow<=2,'Kombi-Rechner: unexpected horizontal overflow '+overflow);
+});
+
+test('Neue Kopfzeile: auf dem iPhone Tools und Mein Laden erreichbar',async t=>{
+ const page=await session(t,{width:375,height:820});
+ await page.goto(base+'/tools/rabattrechner');
+ const button=page.locator('.site-header .menu-toggle');
+ assert.equal(await button.isVisible(),true);
+ await button.click();
+ assert.equal(await page.locator('#mobile-nav').isVisible(),true);
+ await page.locator('#mobile-nav a[href="/mein-laden"]').click();
+ assert.match(page.url(),/\/mein-laden$/);
+});
