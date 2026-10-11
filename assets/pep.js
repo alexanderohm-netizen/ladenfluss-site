@@ -43,6 +43,23 @@ document.addEventListener('DOMContentLoaded',()=> {
   }));
 
   const body=document.getElementById('pepBody');
+  const employeeFilter=document.getElementById('pepEmployeeFilter');
+  if (employeeFilter) {
+    for (const person of team) {
+      const option=document.createElement('option');
+      option.value=person.id;
+      option.textContent=person.name;
+      employeeFilter.append(option);
+    }
+    employeeFilter.addEventListener('change',applyEmployeeFilter);
+  }
+  function applyEmployeeFilter(){
+    if (!employeeFilter) return;
+    const selected=employeeFilter.value;
+    body.querySelectorAll('tr[data-employee-id]').forEach(row=>{
+      row.hidden=selected!=='all'&&row.dataset.employeeId!==selected;
+    });
+  }
   const dlg=document.getElementById('shiftDialog');
   const absenceDlg=document.getElementById('absenceDialog');
   const delBtn=document.getElementById('deleteShift');
@@ -104,7 +121,7 @@ document.addEventListener('DOMContentLoaded',()=> {
         ? `<td class="${a?'has-conflict':''}"><button class="shift-chip" data-e="${escape(e.id)}" data-d="${i}" title="Schicht bearbeiten"><strong>${escape(s[0])}–${escape(s[1])}</strong><span>${hours(s).toLocaleString('de-DE',{maximumFractionDigits:1})} h · ${escape(s[2])} Min Pause</span></button></td>`
         : a ? `<td><button class="absence-chip" data-ae="${escape(e.id)}" data-ad="${i}"><strong>${escape(a)}</strong><span>Abwesend</span></button></td>` : `<td><button class="empty-shift" data-e="${escape(e.id)}" data-d="${i}" aria-label="Schicht hinzufügen">+</button></td>`}).join('');
       const state=total>e.target+5?'high':total<Math.max(0,e.target-8)?'low':'ok';
-      return `<tr><th><strong>${escape(e.name)}</strong><span>${escape(e.role)} · Ziel ${e.target} h</span></th>${cells}<td class="week-total ${state}"><strong>${total.toLocaleString('de-DE',{maximumFractionDigits:1})} h</strong><span>${state==='ok'?'passt':state==='high'?'zu hoch':'zu niedrig'}</span></td></tr>`;
+      return `<tr data-employee-id="${escape(e.id)}"><th scope="row"><strong>${escape(e.name)}</strong><span>${escape(e.role)} · Ziel ${e.target} h</span></th>${cells}<td class="week-total ${state}"><strong>${total.toLocaleString('de-DE',{maximumFractionDigits:1})} h</strong><span>${state==='ok'?'passt':state==='high'?'zu hoch':'zu niedrig'}</span></td></tr>`;
     }).join('');
 
     const total=employees.reduce((a,e)=>a+e.shifts.reduce((x,s)=>x+hours(s),0),0);
@@ -125,6 +142,7 @@ document.addEventListener('DOMContentLoaded',()=> {
 
     renderNeed();
     bindCells();
+    applyEmployeeFilter();
   }
 
   function renderNeed(){
