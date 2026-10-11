@@ -2,37 +2,123 @@
 <html lang="de">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#6d2434">
-<title>Mitarbeiter | Ladenfluss</title>
+<meta name="theme-color" content="#732d43">
+<title>Personalfluss – Mitarbeiter & Team | Ladenfluss</title>
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/staff.css">
+<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/staff.css">
+<link rel="stylesheet" href="/assets/staff-v2.css">
 </head>
-<body>
+<body class="staff-v2-body">
 <a class="skip-link" href="#main">Zum Inhalt</a>
-<header class="site-header"><div class="container header-row"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span>Ladenfluss</span></a><nav class="desktop-nav"><a href="/mein-laden">Mein Laden</a><a href="/mitarbeiter" aria-current="page">Mitarbeiter</a><a href="/pep">Personalplanung</a><a href="/tools/urlaubsplaner">Urlaubsplaner</a><a href="/tools">Tools</a></nav><button class="menu-toggle" aria-expanded="false" aria-controls="mobile-nav">Menü</button></div><nav id="mobile-nav" class="mobile-nav"><a href="/mein-laden">Mein Laden</a><a href="/mitarbeiter">Mitarbeiter</a><a href="/pep">Personalplanung</a><a href="/tools">Tools</a></nav></header>
+<header class="site-header"><div class="container header-row">
+ <a class="brand" href="/" aria-label="Ladenfluss Startseite"><span class="brand-mark" aria-hidden="true"></span><span>Ladenfluss</span></a>
+ <nav class="desktop-nav" aria-label="Hauptnavigation"><a href="/produkte">Produkte</a><a href="/#loesungen">Lösungen</a><a href="/tools">Kostenlose Tools</a><a href="/ueber-uns">Über uns</a><a href="/kontakt">Kontakt</a><a class="nav-cta" href="/mein-laden">Mein Laden <span aria-hidden="true">↗</span></a></nav>
+ <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav">Menü</button>
+ </div><nav id="mobile-nav" class="mobile-nav" aria-label="Mobile Navigation"><a href="/produkte">Produkte</a><a href="/#loesungen">Lösungen</a><a href="/tools">Kostenlose Tools</a><a href="/ueber-uns">Über uns</a><a href="/kontakt">Kontakt</a><a href="/mein-laden">Mein Laden öffnen</a></nav></header>
 
 <main id="main" class="staff-shell">
-<section class="staff-head"><div><span class="eyebrow">Personal · v1.4</span><h1>Dein Team. Ohne Personalakten-Chaos.</h1><p>Nur die Daten, die du im Alltag wirklich brauchst. Der Dienstplan greift später direkt auf dieses Team zu.</p></div><button class="btn btn-primary" id="addEmployee" type="button">+ Mitarbeiter</button></section>
+  <nav class="staff-breadcrumb" aria-label="Brotkrumennavigation"><a href="/mein-laden">Mein Laden</a><span aria-hidden="true">/</span><span>Personalfluss</span></nav>
 
-<section class="staff-summary"><div><small>Aktiv</small><strong id="activeEmployees">0</strong><span>Mitarbeiter</span></div><div><small>Sollstunden</small><strong id="targetHours">0 h</strong><span>pro Woche gesamt</span></div><div><small>Offene Unterlagen</small><strong id="missingDocs">0</strong><span>prüfen</span></div></section>
+  <section class="staff-head" aria-labelledby="staffTitle">
+    <div>
+      <span class="eyebrow">Ladenfluss · Personalfluss</span>
+      <h1 id="staffTitle">Dein Team.<br><em>Alles im Blick.</em></h1>
+      <p>Mitarbeiter verwalten, Schichten überblicken und die Urlaubsplanung verbinden. Ein Team – eine Grundlage für deinen Arbeitsalltag.</p>
+      <div class="staff-hero-meta"><span>✓ Im PEP verwendbar</span><span>✓ Mit dem Urlaubsplaner verknüpfbar</span><span>✓ Lokal auf diesem Gerät</span></div>
+    </div>
+    <div class="staff-head-actions">
+      <span class="staff-local-tag"><span aria-hidden="true">●</span> Lokaler Arbeitsbereich</span>
+      <button class="btn btn-primary" id="addEmployee" type="button">+ Mitarbeiter anlegen</button>
+    </div>
+  </section>
 
-<section class="staff-focus"><span>Ladenfluss Hinweis</span><div><strong id="staffFocusTitle">Alles vollständig.</strong><p id="staffFocusText">Für dein Team liegen aktuell keine Demo-Hinweise vor.</p></div></section>
+  <div class="staff-storage-note" role="note">
+    <strong>Bitte beachten:</strong> Diese Version speichert Teamdaten nur in diesem Browser.
+    Verwende sie auf gemeinsam genutzten Geräten nicht für vertrauliche Personalakten, Kontaktdaten oder Bewerbungsunterlagen.
+    Die Cloud-Synchronisierung ist hier noch nicht aktiv.
+  </div>
+  <div id="staffError" class="staff-error" role="alert" hidden></div>
+  <p id="staffStatus" class="staff-status" role="status" aria-live="polite"></p>
 
-<section class="staff-list-wrap">
-<div class="staff-toolbar"><div><span class="eyebrow">Mitarbeiter</span><h2>Teamübersicht</h2></div><a class="btn btn-secondary" href="/pep">Zum Dienstplan →</a></div>
-<div class="staff-list" id="staffList"></div>
-</section>
+  <section class="staff-summary" aria-label="Personalfluss-Übersicht">
+    <div><small>Mitarbeitende im Team</small><strong id="activeEmployees">0</strong><span>angelegte Teamprofile</span></div>
+    <div><small>Sollstunden pro Woche</small><strong id="targetHours">0 h</strong><span>über alle Teamprofile</span></div>
+    <div><small>Unterlagen-Kennzeichnung offen</small><strong id="missingDocs">0</strong><span>im Profil nachsehen</span></div>
+  </section>
+
+  <section class="staff-focus" aria-label="Hinweis für das Team">
+    <span>PERSONALFLUSS · HINWEIS</span>
+    <div><strong id="staffFocusTitle">Team ist bereit.</strong><p id="staffFocusText">Prüfe die Teamdaten und starte mit deiner Planung.</p></div>
+  </section>
+
+  <nav class="staff-quick-actions" aria-label="Weitere Personalaufgaben">
+    <a href="/pep"><span class="staff-quick-symbol" aria-hidden="true">▦</span><span><strong>Dienstplan</strong><small>Schichten und Stunden planen</small></span><span aria-hidden="true">↗</span></a>
+    <a href="/tools/urlaubsplaner"><span class="staff-quick-symbol" aria-hidden="true">◫</span><span><strong>Urlaubsplaner</strong><small>Urlaubszeiten und Resttage prüfen</small></span><span aria-hidden="true">↗</span></a>
+    <a href="#staffRecruiting"><span class="staff-quick-symbol" aria-hidden="true">♧</span><span><strong>Bewerbungen</strong><small>Geplanter nächster Bereich</small></span><span aria-hidden="true">↘</span></a>
+  </nav>
+
+  <section class="staff-list-wrap" aria-labelledby="staffListTitle">
+    <div class="staff-toolbar">
+      <div><span class="eyebrow">DEIN TEAM</span><h2 id="staffListTitle">Mitarbeiterübersicht</h2><p>Profil öffnen oder Stammdaten bearbeiten.</p></div>
+      <span class="staff-list-counter" id="staffListCount">0 Personen</span>
+    </div>
+    <div class="staff-filters">
+      <label for="staffSearch">Mitarbeiter suchen
+        <input type="search" id="staffSearch" autocomplete="off" placeholder="Name, Rolle oder Filiale">
+      </label>
+      <label for="staffRoleFilter">Rolle
+        <select id="staffRoleFilter"><option value="all">Alle Rollen</option></select>
+      </label>
+    </div>
+    <div class="staff-list" id="staffList" aria-live="polite"></div>
+  </section>
+
+  <section class="staff-profile" id="staffProfile" aria-labelledby="staffProfileTitle" hidden>
+    <div class="staff-profile-top">
+      <div><span class="eyebrow">MITARBEITERPROFIL</span><h2 id="staffProfileTitle">Profil ansehen</h2></div>
+      <button type="button" class="btn btn-secondary" id="closeStaffProfile">Profil schließen</button>
+    </div>
+    <div id="staffProfileContent"></div>
+    <div class="staff-profile-actions">
+      <button type="button" class="btn btn-primary" id="editStaffProfile">Stammdaten bearbeiten</button>
+      <a class="btn btn-secondary" href="/pep">Schichten planen ↗</a>
+      <a class="btn btn-secondary" href="/tools/urlaubsplaner">Urlaub verwalten ↗</a>
+    </div>
+  </section>
+
+  <section class="staff-recruiting" id="staffRecruiting" aria-labelledby="staffRecruitTitle">
+    <div><span class="eyebrow">IN ENTWICKLUNG</span><h2 id="staffRecruitTitle">Bewerbungen & Stellenanzeigen</h2><p>Personalfluss soll später Stellen ausschreiben und Bewerbungen nachvollziehbar durch den gesamten Prozess begleiten. Dieser Bereich nimmt derzeit keine Bewerbungen entgegen und speichert keine Bewerberdaten.</p></div>
+    <div class="staff-recruit-steps" aria-label="Geplanter Bewerbungsprozess">
+      <span>01 <strong>Stelle anlegen</strong></span>
+      <span>02 <strong>Bewerbung sichten</strong></span>
+      <span>03 <strong>Gespräch planen</strong></span>
+      <span>04 <strong>Entscheidung treffen</strong></span>
+    </div>
+  </section>
 </main>
 
-<dialog id="employeeDialog" class="employee-dialog"><form id="employeeForm" method="dialog">
-<div class="dialog-head"><div><span class="eyebrow">Mitarbeiter</span><h2>Person hinzufügen</h2></div><button value="cancel" class="dialog-close" aria-label="Schließen">×</button></div>
-<label>Name<input id="employeeName" required placeholder="Vor- und Nachname"></label>
-<div class="dialog-two"><label>Rolle<select id="employeeRole"><option>Verkauf</option><option>Filialleitung</option><option>Aushilfe</option><option>Lager</option><option>Service</option><option>Küche</option></select></label><label>Sollstunden / Woche<input id="employeeHours" type="number" min="0" max="60" step=".5" value="20"></label></div>
-<label>Einsatzort<select id="employeeBranch"><option>Hauptfiliale</option></select></label>
-<label class="check-row"><input id="employeeDocs" type="checkbox"><span>Grundlegende Unterlagen vollständig</span></label>
-<div class="dialog-actions"><button value="cancel" class="btn btn-secondary">Abbrechen</button><button class="btn btn-primary" type="submit">Mitarbeiter übernehmen</button></div>
-</form></dialog>
+<dialog id="employeeDialog" class="employee-dialog">
+  <form id="employeeForm">
+    <div class="dialog-head"><div><span class="eyebrow" id="employeeDialogEyebrow">TEAM VERWALTEN</span><h2 id="employeeDialogTitle">Mitarbeiter hinzufügen</h2></div><button type="button" class="dialog-close" id="closeEmployeeDialog" aria-label="Schließen">×</button></div>
+    <p class="employee-dialog-note">Nur Grunddaten für deine Planung. Keine privaten Kontakt-, Gesundheits- oder Gehaltsdaten erfassen.</p>
+    <label for="employeeName">Name<input id="employeeName" name="name" maxlength="80" required autocomplete="off" placeholder="Vor- und Nachname"></label>
+    <div class="dialog-two">
+      <label for="employeeRole">Rolle<select id="employeeRole"><option>Verkauf</option><option>Filialleitung</option><option>Aushilfe</option><option>Lager</option><option>Service</option><option>Küche</option></select></label>
+      <label for="employeeHours">Sollstunden / Woche<input id="employeeHours" name="hours" type="number" min="0" max="60" step=".5" value="20" required></label>
+    </div>
+    <label for="employeeBranch">Einsatzort<select id="employeeBranch"><option>Hauptfiliale</option></select></label>
+    <label class="check-row" for="employeeDocs"><input id="employeeDocs" type="checkbox"><span>Grundlegende Unterlagen als vollständig markiert</span></label>
+    <div class="dialog-actions"><button type="button" class="btn btn-secondary" id="cancelEmployeeDialog" value="cancel">Abbrechen</button><button class="btn btn-primary" id="saveEmployee" type="submit">Mitarbeiter übernehmen</button></div>
+  </form>
+</dialog>
 
-<script src="/assets/site.js" defer></script><script src="/assets/team-store.js" defer></script><script src="/assets/staff.js" defer></script>
-</body></html>
+<script src="/assets/site.js" defer></script>
+<script src="/assets/team-store.js" defer></script>
+<script src="/assets/de-holidays.js" defer></script>
+<script src="/assets/urlaubsplaner-store.js" defer></script>
+<script src="/assets/planning-engine.js" defer></script>
+<script src="/assets/staff.js" defer></script>
+</body>
+</html>

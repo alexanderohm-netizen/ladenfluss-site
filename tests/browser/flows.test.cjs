@@ -161,7 +161,7 @@ test('Personalbedarf führt zum gewählten Tag und zeigt den gespeicherten Vergl
   await page.getByRole('button',{name:'Team-Bedarf anzeigen'}).click();
   await page.locator('.planning-transfer').click();
   assert.match(page.url(),/week=2026-10-05&day=2026-10-08/);
-  assert.equal(await page.locator('#planningReference').isVisible(),true);
+  await page.locator('#planningReference').waitFor({state:'visible',timeout:10000});
   assert.match(await page.locator('#planningReference').innerText(),/Donnerstag/);
   await page.locator('#nextWeek').click();
   assert.equal(await page.locator('#planningReference').isVisible(),false);
@@ -194,4 +194,342 @@ for(const width of [390,1440])test('App-Ansichten als Bild prüfen ('+width+' px
   await page.screenshot({path:path.join(folder,'menu-'+width+'.png'),fullPage:true});
   await page.goto(base+'/tools/urlaubsplaner');
   await page.screenshot({path:path.join(folder,'vacation-'+width+'.png'),fullPage:true});
+});
+
+
+for (const width of [1440, 768, 390, 320]) {
+  test('Design v2 Startseite bleibt responsiv und die Produktnavigation funktioniert ('+width+'px)',async t=>{
+    const page=await session(t,{width,height:900});
+    const errors=[];
+    page.on('pageerror',e=>errors.push(e.message));
+    const response=await page.goto(base+'/');
+    assert.equal(response.status(),200);
+    await page.locator('.ref-hero').waitFor({state:'visible'});
+    assert.match((await page.locator('#home-title').innerText()).replace(/\s+/g,' '),/Ein System für deinen Laden\./);
+    assert.equal(await page.locator('.ref-module-card').count(),6);
+    assert.equal(await page.locator('.ref-module-soon').count(),3);
+    assert.equal(await page.locator('.ref-module-card[href="/pep"]').count(),1);
+    const styles=await page.evaluate(()=>({
+      hero:getComputedStyle(document.querySelector('.ref-hero')).display,
+      grid:getComputedStyle(document.querySelector('.ref-modules-grid')).gridTemplateColumns,
+      wine:getComputedStyle(document.body).getPropertyValue('--wine').trim(),
+      overflow:document.documentElement.scrollWidth-innerWidth,
+      photo:getComputedStyle(document.querySelector('.ref-hero-photo')).backgroundImage,
+    }));
+    assert.equal(styles.hero,'block');
+    assert.equal(styles.wine,'#7c101c');
+    assert.match(styles.photo,/images\.pexels\.com/);
+    assert.ok(styles.overflow<=2,'Homepage horizontal overflow '+styles.overflow);
+    assert.deepEqual(errors,[]);
+    const cols=styles.grid.split(' ').length;
+    if(width>=1280)assert.equal(cols,6);
+    if(width>=651&&width<=1200)assert.equal(cols,3);
+    if(width<=390)assert.equal(cols,1);
+    const link=page.locator('.ref-module-card[href="/pep"]');
+    await link.click();
+    assert.match(page.url(),/\/pep$/);
+  });
+}
+
+for (const width of [1440, 390, 320]) {
+  test('Design v2 Cockpit: neue Navigation behält alle Funktionen ('+width+'px)',async t=>{
+    const page=await session(t,{width,height:960});
+    const errors=[];
+    page.on('pageerror',e=>errors.push(e.message));
+    const response=await page.goto(base+'/mein-laden');
+    assert.equal(response.status(),200);
+    assert.equal(await page.locator('.workspace-breadcrumb').count(),1);
+    assert.equal(await page.locator('.ref-kpi-card').count(),6);
+    assert.equal(await page.locator('.ref-panel').count(),6);
+    assert.equal(await page.locator('.ref-pep-preview tbody tr').count(),3);
+    assert.equal(await page.locator('#refKpiCloud').innerText(),'Lokal');
+    assert.equal(await page.locator('#refKpiSales').innerText(),'–');
+    assert.equal(await page.locator('#refKpiStock').innerText(),'–');
+    assert.equal(await page.locator('#refKpiApplicants').innerText(),'–');
+    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+    assert.ok(overflow<=2,'Cockpit horizontal overflow '+overflow);
+    if(width<=900)await page.locator('#refMobileMenu').click();
+    await page.locator('[data-cockpit-tab="profile"]').click();
+    assert.equal(await page.locator('[data-cockpit-panel="profile"]').isVisible(),true);
+    assert.equal(await page.locator('[data-cockpit-panel="overview"]').isVisible(),false);
+    if(width<=900)await page.locator('#refMobileMenu').click();
+    await page.locator('[data-cockpit-tab="targets"]').click();
+    assert.equal(await page.locator('[data-cockpit-panel="targets"]').isVisible(),true);
+    if(width<=900)await page.locator('#refMobileMenu').click();
+    await page.locator('[data-cockpit-tab="overview"]').click();
+    assert.equal(await page.locator('[data-cockpit-panel="overview"]').isVisible(),true);
+    assert.deepEqual(errors,[]);
+  });
+}
+
+
+for (const width of [1440, 768, 390, 320]) {
+  test('PEP v2: Teamfilter und Wochenplan bleiben bedienbar ('+width+'px)',async t=>{
+    const page=await session(t,{width,height:900});
+    const errors=[];
+    page.on('pageerror',error=>errors.push(error.message));
+    const response=await page.goto(base+'/pep');
+    assert.equal(response.status(),200);
+    assert.equal(await page.locator('.pep-daycheck>div').count(),7);
+    assert.equal(await page.locator('#pepEmployeeFilter option').count(),(await page.locator('#pepBody tr').count())+1);
+    const all=await page.locator('#pepBody tr').count();
+    assert.ok(all>=1,'At least one employee should be displayed');
+    if(all>=2){
+      const id=await page.locator('#pepEmployeeFilter option').nth(1).getAttribute('value');
+      await page.locator('#pepEmployeeFilter').selectOption(id);
+      assert.equal(await page.locator('#pepBody tr:visible').count(),1);
+      assert.equal(await page.locator('#pepBody tr:visible').first().getAttribute('data-employee-id'),id);
+      await page.locator('#nextWeek').click();
+      assert.equal(await page.locator('#pepBody tr:visible').count(),1);
+      await page.locator('#pepEmployeeFilter').selectOption('all');
+      assert.equal(await page.locator('#pepBody tr:visible').count(),all);
+    }
+    await page.locator('#addShift').click();
+    assert.equal(await page.locator('#shiftDialog').evaluate(el=>el.open),true);
+    await page.locator('#shiftDialog button[value=cancel]').first().click();
+    assert.equal(await page.locator('#shiftDialog').evaluate(el=>el.open),false);
+    const layout=await page.evaluate(()=>({
+      overflow:document.documentElement.scrollWidth-innerWidth,
+      table:document.querySelector('.pep-table-wrap').scrollWidth,
+      viewport:document.querySelector('.pep-table-wrap').clientWidth,
+    }));
+    assert.ok(layout.overflow<=2,'Unexpected PEP full-page horizontal overflow: '+layout.overflow);
+    if(width<=390)assert.ok(layout.table>layout.viewport,'Weekly grid must scroll inside its own container on phones');
+    assert.deepEqual(errors,[]);
+  });
+}
+
+for(const width of [1440,390,320]){
+  test('Urlaubsplaner v2: Schnellzugriff, Anträge und Resturlaub ('+width+'px)',async t=>{
+    const page=await session(t,{width,height:950});
+    const errors=[];
+    page.on('pageerror',error=>errors.push(error.message));
+    const response=await page.goto(base+'/tools/urlaubsplaner');
+    assert.equal(response.status(),200);
+    assert.equal(await page.locator('.vac-v2-shortcuts button').count(),3);
+    await page.locator('[data-vac-shortcut=team]').click();
+    assert.equal(await page.locator('[data-vac-panel=team]').first().isVisible(),true);
+    assert.equal(await page.locator('[data-vac-panel=calendar]').first().isVisible(),false);
+    await page.locator('#vacEmployeeName').fill('Design Test');
+    await page.locator('#vacAllowance').fill('30');
+    await page.locator('#vacEmployeeForm button[type=submit]').click();
+    assert.match(await page.locator('#vacEmployees').innerText(),/Design Test/);
+    await page.locator('[data-vac-shortcut=entry]').click();
+    assert.equal(await page.locator('[data-vac-panel=entry]').isVisible(),true);
+    await page.locator('#vacPerson').selectOption({label:'Design Test'});
+    await page.locator('#vacFrom').fill('2026-11-02');
+    await page.locator('#vacTo').fill('2026-11-06');
+    await page.locator('#vacStatus').selectOption('approved');
+    assert.match(await page.locator('#vacPreview').innerText(),/5/);
+    await page.locator('#vacSaveEntry').click();
+    await page.locator('[data-vac-shortcut=calendar]').click();
+    assert.equal(await page.locator('[data-vac-panel=calendar]').first().isVisible(),true);
+    assert.match(await page.locator('#vacEntries').innerText(),/Design Test/);
+    await page.reload();
+    assert.match(await page.locator('#vacEntries').innerText(),/Design Test/);
+    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+    assert.ok(overflow<=2,'Unexpected vacation full-page horizontal overflow: '+overflow);
+    assert.deepEqual(errors,[]);
+  });
+}
+
+
+for(const width of [1440,768,390,320]){
+  test('Personalfluss v2 – Profile, Filter und lokale Teamansicht ('+width+'px)',async t=>{
+    const page=await session(t,{width,height:920});
+    const errors=[];
+    page.on('pageerror',error=>errors.push(error.message));
+    const response=await page.goto(base+'/mitarbeiter');
+    assert.equal(response.status(),200);
+    assert.equal(await page.locator('#activeEmployees').innerText(),'3');
+    assert.equal(await page.locator('.staff-card').count(),3);
+    await page.locator('#staffSearch').fill('Ben');
+    assert.equal(await page.locator('.staff-card').count(),1);
+    assert.match(await page.locator('.staff-card').innerText(),/Ben Weber/);
+    await page.locator('#staffSearch').fill('');
+    await page.locator('#staffRoleFilter').selectOption('Aushilfe');
+    assert.equal(await page.locator('.staff-card').count(),1);
+    await page.locator('#staffRoleFilter').selectOption('all');
+    await page.locator('[data-profile-id="e1"]').click();
+    assert.equal(await page.locator('#staffProfileTitle').innerText(),'Anna Müller');
+    assert.match(await page.locator('#staffProfileContent').innerText(),/Schichten & Anwesenheit/);
+    assert.match(await page.locator('#staffProfileContent').innerText(),/Geplante Stunden/);
+    assert.equal(await page.locator('#staffProfile').isVisible(),true);
+    await page.locator('#editStaffProfile').click();
+    await page.locator('#employeeName').fill('Anna Neu');
+    await page.locator('#employeeHours').fill('32.5');
+    await page.locator('#employeeForm button[type=submit]').click();
+    assert.equal(await page.locator('#staffProfileTitle').innerText(),'Anna Neu');
+    const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('ladenfluss.team.v1')));
+    assert.equal(stored.find(p=>p.id==='e1').name,'Anna Neu');
+    assert.equal(stored.find(p=>p.id==='e1').hours,32.5);
+    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+    assert.ok(overflow<=2,'Personalfluss horizontal overflow '+overflow);
+    assert.equal(await page.locator('#staffRecruiting input, #staffRecruiting textarea, #staffRecruiting form').count(),0);
+    assert.deepEqual(errors,[]);
+    await page.goto(base+'/pep');
+    assert.match(await page.locator('#pepBody').innerText(),/Anna Neu/);
+  });
+}
+
+test('Personalfluss v2 – genehmigte Urlaubszeiträume sind im selben Teamprofil sichtbar',async t=>{
+  const page=await session(t,{width:390,height:900});
+  await page.goto(base+'/tools/urlaubsplaner');
+  await page.locator('[data-vac-view=team]').click();
+  await page.locator('#vacImportPep').click();
+  await page.locator('[data-vac-view=entry]').click();
+  await page.locator('#vacPerson').selectOption('e1');
+  await page.locator('#vacFrom').fill('2026-11-02');
+  await page.locator('#vacTo').fill('2026-11-06');
+  await page.locator('#vacStatus').selectOption('approved');
+  await page.locator('#vacSaveEntry').click();
+  await page.goto(base+'/mitarbeiter');
+  await page.locator('[data-profile-id=e1]').click();
+  const labels=await page.locator('.staff-profile-metrics').innerText();
+  assert.match(labels,/Bestätigte Urlaubszeiträume\s*1/);
+  assert.equal(await page.locator('#staffProfile').isVisible(),true);
+});
+
+
+test('Referenz-Cockpit zeigt echte PEP-, Urlaubs- und Teamdaten statt fiktiver Geschäftszahlen',async t=>{
+  const page=await session(t,{width:1440,height:920});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base+'/mein-laden');
+  assert.equal(await page.locator('#refKpiTeam').innerText(),'2 / 3');
+  assert.equal(await page.locator('#refKpiSales').innerText(),'–');
+  assert.equal(await page.locator('#refKpiStock').innerText(),'–');
+  assert.equal(await page.locator('#refKpiApplicants').innerText(),'–');
+  assert.equal(await page.locator('#refKpiCloud').innerText(),'Lokal');
+  assert.match(await page.locator('#refPepBody').innerText(),/Anna Müller/);
+  assert.equal(await page.locator('.ref-hour-col').count(),7);
+  await page.locator('#refDashboardQuery').fill('Urlaub');
+  assert.ok(await page.locator('#refDashboardResults a').count()>=1);
+  assert.equal(await page.locator('#refDashboardResults').isVisible(),true);
+  await page.locator('#refDashboardQuery').fill('');
+  assert.equal(await page.locator('#refDashboardResults').isVisible(),false);
+  await page.evaluate(()=>{
+    const profile=window.LadenflussStoreSettings.read();
+    window.LadenflussStoreSettings.save({...profile,name:'Blütenzauber'});
+  });
+  await page.reload();
+  assert.equal(await page.locator('#refSidebarShop').innerText(),'Blütenzauber');
+  assert.equal(await page.locator('#refTopShop').innerText(),'Blütenzauber');
+  await page.goto(base+'/tools/urlaubsplaner');
+  await page.locator('[data-vac-view=team]').click();
+  await page.locator('#vacImportPep').click();
+  await page.locator('[data-vac-view=entry]').click();
+  await page.locator('#vacPerson').selectOption('e1');
+  await page.locator('#vacFrom').fill('2026-10-12');
+  await page.locator('#vacTo').fill('2026-10-13');
+  await page.locator('#vacStatus').selectOption('approved');
+  await page.locator('#vacSaveEntry').click();
+  await page.goto(base+'/mein-laden');
+  assert.equal(await page.locator('#refKpiVacation').innerText(),'1');
+  assert.equal(await page.locator('.ref-vacation-item').count(),1);
+  assert.match(await page.locator('#refVacationList').innerText(),/Anna Müller/);
+  assert.match(await page.locator('#refVacationList').innerText(),/Bestätigt/);
+  assert.deepEqual(errors,[]);
+});
+
+test('Referenz-Cockpit Suche öffnet echte Module und mobile Menü-Tabs bleiben nutzbar',async t=>{
+  const page=await session(t,{width:390,height:820});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base+'/mein-laden');
+  assert.equal(await page.locator('#refMobileMenu').isVisible(),true);
+  await page.locator('#refMobileMenu').click();
+  assert.equal(await page.locator('.workspace-nav').isVisible(),true);
+  await page.locator('[data-cockpit-tab=profile]').click();
+  assert.equal(await page.locator('[data-cockpit-panel=profile]').isVisible(),true);
+  assert.equal(await page.locator('.workspace-nav').isVisible(),false);
+  await page.locator('#refDashboardQuery').fill('Personalfluss');
+  await page.locator('#refDashboardResults a[href="/mitarbeiter"]').click();
+  assert.match(page.url(),/\/mitarbeiter$/);
+  assert.deepEqual(errors,[]);
+});
+
+
+for(const width of [1440,768,390,320]){
+  test('Einheitliches Ladenfluss-Design: Rechner, Fachtools und Navigation ('+width+'px)',async t=>{
+    const page=await session(t,{width,height:960});
+    const errors=[];page.on('pageerror',e=>errors.push(e.message));
+    const routes=['/tools','/tools/rabattrechner','/tools/margenrechner','/tools/kpi-dashboard','/rechner','/produkte','/ueber-uns'];
+    for(const route of routes){
+      const resp=await page.goto(base+route);
+      assert.equal(resp.status(),200,route);
+      const style=await page.evaluate(()=>({
+        wine:getComputedStyle(document.documentElement).getPropertyValue('--lf-brand').trim(),
+        overflow:document.documentElement.scrollWidth-innerWidth,
+        body:getComputedStyle(document.body).backgroundColor,
+        header:document.querySelector('.site-header, .calc-topbar')?.tagName||'',
+      }));
+      assert.equal(style.wine,'#7c101c',route+': palette');
+      assert.ok(style.overflow<=2,route+': horizontal overflow '+style.overflow);
+      assert.equal(style.header,'HEADER',route+': persistent branded navigation');
+      if(route.startsWith('/tools/')&&route!=='/tools/urlaubsplaner'){
+        assert.equal(await page.locator('link[href="/assets/reference-calculator.css"]').count(),1,route);
+        assert.match(await page.locator('.tool-page .calculator').evaluate(el=>getComputedStyle(el).backgroundColor),/rgb\(255, 253, 250\)/,route);
+      }
+    }
+    await page.goto(base+'/tools');
+    assert.equal(await page.locator('.ref-tool-choice').count(),8);
+    const href=await page.locator('.ref-tool-choice').first().getAttribute('href');
+    assert.equal(href,'/tools/personalbedarf');
+    await page.locator('.ref-tool-choice[href="/tools/margenrechner"]').click();
+    assert.match(page.url(),/\/tools\/margenrechner$/);
+    assert.deepEqual(errors,[]);
+  });
+}
+
+test('Rechner-Vorlage behält korrekte Euro-Ergebnisse für Marge, Rabatt und Break-even',async t=>{
+  const page=await session(t,{width:390,height:900});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base+'/tools/margenrechner');
+  await page.locator('#m_cost').fill('10');
+  await page.locator('#m_margin').fill('50');
+  await page.locator('#m_vat').fill('19');
+  await page.evaluate(()=>window.calcMargin(false));
+  assert.match(await page.locator('#m_result').innerText(),/23,80/);
+  assert.equal(await page.locator('#m_result').isVisible(),true);
+  await page.goto(base+'/tools/rabattrechner');
+  await page.locator('#d_price').fill('100');
+  await page.locator('#d_discount').fill('20');
+  await page.evaluate(()=>window.calcDiscount(false));
+  assert.match(await page.locator('#d_result').innerText(),/80,00/);
+  await page.goto(base+'/tools/break-even');
+  await page.locator('#b_fixed').fill('12000');
+  await page.locator('#b_rate').fill('40');
+  await page.locator('#b_days').fill('24');
+  await page.locator('.advanced-options summary').click();
+  await page.locator('#b_profit').fill('0');
+  await page.locator('#b_buffer').fill('0');
+  await page.evaluate(()=>window.calcBreakEven(false));
+  assert.match(await page.locator('#b_result').innerText(),/30.000/);
+  assert.match(await page.locator('#b_result').innerText(),/1.250/);
+  assert.deepEqual(errors,[]);
+});
+
+test('Kombi-Rechner: alle acht Kategorien zugänglich, aktive Auswahl hervorgehoben',async t=>{
+ const page=await session(t,{width:390,height:880});
+ await page.goto(base+'/rechner');
+ assert.equal(await page.locator('[data-ref-calc-mode]').count(),8);
+ assert.equal(await page.locator('[data-ref-calc-mode][aria-current=true]').count(),1);
+ await page.locator('[data-ref-calc-mode="rabattrechner"]').click();
+ await page.waitForFunction(()=>document.getElementById('modeTitle')?.textContent==='Rabattwirkung');
+ assert.equal(await page.locator('[data-ref-calc-mode="rabattrechner"]').getAttribute('aria-current'),'true');
+ await page.locator('[data-ref-calc-mode="margenrechner"]').click();
+ await page.waitForFunction(()=>document.getElementById('modeTitle')?.textContent==='Verkaufspreis');
+ assert.equal(await page.locator('[data-ref-calc-mode="margenrechner"]').getAttribute('aria-current'),'true');
+ const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+ assert.ok(overflow<=2,'Kombi-Rechner: unexpected horizontal overflow '+overflow);
+});
+
+test('Neue Kopfzeile: auf dem iPhone Tools und Mein Laden erreichbar',async t=>{
+ const page=await session(t,{width:375,height:820});
+ await page.goto(base+'/tools/rabattrechner');
+ const button=page.locator('.site-header .menu-toggle');
+ assert.equal(await button.isVisible(),true);
+ await button.click();
+ assert.equal(await page.locator('#mobile-nav').isVisible(),true);
+ await page.locator('#mobile-nav a[href="/mein-laden"]').click();
+ assert.match(page.url(),/\/mein-laden$/);
 });

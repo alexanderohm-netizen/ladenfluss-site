@@ -23,6 +23,10 @@ for(const input of host.querySelectorAll('input,select'))input.addEventListener(
 $('quickFields').replaceChildren();for(const input of host.querySelectorAll('input,select')){const b=document.createElement('button');b.type='button';b.dataset.field=input.id;const label=document.createElement('span'),value=document.createElement('strong');label.textContent=host.querySelector('label[for="'+input.id+'"]')?.textContent||input.id;b.append(label,value);b.onclick=()=>{if(input.type==='number')focus(input);else{$('fullInputs').open=true;input.closest('details.advanced-options')?.setAttribute('open','');input.focus();}};$('quickFields').append(b);}refreshChips();
 host.addEventListener('keydown',onEnter);active=numeric()[0];calculate(false);fresh=true;
 for(const button of $('modeOptions').querySelectorAll('button'))button.setAttribute('aria-pressed',String(button.dataset.mode===next[0]));
+for(const link of document.querySelectorAll('[data-ref-calc-mode]')){
+  const chosen=link.dataset.refCalcMode===next[0];
+  if(chosen)link.setAttribute('aria-current','true');else link.removeAttribute('aria-current');
+}
 }
 function onEnter(event){if(event.key==='Enter'&&event.target.matches('input,select')){event.preventDefault();calculate();}}
 for(const mode of modes){const b=document.createElement('button');b.dataset.mode=mode[0];const group=document.createElement('small'),name=document.createElement('strong'),help=document.createElement('span');group.textContent=mode[2];name.textContent=mode[1];help.textContent=mode[3];b.append(group,name,help);b.onclick=()=>{location.hash=mode[0];if(current?.[0]===mode[0])changeMode(mode[0]);dialog.close();$('chooseMode').focus();};$('modeOptions').append(b);}

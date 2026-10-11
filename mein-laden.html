@@ -6,9 +6,9 @@
 <title>Mein Laden – Überblick & nächste Schritte | Ladenfluss</title>
 <meta name="description" content="Dein Laden im Blick: Besetzung prüfen, Prioritäten erkennen und lokale Daten sichern.">
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/cockpit.css">
+<link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/cockpit.css"><link rel="stylesheet" href="/assets/cockpit-v2.css"><link rel="stylesheet" href="/assets/reference-dashboard.css">
 </head>
-<body class="workspace-body">
+<body class="workspace-body lf-reference-dashboard">
 <a class="skip-link" href="#main">Zum Inhalt</a>
 <header class="site-header"><div class="container header-row">
 <a class="brand" href="/" aria-label="Ladenfluss Startseite"><span class="brand-mark" aria-hidden="true"></span>Ladenfluss</a>
@@ -16,22 +16,80 @@
 <button class="menu-toggle" aria-expanded="false" aria-controls="mobile-nav">Menü</button></div>
 <nav id="mobile-nav" class="mobile-nav" aria-label="Mobile Navigation"><a href="/mein-laden">Mein Laden</a><a href="/mitarbeiter">Team</a><a href="/pep">Dienstplan</a><a href="/tools/urlaubsplaner">Urlaub</a><a href="/tools">Werkzeuge</a></nav></header>
 <main id="main" class="container workspace">
-<div class="workspace-heading"><div><span class="eyebrow">Dein Arbeitsbereich</span><h1 id="storeGreeting">Mein Laden</h1><p>Was zählt heute? Was ist als Nächstes dran?</p></div><div class="workspace-date"><span id="cockpitDate"></span><small>Lokale Planung · auf diesem Gerät</small></div></div>
-<div id="cockpitError" class="workspace-alert" role="alert" hidden></div>
 <div class="workspace-grid">
-<nav class="workspace-nav" aria-label="Bereiche im Cockpit">
-<button type="button" class="active" data-cockpit-tab="overview" aria-pressed="true">Überblick</button>
-<button type="button" data-cockpit-tab="profile" aria-pressed="false">Ladenprofil</button>
-<button type="button" data-cockpit-tab="targets" aria-pressed="false">Meine Richtwerte</button>
-<button type="button" data-cockpit-tab="backup" aria-pressed="false">Datensicherung</button>
-<button type="button" data-cockpit-tab="modules" aria-pressed="false">Module & Stand</button>
-<div class="workspace-nav-note">Kostenlos starten.<br>Im eigenen Tempo wachsen.</div>
-<a href="/tools/urlaubsplaner">Urlaub planen ↗</a><a href="/tools">Alle Werkzeuge ↗</a>
+<nav class="workspace-nav" aria-label="Hauptbereiche und Einstellungen">
+<a href="/" class="ref-side-brand" aria-label="Ladenfluss Startseite"><span class="ref-leaf" aria-hidden="true">❦</span><strong>Ladenfluss</strong></a>
+<div class="workspace-nav-heading">DEIN SYSTEM</div>
+<button type="button" class="active" data-cockpit-tab="overview" aria-pressed="true"><span aria-hidden="true">⌂</span> Übersicht</button>
+<button type="button" data-cockpit-tab="profile" aria-pressed="false"><span aria-hidden="true">▧</span> Mein Laden</button>
+<a href="#modules" data-open-panel="modules" class="ref-sidebar-link"><span aria-hidden="true">▥</span> Zahlenfluss <small>In Entwicklung</small></a>
+<a href="#modules" data-open-panel="modules" class="ref-sidebar-link"><span aria-hidden="true">◈</span> Warenfluss <small>In Entwicklung</small></a>
+<a href="/pep" class="ref-sidebar-link"><span aria-hidden="true">▦</span> PEP</a>
+<a href="/tools/urlaubsplaner" class="ref-sidebar-link"><span aria-hidden="true">▤</span> Urlaubsplaner</a>
+<a href="/mitarbeiter" class="ref-sidebar-link"><span aria-hidden="true">♧</span> Personalfluss</a>
+<a href="#modules" data-open-panel="modules" class="ref-sidebar-link"><span aria-hidden="true">☁</span> Cloud <small>In Vorbereitung</small></a>
+<a href="/rechner" class="ref-sidebar-link"><span aria-hidden="true">⌗</span> Handelsrechner</a>
+<div class="workspace-nav-heading workspace-nav-heading-later">MEIN LADEN</div>
+<button type="button" data-cockpit-tab="targets" aria-pressed="false"><span aria-hidden="true">⌁</span> Richtwerte</button>
+<button type="button" data-cockpit-tab="backup" aria-pressed="false"><span aria-hidden="true">⇩</span> Datensicherung</button>
+<button type="button" data-cockpit-tab="modules" aria-pressed="false"><span aria-hidden="true">▧</span> Module & Stand</button>
+<p class="ref-side-quote">„Mehr Zeit für das, was deinen Laden besonders macht.“</p>
+<div class="ref-side-shop"><span class="ref-shop-avatar" aria-hidden="true">L</span><span><strong id="refSidebarShop">Dein Laden</strong><small>Lokaler Arbeitsbereich</small></span></div>
 </nav>
 <div class="workspace-main">
+<header class="ref-dash-topbar">
+ <button type="button" class="ref-dash-mobile-menu" id="refMobileMenu" aria-label="Menü öffnen" aria-controls="main" aria-expanded="false">☰</button>
+ <form id="refDashboardSearch" class="ref-dash-search" role="search" autocomplete="off">
+  <label class="sr-only" for="refDashboardQuery">In Ladenfluss suchen</label>
+  <span aria-hidden="true">⌕</span><input id="refDashboardQuery" type="search" placeholder="Suche: Mitarbeiter, Module, Dienstplan …">
+  <div id="refDashboardResults" class="ref-dash-search-results" role="status" hidden></div>
+ </form>
+ <div class="ref-dash-top-actions"><a href="#overview" data-open-panel="overview" class="ref-dash-bell" aria-label="Hinweise anzeigen">♧ <span id="refAlertCount">0</span></a><span class="ref-top-avatar" aria-hidden="true">L</span><div class="ref-dash-account"><strong id="refTopShop">Mein Laden</strong><small>Auf diesem Gerät</small></div></div>
+</header>
+<div class="workspace-breadcrumb"><a href="/">Startseite</a><span aria-hidden="true">/</span><span>Mein Laden</span><span class="workspace-breadcrumb-state">Lokaler Arbeitsbereich</span></div>
+<div class="workspace-heading"><div><span class="eyebrow">DEIN LADEN AUF EINEN BLICK</span><h1><span id="refGreeting">Guten Morgen,</span> <span id="storeGreeting">Mein Laden</span>!</h1><p>Hier ist dein aktueller Überblick. Alles Wichtige an einem Ort. <span aria-hidden="true">❦</span></p></div><div class="workspace-date"><span id="cockpitDate"></span><small><span class="workspace-local-dot" aria-hidden="true"></span> Lokal gespeichert · Keine Cloud-Synchronisierung</small></div></div>
+<div id="cockpitError" class="workspace-alert" role="alert" hidden></div>
 <section data-cockpit-panel="overview" aria-label="Überblick">
-<div id="demoNotice" class="workspace-note" hidden><strong>Beispielteam aktiv.</strong> Hinweise beziehen sich auf die mitgelieferten Mitarbeiter und deine lokale Planung. <a href="/mitarbeiter">Eigenes Team anlegen →</a></div>
-<div class="overview-head"><h2>Dein nächster Schritt</h2><span id="analysisTime"></span></div>
+<div class="ref-kpi-grid" aria-label="Kennzahlen und Module"><article class="ref-kpi-card"><div><span class="ref-kpi-icon" aria-hidden="true">▥</span><span>Umsatz heute</span></div><strong id="refKpiSales">–</strong><small>Zahlenfluss folgt</small></article>
+<article class="ref-kpi-card"><div><span class="ref-kpi-icon" aria-hidden="true">▣</span><span>Warenbestand</span></div><strong id="refKpiStock">–</strong><small>Warenfluss folgt</small></article>
+<article class="ref-kpi-card"><div><span class="ref-kpi-icon" aria-hidden="true">♧</span><span>Personaleinsatz</span></div><strong id="refKpiTeam">–</strong><small>Für heute geplant</small></article>
+<article class="ref-kpi-card"><div><span class="ref-kpi-icon" aria-hidden="true">▤</span><span>Bewerbungen</span></div><strong id="refKpiApplicants">–</strong><small>In Vorbereitung</small></article>
+<article class="ref-kpi-card"><div><span class="ref-kpi-icon" aria-hidden="true">☼</span><span>Urlaubsplanung</span></div><strong id="refKpiVacation">–</strong><small>Gespeicherte Einträge</small></article>
+<article class="ref-kpi-card"><div><span class="ref-kpi-icon" aria-hidden="true">☁</span><span>Cloud-Status</span></div><strong id="refKpiCloud">Lokal</strong><small>Noch nicht aktiviert</small></article></div>
+<div class="ref-dashboard-cards">
+ <section class="ref-panel ref-hours-panel" aria-labelledby="refHoursTitle">
+   <div class="ref-panel-header"><h2 id="refHoursTitle"><span aria-hidden="true">▥</span> Personalstunden</h2><small>Diese Woche · aus dem PEP</small></div>
+   <div id="refHoursChart" class="ref-hour-chart" aria-label="Geplante Stunden von Montag bis Sonntag"></div>
+   <p class="ref-panel-foot">Geplante Stunden, keine Umsatzzahlen. <a href="/pep">Zum PEP →</a></p>
+ </section>
+ <section class="ref-panel ref-pep-panel" aria-labelledby="refPepTitle">
+   <div class="ref-panel-header"><h2 id="refPepTitle"><span aria-hidden="true">▦</span> PEP – Einsatzplan</h2><a href="/pep">Diese Woche ↗</a></div>
+   <div class="ref-pep-preview-scroll"><table class="ref-pep-preview" aria-label="Dienstplan Vorschau"><thead id="refPepHead"></thead><tbody id="refPepBody"></tbody></table></div>
+   <p class="ref-panel-foot">Vorschau aus deinen lokal gespeicherten Schichten.</p>
+ </section>
+ <section class="ref-panel ref-insights-panel" aria-labelledby="refInsightsTitle">
+   <div class="ref-panel-header"><h2 id="refInsightsTitle"><span aria-hidden="true">✦</span> Meine Insights</h2></div>
+   <div id="refInsightList" class="ref-insight-list"></div>
+   <a href="#refDetailedSignals" class="ref-all-insights">Alle Hinweise anzeigen →</a>
+ </section>
+</div>
+<div class="ref-dashboard-bottom">
+ <section class="ref-panel" aria-labelledby="refTeamTitle">
+  <div class="ref-panel-header"><h2 id="refTeamTitle"><span aria-hidden="true">♧</span> Mein Team</h2><a href="/mitarbeiter">Alle anzeigen →</a></div>
+  <div id="refTeamMembers" class="ref-team-members"></div>
+ </section>
+ <section class="ref-panel" aria-labelledby="refVacationsTitle">
+  <div class="ref-panel-header"><h2 id="refVacationsTitle"><span aria-hidden="true">☼</span> Urlaubsplanung</h2><a href="/tools/urlaubsplaner">Alle anzeigen →</a></div>
+  <div id="refVacationList" class="ref-vacation-list"></div>
+ </section>
+ <section class="ref-panel" aria-labelledby="refApplicationsTitle">
+  <div class="ref-panel-header"><h2 id="refApplicationsTitle"><span aria-hidden="true">▤</span> Bewerbungen</h2><a href="/mitarbeiter#staffRecruiting">Zum Personalfluss →</a></div>
+  <div class="ref-application-placeholder"><span aria-hidden="true">♧</span><strong>In Vorbereitung</strong><p>Bewerbermanagement folgt mit passenden Zugriffsrechten.</p></div>
+ </section>
+</div>
+<div class="ref-actions-row"><strong>Schnellaktionen</strong><a href="/mitarbeiter" class="btn btn-primary">＋ Mitarbeiter anlegen</a><a href="/pep" class="btn btn-secondary">▦ Schicht planen</a><a href="/tools/urlaubsplaner" class="btn btn-secondary">☼ Urlaub planen</a><a href="#backup" data-open-panel="backup" class="btn btn-secondary">⇩ Daten sichern</a></div>
+<details class="ref-detailed-section" id="refDetailedSignals"><summary>Alle Hinweise und Planungsdetails ansehen</summary><div id="demoNotice" class="workspace-note" hidden><strong>Beispielteam aktiv.</strong> Hinweise beziehen sich auf die mitgelieferten Mitarbeiter und deine lokale Planung. <a href="/mitarbeiter">Eigenes Team anlegen →</a></div>
+<div class="overview-head"><div><span class="workspace-section-kicker">DEIN TAGESÜBERBLICK</span><h2>Das hat gerade Priorität.</h2></div><span id="analysisTime"></span></div>
 <div class="focus-card" id="decisionCard" aria-live="polite"></div>
 <div class="signal-counts" aria-label="Hinweise nach Dringlichkeit">
 <div><span class="status-dot critical"></span><strong id="countCritical">0</strong><span>Dringend prüfen</span></div>
@@ -40,7 +98,7 @@
 </div>
 <section class="workspace-section" aria-label="Handlungshinweise"><div class="section-line"><div><h2>Was Aufmerksamkeit braucht</h2><p>Mit Ursache, Auswirkung und direktem Weg zur Klärung.</p></div><label class="filter-label">Anzeigen<select id="signalFilter"><option value="all">Alle Hinweise</option><option value="critical">Dringend</option><option value="important">Im Blick</option><option value="info">Einordnung</option></select></label></div>
 <div id="storeSignals" class="signal-list"></div><button id="showAllSignals" type="button" class="btn btn-secondary" hidden>Weitere Hinweise zeigen</button></section>
-<div class="quick-links"><a href="/pep"><strong>Dienstplan</strong><span>Die Woche organisieren →</span></a><a href="/tools/urlaubsplaner"><strong>Urlaub</strong><span>Freie Tage abstimmen →</span></a><a href="/tools"><strong>Werkzeuge</strong><span>Eine Frage klären →</span></a></div>
+</details><div class="quick-links"><a href="/pep"><span class="quick-link-symbol" aria-hidden="true">▦</span><strong>Personalplanung</strong><span>Dienstplan öffnen ↗</span></a><a href="/tools/urlaubsplaner"><span class="quick-link-symbol" aria-hidden="true">◫</span><strong>Urlaub</strong><span>Freie Tage abstimmen ↗</span></a><a href="/tools"><span class="quick-link-symbol" aria-hidden="true">⌗</span><strong>Werkzeuge</strong><span>Berechnungen starten ↗</span></a></div>
 <section class="workspace-section"><div class="section-line"><div><h2>Deine Richtwerte</h2><p>Planungsannahmen, keine gemessenen Geschäftszahlen.</p></div><button type="button" class="text-button" data-open-panel="targets">Anpassen →</button></div>
 <div class="target-grid"><div><small>Stundenleistung</small><strong id="dashProductivity">–</strong></div><div><small>Personalkostenquote</small><strong id="dashLabor">–</strong></div><div><small>Handelsspanne</small><strong id="dashMargin">–</strong></div><div><small>Lieferzeit</small><strong id="dashLead">–</strong></div></div></section>
 <section class="workspace-section"><div class="section-line"><div><h2>Letzte Berechnungen</h2><p>Gespeicherte Ergebnisse auf diesem Gerät. Hinweise daraus gelten höchstens sieben Tage.</p></div></div><div id="recentCalculations" class="calculation-list"></div></section>
@@ -79,5 +137,5 @@
 </div></div>
 <div class="workspace-footer">Daten nur in diesem Browser · keine Gerätesynchronisierung · <a href="#backup" data-open-panel="backup">Arbeitsstand sichern</a></div>
 </main>
-<script src="/assets/site.js" defer></script><script src="/assets/signals.js" defer></script><script src="/assets/planning-engine.js" defer></script><script src="/assets/team-store.js" defer></script><script src="/assets/de-holidays.js" defer></script><script src="/assets/urlaubsplaner-store.js" defer></script><script src="/assets/store-settings.js" defer></script><script src="/assets/pep-signals.js" defer></script><script src="/assets/business-signals.js" defer></script><script src="/assets/backup.js" defer></script><script src="/assets/cockpit.js" defer></script>
+<script src="/assets/site.js" defer></script><script src="/assets/signals.js" defer></script><script src="/assets/planning-engine.js" defer></script><script src="/assets/team-store.js" defer></script><script src="/assets/de-holidays.js" defer></script><script src="/assets/urlaubsplaner-store.js" defer></script><script src="/assets/store-settings.js" defer></script><script src="/assets/pep-signals.js" defer></script><script src="/assets/business-signals.js" defer></script><script src="/assets/backup.js" defer></script><script src="/assets/cockpit.js" defer></script><script src="/assets/reference-dashboard.js" defer></script>
 </body></html>

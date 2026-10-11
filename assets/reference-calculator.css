@@ -1,0 +1,426 @@
+/* Ladenfluss reference design · all calculators and tool results.
+   Keep all existing math, IDs and handlers; CSS-only presentation. */
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-page{
+  padding:39px 0 77px;
+  background:linear-gradient(180deg,#f9f3ed 0%,#fbf8f4 100%);
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator-layout{
+  display:grid;grid-template-columns:minmax(0,1.48fr) minmax(245px,.72fr);
+  gap:24px;align-items:start;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-page .calculator{
+  padding:32px 33px;border:1px solid #e7d7ce;border-radius:12px;
+  box-shadow:0 11px 36px rgba(86,42,45,.065);
+  background:#fffdfa;min-width:0;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .simple-step{
+  color:#8d3946;border:1px solid #e7cbd0;background:#f8ebed;
+  display:inline-block;padding:6px 10px;border-radius:100px;
+  font-size:10px;text-transform:uppercase;font-weight:850;letter-spacing:.1em;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator>h2{
+  font:550 clamp(28px,3.15vw,41px)/1.19 Georgia,"Times New Roman",serif;
+  color:#73212a;letter-spacing:-.052em;margin:17px 0 12px;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator-intro{
+  font-size:13px;line-height:1.72;color:#796960;max-width:650px;
+  margin:0 0 26px;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .fields{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 20px;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .field{min-width:0}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .field label{
+  font-size:12px;line-height:1.45;color:#57443f;font-weight:780;letter-spacing:0;
+  text-transform:none;display:block;margin:0 0 9px;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .field small,
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .field-hint{
+  display:block;color:#968278;font-size:11px;line-height:1.55;margin-top:7px;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .field input,
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .field select{
+  background:#fff;border:1px solid #d9cac0;border-radius:7px;color:#3f312e;
+  width:100%;max-width:100%;min-width:0;min-height:49px;padding:11px 13px;
+  font-size:16px;font-weight:650;font-variant-numeric:tabular-nums;box-shadow:0 1px 2px rgba(66,42,31,.02);
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .field input:hover,
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .field select:hover{
+  border-color:#bca59c;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .field input:focus,
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .field select:focus{
+  border-color:#883b4d;outline:3px solid #f0dfe4;outline-offset:0;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .calc-actions{
+  display:flex;flex-wrap:wrap;gap:11px;margin:24px 0 0;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .calc-actions .btn{
+  min-height:45px;font-size:13px;padding:11px 21px;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .result,
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .kpi-grid{
+  background:#fff8f4;border:1px solid #eadbd5;border-radius:10px;margin-top:22px;
+  padding:7px 19px;box-shadow:inset 4px 0 0 #8b2b3c;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .result[hidden],
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .kpi-grid[hidden]{display:none!important}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .metric{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;
+  gap:13px;padding:15px 3px;border-bottom:1px solid #eaded6;
+  font-size:12px;background:none;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .metric:last-child{border:0}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .metric span{color:#78655f;line-height:1.45}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .metric strong,
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .metric b{
+  color:#76222e;font-size:clamp(15px,1.9vw,22px);
+  letter-spacing:-.035em;text-align:right;font-variant-numeric:tabular-nums;
+  overflow-wrap:anywhere;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .metric:first-child strong,
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .metric:first-child b{
+  font-family:Georgia,"Times New Roman",serif;font-size:clamp(22px,2.5vw,31px);
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .kpi-grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;border:0;
+  background:transparent;padding:0;box-shadow:none;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .kpi{
+  border:1px solid #e5d8d0;border-radius:9px;background:#fff8f5;
+  padding:19px 17px;min-width:0;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .kpi small{
+  color:#856f68;font-size:10px;line-height:1.5;text-transform:uppercase;
+  letter-spacing:.04em;font-weight:740;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .kpi strong{
+  font:550 clamp(23px,3vw,33px) Georgia,"Times New Roman",serif;
+  color:#76232d;letter-spacing:-.045em;overflow-wrap:anywhere;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .result-toolbar{
+  display:flex;justify-content:flex-end;flex-wrap:wrap;margin:13px 0 0;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .result-copy{
+  border:1px solid #d5aeb4;background:#fffaf7;color:#802a37;
+  border-radius:6px;padding:9px 13px;font-size:11px;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .result-copy:hover{background:#f6e6e8}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .result-insight,
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .legal-note{
+  border-left:3px solid #933849;background:#f8efeb;color:#755c57;
+  border-radius:0 7px 7px 0;font-size:11px;line-height:1.75;
+  padding:13px 16px;margin-top:18px;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .result-insight::before{
+  color:#83303e;font-weight:850;font-size:9px;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .legal-note{
+  border-left-color:#bb9b89;background:#f9f1e8;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .advanced-options{
+  border:1px solid #e3d4ce;border-radius:8px;background:#fcf8f5;overflow:hidden;
+  margin-top:22px;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .advanced-options summary{
+  background:#f8f0ec;padding:15px 18px;color:#783846;font-size:12px;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .advanced-options[open] .fields{
+  padding:18px;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-page .side-stack{
+  border:0;display:grid;gap:12px;position:sticky;top:105px;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-page .side-box{
+  border:1px solid #e4d6ce;background:#fffdfa;border-radius:10px;
+  padding:23px 22px;box-shadow:0 6px 20px rgba(64,36,33,.035);
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-page .side-box:first-child{
+  background:linear-gradient(135deg,#652232,#894555);color:#fff;
+  border-color:#81384d;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-page .side-box h3{
+  font:550 21px/1.23 Georgia,"Times New Roman",serif;letter-spacing:-.035em;
+  color:#742b36;margin:0 0 12px;text-transform:none;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-page .side-box:first-child h3{color:#fff}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-page .side-box p,
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-page .side-box li{
+  font-size:12px;line-height:1.68;color:#76655c;margin:0;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-page .side-box:first-child p{color:#f7e7e8}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-page .side-box li{margin:8px 0}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-page .side-box a{color:#7d2936}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-page .side-box a:hover{color:#512027}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .error{
+ color:#9b2d39;font-size:12px;line-height:1.5;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .store-default-note{
+ background:#f3e7e9;border:1px solid #e1c3c9;border-radius:7px;padding:12px 14px;margin-bottom:20px;
+}
+body:not(.lf-reference-home):not(.lf-reference-dashboard) .store-default-note strong{color:#7c2734}
+/* Unified eight-mode handheld calculator: still retains genuine keypad workflow. */
+.calc-app-body .calc-topbar{
+ width:100%;max-width:none;margin:0;padding:13px max(24px,calc((100% - 1240px)/2));
+ border-bottom:1px solid #e5d8d1;background:#fffaf5;min-height:76px;
+}
+.calc-app-body .calc-topbar .brand{
+ font:600 25px Georgia,"Times New Roman",serif;letter-spacing:-.055em;color:#7c101c;
+}
+.calc-app-body .calc-topbar nav{gap:24px}
+.calc-app-body .calc-topbar nav a{
+ color:#67534d;font-size:12px;font-weight:700;text-decoration:none;
+}
+.calc-app-body .calc-topbar nav a[aria-current=page]{color:#7c1420}
+.calc-app-body .calc-topbar nav a:hover{color:#7c101c}
+.calc-app-body .calc-app{max-width:1240px;padding:0 26px;margin:0 auto 30px}
+.calc-app-body .calc-title{
+ background:linear-gradient(115deg,#fff9f4,#f2e2de);border:1px solid #ead8d1;
+ border-radius:11px;padding:30px 34px;margin:35px 0 20px;gap:22px;
+}
+.calc-app-body .calc-title .eyebrow{font-size:10px}
+.calc-app-body .calc-title .eyebrow:before{display:none}
+.calc-app-body .calc-title h1{
+ font:550 clamp(34px,4.5vw,54px)/1.09 Georgia,"Times New Roman",serif;
+ color:#7c101c;letter-spacing:-.06em;margin:12px 0 3px;
+}
+.calc-app-body .calc-title #chooseMode{
+ background:#7c1420;border:1px solid #7c1420;color:#fff;border-radius:7px;
+ padding:13px 18px;font:780 12px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+ box-shadow:0 7px 18px #64162018;min-height:45px;
+}
+.calc-app-body .calc-title #chooseMode:hover{background:#560e18}
+.calc-app-body .calc-workspace{
+ grid-template-columns:minmax(0,1.35fr) minmax(310px,.75fr);gap:18px;align-items:start;
+}
+.calc-app-body .calc-inputs{
+ background:#fffdfa;border:1px solid #e5d7cf;border-radius:11px;
+ box-shadow:0 9px 27px #6540380b;padding:27px;
+}
+.calc-app-body .calc-inputs>details>summary{
+ color:#7c2938;font-size:11px;text-transform:uppercase;letter-spacing:.08em;
+ padding:4px 0 11px;margin-bottom:18px;
+}
+.calc-app-body .calc-mode-heading>span{
+ background:#f4e7e9;color:#852e3e;display:inline-block;padding:5px 9px;
+ border-radius:100px;font-weight:850;font-size:9px;letter-spacing:.1em;
+}
+.calc-app-body .calc-mode-heading h2{
+ font:550 29px/1.16 Georgia,"Times New Roman",serif;color:#6b202b;
+ letter-spacing:-.045em;margin:12px 0 9px;
+}
+.calc-app-body .calc-mode-heading p{
+ font-size:12px;line-height:1.65;color:#7b6a63;margin:0;
+}
+.calc-app-body .calc-example{
+ padding:12px 14px;background:#fbf2eb;border-left:3px solid #b58083;
+ border-radius:0 6px 6px 0;font-size:11px;color:#766258;margin:18px 0 21px;
+}
+.calc-app-body .calc-inputs .field label{
+ font-size:11px;color:#594944;font-weight:750;line-height:1.5;margin-bottom:7px;
+}
+.calc-app-body .calc-inputs .field input,.calc-app-body .calc-inputs .field select{
+ background:#fff;border:1px solid #dfcfc5;min-width:0;min-height:48px;
+ width:100%;border-radius:7px;padding:11px 12px;font-size:16px;color:#453231;
+}
+.calc-app-body .calc-inputs .field input:focus,
+.calc-app-body .calc-inputs .field select:focus{
+ outline:3px solid #efdce1;border-color:#9d596a;outline-offset:0;
+}
+.calc-app-body .calc-inputs .advanced-options{
+ border:1px solid #e6d6ce;background:#fbf5f0;border-radius:7px;margin-top:16px;overflow:hidden;
+}
+.calc-app-body .calc-inputs .advanced-options summary{
+ background:#f8efeb;color:#823b49;border-radius:7px;font-size:11px;
+}
+.calc-app-body .calc-inputs .advanced-options[open] .fields{padding:14px}
+.calc-app-body .calc-inputs .result{
+ padding:7px 15px;border:1px solid #e9d6cf;background:#fcf6f2;
+ border-radius:8px;box-shadow:inset 3px 0 0 #8c3443;
+}
+.calc-app-body .calc-inputs .metric{
+ display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;
+ gap:9px;padding:13px 3px;border-bottom:1px solid #ebdfd8;
+}
+.calc-app-body .calc-inputs .metric:last-child{border:0}
+.calc-app-body .calc-inputs .metric span{font-size:11px;color:#77645f}
+.calc-app-body .calc-inputs .metric strong{font-size:18px;color:#792934}
+.calc-app-body .calc-inputs .kpi-grid{
+ border:0;gap:8px;background:transparent;grid-template-columns:repeat(2,minmax(0,1fr));
+}
+.calc-app-body .calc-inputs .kpi{
+ border:1px solid #e5d7d0;border-radius:7px;background:#fff8f6;padding:13px;
+}
+.calc-app-body .calc-inputs .kpi strong{color:#802632}
+.calc-app-body .pocket-calculator{
+ background:linear-gradient(146deg,#4d2732,#321e25);
+ border:1px solid #6f404c;border-radius:14px;
+ box-shadow:0 16px 35px #431d2b24;
+ padding:18px;position:sticky;top:89px;
+}
+.calc-app-body .calc-screen{
+ background:linear-gradient(155deg,#684151,#493039);border:1px solid #79515e;
+ border-radius:10px;margin:0 0 16px;padding:19px 17px;
+ min-height:155px;color:#fffaf6;gap:9px;
+}
+.calc-app-body .calc-screen>span,.calc-app-body .calc-screen small{
+ color:#ead2d8;font-size:11px;line-height:1.5;
+}
+.calc-app-body .calc-screen strong{
+ font:500 clamp(27px,3.5vw,41px)/1.15 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+ font-variant-numeric:tabular-nums;letter-spacing:-.04em;
+}
+.calc-app-body .keypad{gap:8px}
+.calc-app-body .keypad button{
+ height:61px;min-width:0;background:#76505b;border:1px solid #8f626d;
+ color:#fff8f5;border-radius:9px;font-size:25px;
+}
+.calc-app-body .keypad button:hover{background:#8f6470}
+.calc-app-body .keypad .key-utility{background:#eee1dc;color:#4b3435;border-color:#efe1dc}
+.calc-app-body .keypad .key-brown{background:#a27c70;border-color:#a27c70;font-size:11px;font-weight:850}
+.calc-app-body .keypad .key-equals{background:#a92337;border-color:#c04454;font-size:32px}
+.calc-app-body .keypad .key-equals:hover{background:#8a1727}
+.calc-app-body .keypad-note{color:#e1cbd1;font-size:10px}
+.calc-app-body .calc-local{font-size:11px;color:#7c655e;margin:25px 0 35px}
+.calc-app-body .calc-local a{color:#792331;font-weight:750}
+.calc-app-body .mode-dialog{
+ background:#fffaf6;border:1px solid #e1cfc6;border-radius:12px;padding:27px;
+ box-shadow:0 20px 70px #2c1a2240;
+}
+.calc-app-body .mode-dialog-head h2{
+ font:550 30px Georgia,"Times New Roman",serif;color:#76202a;margin:10px 0 20px;
+}
+.calc-app-body .mode-options{gap:9px}
+.calc-app-body .mode-options button{
+ border-radius:8px;background:#fffdfa;border:1px solid #e4d4cc;padding:17px;
+}
+.calc-app-body .mode-options button:hover{border-color:#b88c91;background:#fff7f3}
+.calc-app-body .mode-options button[aria-pressed=true]{
+ background:#f6e7e9;border:2px solid #8b3c4b;
+}
+.calc-app-body .mode-options strong{color:#662932;font-size:18px;margin:8px 0}
+.calc-app-body .mode-options span{font-size:11px;color:#79655c;line-height:1.56}
+.calc-app-body .mode-options small{color:#8b5060}
+.calc-app-body .quick-fields button{border-radius:7px;background:#684550;color:#fff}
+.calc-app-body .quick-fields button[aria-pressed=true]{background:#9e2940;border-color:#c35d75}
+.calc-app-body .quick-fields span{color:#f0dae2}
+@media(max-width:900px){
+ body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator-layout{grid-template-columns:1fr}
+ body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-page .side-stack{
+   grid-template-columns:repeat(2,minmax(0,1fr));position:static;
+ }
+ body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-page .side-box:last-child{grid-column:1/-1}
+ .calc-app-body .calc-workspace{grid-template-columns:1fr}
+ .calc-app-body .pocket-calculator{position:static;max-width:100%}
+}
+@media(max-width:650px){
+ body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-page{padding:24px 0 47px}
+ body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-page .calculator{
+   padding:22px 17px;border-radius:10px;
+ }
+ body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator>h2{font-size:30px}
+ body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .fields{grid-template-columns:1fr;gap:13px}
+ body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .field input,
+ body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .field select{font-size:16px}
+ body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-page .side-stack{grid-template-columns:1fr}
+ body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-page .side-box:last-child{grid-column:auto}
+ body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .kpi{padding:14px 10px}
+ body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .kpi strong{font-size:23px}
+ .calc-app-body .calc-topbar{padding:13px 17px;min-height:65px}
+ .calc-app-body .calc-topbar .brand{font-size:21px}
+ .calc-app-body .calc-topbar nav{gap:11px}
+ .calc-app-body .calc-topbar nav a{font-size:10px}
+ .calc-app-body .calc-app{padding-inline:15px}
+ .calc-app-body .calc-title{padding:23px 19px;margin:17px 0}
+ .calc-app-body .calc-title h1{font-size:37px}
+ .calc-app-body .calc-inputs{padding:20px 17px}
+ .calc-app-body .calc-workspace{grid-template-columns:minmax(0,1fr);gap:15px}
+ .calc-app-body .pocket-calculator{order:0}
+ .calc-app-body .calc-screen{min-height:115px;padding:15px}
+ .calc-app-body .keypad button{height:57px}
+ .calc-app-body .calc-inputs .fields{grid-template-columns:1fr}
+ .calc-app-body .mode-options{grid-template-columns:1fr}
+}
+@media(max-width:370px){
+ .calc-app-body .calc-topbar{flex-wrap:wrap;gap:8px}
+ .calc-app-body .calc-topbar nav{width:100%;justify-content:space-between}
+ .calc-app-body .calc-title h1{font-size:31px}
+ body:not(.lf-reference-home):not(.lf-reference-dashboard) .calculator .kpi-grid{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+ .calc-app-body .keypad button:active{transform:none}
+}
+
+
+/* Immediately accessible category strip for the eight-mode tool. */
+.calc-app-body .calc-breadcrumb{
+  display:flex;align-items:center;gap:10px;color:#957c74;font-size:11px;
+  margin:22px 0 -12px;
+}
+.calc-app-body .calc-breadcrumb a{
+  text-decoration:none;color:#7e343d;font-weight:700;
+}
+.calc-app-body .calc-breadcrumb a:hover{text-decoration:underline}
+.calc-app-body .calc-title h1 em{font-style:normal;color:#7c101c}
+.calc-app-body .calc-title .ref-calc-lead{
+  font-size:13px;line-height:1.65;color:#755b58;margin:13px 0 0;max-width:580px;
+}
+.calc-app-body .ref-calc-shortcuts{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;
+  margin:0 0 20px;
+}
+.calc-app-body .ref-calc-shortcuts a{
+  display:flex;align-items:center;gap:9px;padding:12px 14px;min-width:0;
+  min-height:47px;text-decoration:none;color:#714148;font-size:11px;
+  font-weight:750;border:1px solid #e7d8d0;background:#fffdfa;
+  border-radius:8px;transition:border-color .15s,background .15s,box-shadow .15s;
+}
+.calc-app-body .ref-calc-shortcuts a>span{
+  display:inline-grid;place-items:center;color:#893546;font-size:17px;
+  background:#f7e8e8;border-radius:6px;width:27px;height:27px;flex:0 0 27px;
+}
+.calc-app-body .ref-calc-shortcuts a:hover{
+  border-color:#bd8996;background:#fff9f6;box-shadow:0 4px 12px #5b333313;
+}
+.calc-app-body .ref-calc-shortcuts a[aria-current=true]{
+  background:#792333;border-color:#792333;color:#fff;
+}
+.calc-app-body .ref-calc-shortcuts a[aria-current=true]>span{
+  background:#a65b6b;color:#fff;
+}
+@media(max-width:800px){
+ .calc-app-body .ref-calc-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .calc-app-body .calc-breadcrumb{margin:16px 0 -4px}
+}
+@media(max-width:400px){
+ .calc-app-body .ref-calc-shortcuts{gap:7px}
+ .calc-app-body .ref-calc-shortcuts a{font-size:10px;padding:10px 8px;gap:6px}
+ .calc-app-body .ref-calc-shortcuts a>span{font-size:15px;width:23px;height:23px;flex-basis:23px}
+}
+
+
+/* Sitewide navigation inside the standalone eight-mode calculator. */
+.calc-app-body .calc-topbar .ref-calc-desktop-nav{display:flex;gap:20px;align-items:center}
+.calc-app-body .calc-topbar .ref-calc-desktop-nav a{font-weight:660}
+.calc-app-body .calc-topbar .ref-calc-desktop-nav .ref-calc-login{
+  border:1px solid #7c101c;border-radius:7px;padding:10px 15px;
+  background:#7c101c;color:#fff;text-decoration:none;
+}
+.calc-app-body .calc-topbar .ref-calc-desktop-nav .ref-calc-login:hover{
+  background:#560e18;border-color:#560e18;color:#fff;
+}
+.calc-app-body .calc-topbar .menu-toggle{
+  display:none;border:1px solid #dfc9c5;border-radius:7px;padding:10px 14px;
+  background:#fff9f4;color:#7c101c;font-size:12px;
+}
+.calc-app-body .mobile-nav{background:#fffaf5;border-color:#e9dad2}
+.calc-app-body .mobile-nav a{font-size:13px;color:#682c34}
+@media(max-width:1090px){
+ .calc-app-body .calc-topbar .ref-calc-desktop-nav{gap:11px}
+ .calc-app-body .calc-topbar .ref-calc-desktop-nav a{font-size:10px}
+}
+@media(max-width:900px){
+ .calc-app-body .calc-topbar .ref-calc-desktop-nav{display:none}
+ .calc-app-body .calc-topbar .menu-toggle{display:block}
+}
