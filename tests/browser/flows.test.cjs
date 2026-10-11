@@ -320,3 +320,60 @@ for(const width of [1440,390,320]){
     assert.deepEqual(errors,[]);
   });
 }
+
+
+for(const width of [1440,768,390,320]){
+  test('Personalfluss v2 – Profile, Filter und lokale Teamansicht ('+width+'px)',async t=>{
+    const page=await session(t,{width,height:920});
+    const errors=[];
+    page.on('pageerror',error=>errors.push(error.message));
+    const response=await page.goto(base+'/mitarbeiter');
+    assert.equal(response.status(),200);
+    assert.equal(await page.locator('#activeEmployees').innerText(),'3');
+    assert.equal(await page.locator('.staff-card').count(),3);
+    await page.locator('#staffSearch').fill('Ben');
+    assert.equal(await page.locator('.staff-card').count(),1);
+    assert.match(await page.locator('.staff-card').innerText(),/Ben Weber/);
+    await page.locator('#staffSearch').fill('');
+    await page.locator('#staffRoleFilter').selectOption('Aushilfe');
+    assert.equal(await page.locator('.staff-card').count(),1);
+    await page.locator('#staffRoleFilter').selectOption('all');
+    await page.locator('[data-profile-id="e1"]').click();
+    assert.equal(await page.locator('#staffProfileTitle').innerText(),'Anna Müller');
+    assert.match(await page.locator('#staffProfileContent').innerText(),/Schichten & Anwesenheit/);
+    assert.match(await page.locator('#staffProfileContent').innerText(),/Geplante Stunden/);
+    assert.equal(await page.locator('#staffProfile').isVisible(),true);
+    await page.locator('#editStaffProfile').click();
+    await page.locator('#employeeName').fill('Anna Neu');
+    await page.locator('#employeeHours').fill('32.5');
+    await page.locator('#employeeForm button[type=submit]').click();
+    assert.equal(await page.locator('#staffProfileTitle').innerText(),'Anna Neu');
+    const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('ladenfluss.team.v1')));
+    assert.equal(stored.find(p=>p.id==='e1').name,'Anna Neu');
+    assert.equal(stored.find(p=>p.id==='e1').hours,32.5);
+    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+    assert.ok(overflow<=2,'Personalfluss horizontal overflow '+overflow);
+    assert.equal(await page.locator('#staffRecruiting input, #staffRecruiting textarea, #staffRecruiting form').count(),0);
+    assert.deepEqual(errors,[]);
+    await page.goto(base+'/pep');
+    assert.match(await page.locator('#pepBody').innerText(),/Anna Neu/);
+  });
+}
+
+test('Personalfluss v2 – genehmigte Urlaubszeiträume sind im selben Teamprofil sichtbar',async t=>{
+  const page=await session(t,{width:390,height:900});
+  await page.goto(base+'/tools/urlaubsplaner');
+  await page.locator('[data-vac-view=team]').click();
+  await page.locator('#vacImportPep').click();
+  await page.locator('[data-vac-view=entry]').click();
+  await page.locator('#vacPerson').selectOption('e1');
+  await page.locator('#vacFrom').fill('2026-11-02');
+  await page.locator('#vacTo').fill('2026-11-06');
+  await page.locator('#vacStatus').selectOption('approved');
+  await page.locator('#vacSaveEntry').click();
+  await page.goto(base+'/mitarbeiter');
+  await page.locator('[data-profile-id=e1]').click();
+  const labels=await page.locator('.staff-profile-metrics').innerText();
+  assert.match(labels,/Bestätigte Urlaubszeiträume\s*1/);
+  assert.equal(await page.locator('#staffProfile').isVisible(),true);
+});
