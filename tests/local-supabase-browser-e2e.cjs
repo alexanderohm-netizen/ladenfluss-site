@@ -205,9 +205,27 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
     const changedPassword='Changed-browser-password-2026';
     await page.locator('#newPassword').fill(changedPassword);
     await page.locator('#confirmPassword').fill(changedPassword);
+    const formValidity=await page.locator('#passwordResetForm').evaluate(form=>({
+      valid:form.checkValidity(),
+      problems:[...form.querySelectorAll('input')].filter(el=>!el.validity.valid)
+        .map(el=>({id:el.id,reason:el.validationMessage})),
+    }));
+    assert.equal(formValidity.valid,true,'Recovery form must be valid: '+JSON.stringify(formValidity.problems));
     await page.locator('#passwordResetForm button[type=submit]').click();
-    await page.waitForFunction(()=>document.getElementById('passwordResetStatus')?.textContent.includes('Passwort geändert'),
-      {timeout:20000});
+    try {
+      await page.waitForFunction(()=>{
+        const text=document.getElementById('passwordResetStatus')?.textContent||'';
+        return text.includes('Passwort geändert')||text.includes('Änderung fehlgeschlagen')||
+          text.includes('Reset-Link erforderlich')||text.includes('Passwörter prüfen');
+      },null,{timeout:20000});
+      assert.match(await page.locator('#passwordResetStatus').textContent(),/Passwort geändert/);
+    } catch (error) {
+      const diagnostic=await page.locator('#passwordResetForm').evaluate(form=>({
+        visible:!form.hidden,valid:form.checkValidity(),
+        buttonDisabled:form.querySelector('button[type=submit]')?.disabled,
+      }));
+      throw new Error(error.message+' Password form: '+JSON.stringify(diagnostic));
+    }
     phase='A: Erneut mit neuem Passwort anmelden';
     await page.goto(base+'/konto',{waitUntil:'domcontentloaded'});
     await page.locator('[data-auth-form=login] input[type=email]').fill(email);
