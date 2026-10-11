@@ -9,6 +9,7 @@
   const SDK_URL = 'https://esm.sh/@supabase/supabase-js@2.117.2';
 
   function applyAuthEvent(event, session) {
+    const previousRecoveryUserId = recoveryUserId;
     if (event === 'PASSWORD_RECOVERY') {
       recoveryUserId = typeof session?.user?.id === 'string' ? session.user.id : null;
     } else if (event === 'SIGNED_IN') {
@@ -19,6 +20,7 @@
     } else if (event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
       recoveryUserId = null;
     } else return;
+    if (recoveryUserId === previousRecoveryUserId) return;
     for (const listener of recoveryListeners) listener(recoveryUserId);
   }
   function subscribeRecovery(listener) {
