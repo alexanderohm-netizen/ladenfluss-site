@@ -1,0 +1,217 @@
+/* Ladenfluss Personalfluss – role profiles and encrypted compensation desk.
+   Uses the approved warm burgundy, brown, vanilla brand system. */
+.staff-quick-actions{grid-template-columns:repeat(4,minmax(0,1fr))}
+.staff-positions{
+  margin-top:26px;border:1px solid #e5d7cf;border-radius:12px;
+  background:#fffdfa;box-shadow:0 9px 25px #5e2d350a;padding:29px;
+  scroll-margin-top:110px;
+}
+.staff-positions-head{
+  display:flex;justify-content:space-between;align-items:center;gap:22px;margin-bottom:22px;
+}
+.staff-positions-head h2{
+  font:500 clamp(29px,3.5vw,38px)/1.14 Georgia,"Times New Roman",serif;
+  color:#762130;letter-spacing:-.055em;margin:9px 0 8px;
+}
+.staff-positions-head p{font-size:12px;color:#806c63;line-height:1.65;max-width:650px}
+.staff-positions-head .btn{flex-shrink:0}
+.staff-position-filters{
+  display:flex;justify-content:space-between;gap:15px;align-items:end;
+  padding:15px 0 19px;border-bottom:1px solid #eee4dd;margin-bottom:16px;
+}
+.staff-position-filters label{display:grid;gap:8px;font-size:11px;font-weight:760;color:#664e4a;width:min(100%,420px)}
+.staff-position-filters input{
+  background:#fff;border:1px solid #ddcbc1;border-radius:7px;
+  min-height:43px;padding:10px 13px;font-size:13px;
+}
+.staff-position-filters>span{font-size:10px;font-weight:800;color:#85515b;white-space:nowrap}
+.staff-position-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
+}
+.staff-position-card{
+  display:flex;flex-direction:column;gap:10px;border:1px solid #e8dcd5;
+  border-radius:10px;background:linear-gradient(155deg,#fffdfa,#fcf6f1);
+  padding:20px;min-width:0;transition:border-color .15s,box-shadow .15s;
+}
+.staff-position-card:hover,.staff-position-card.selected{
+  border-color:#bc8394;box-shadow:0 7px 19px #7d48500d;
+}
+.staff-position-card-top{
+  display:flex;justify-content:space-between;align-items:center;gap:7px;
+}
+.staff-position-symbol{
+  display:grid;place-items:center;width:39px;height:39px;background:#f0dfe5;
+  border-radius:8px;color:#73273c;font:700 18px Georgia,serif;
+}
+.staff-position-assigned{
+  font-size:10px;color:#865965;background:#f8edef;border:1px solid #eddbdc;
+  border-radius:100px;padding:5px 9px;white-space:nowrap;
+}
+.staff-position-category{
+  font-size:9px;font-weight:810;color:#916c62;text-transform:uppercase;
+  letter-spacing:.09em;margin-top:4px;
+}
+.staff-position-card h3{
+  font:600 22px/1.15 Georgia,"Times New Roman",serif;
+  letter-spacing:-.05em;color:#652532;overflow-wrap:anywhere;
+}
+.staff-position-card p{
+  font-size:12px;line-height:1.6;color:#877268;margin:0 0 5px;flex:1;
+}
+.staff-position-view{
+  display:inline-flex;align-self:flex-start;align-items:center;
+  background:#f5e6e9;color:#7d2439;border:1px solid #e9cfd5;
+  font-size:11px;font-weight:800;min-height:37px;padding:9px 12px;border-radius:7px;
+  cursor:pointer;
+}
+.staff-position-view:hover{background:#ecd8df}
+.staff-position-detail{
+  margin-top:19px;padding:23px;border:1px solid #e2cad0;
+  border-radius:10px;background:#fbf3f2;scroll-margin-top:100px;
+}
+.staff-position-detail[hidden]{display:none!important}
+.staff-position-detail-top{
+  display:flex;justify-content:space-between;align-items:center;gap:20px;
+  padding-bottom:19px;border-bottom:1px solid #ead7d4;
+}
+.staff-position-detail-top .eyebrow{letter-spacing:.09em;font-size:9px}
+.staff-position-detail-top h3{
+  color:#7d2434;font:500 30px Georgia,"Times New Roman",serif;
+  letter-spacing:-.045em;margin:9px 0 8px;
+}
+.staff-position-detail-top p{color:#785f58;font-size:12px;line-height:1.6;max-width:680px}
+.staff-position-detail-grid{display:grid;grid-template-columns:1fr 1.25fr 1.25fr;gap:14px;margin-top:17px}
+.staff-position-detail-grid>div{background:#fffdfa;border:1px solid #e7d8d2;border-radius:8px;padding:18px;min-width:0}
+.staff-position-responsibility small{font-size:9px;font-weight:850;color:#a07177;letter-spacing:.1em}
+.staff-position-responsibility strong{display:block;font-size:15px;line-height:1.4;color:#6f2e3a;margin:10px 0}
+.staff-position-responsibility p{font-size:11px;color:#8c766d;line-height:1.5}
+.staff-position-detail-list h4{font-size:13px;color:#68303a;margin-bottom:12px}
+.staff-position-detail-list ul{padding-left:17px;margin:0;display:grid;gap:8px}
+.staff-position-detail-list li{font-size:11px;line-height:1.55;color:#685952;overflow-wrap:anywhere}
+.staff-position-dialog{
+  border:0;border-radius:12px;max-height:calc(100dvh - 25px);
+  overflow-y:auto;background:#fffdfa;width:min(94vw,650px);
+  box-shadow:0 23px 65px #2b1d2140;
+}
+.staff-position-dialog::backdrop{background:#231116b3}
+.staff-position-dialog form{display:grid;gap:15px;padding:28px}
+.staff-position-dialog .dialog-head h2{
+  font:500 29px Georgia,"Times New Roman",serif;
+  color:#752a38;letter-spacing:-.045em;
+}
+.staff-position-dialog .dialog-close{
+  border:0;border-radius:7px;background:#f3e4e8;
+  color:#762330;font-size:25px;width:36px;height:36px;cursor:pointer;
+}
+.staff-position-dialog label{display:grid;gap:8px;font-size:12px;font-weight:780;color:#654c48}
+.staff-position-dialog textarea,.staff-position-dialog input{
+  width:100%;min-height:45px;border:1px solid #d9c8c0;
+  background:#fffdfb;padding:11px 13px;border-radius:7px;font:500 13px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  color:#3f2b29;resize:vertical;
+}
+.staff-position-dialog textarea{min-height:83px}
+.staff-position-dialog input[readonly]{background:#f4eae7;color:#8e7972}
+.staff-position-dialog .dialog-actions{flex-wrap:wrap}
+.staff-employee-position{
+  margin-top:21px;border:1px solid #e9d8d4;
+  border-left:4px solid #8c4659;border-radius:8px;
+  background:#fff9f7;padding:19px 23px;
+}
+.staff-employee-position-head{display:flex;justify-content:space-between;align-items:center;gap:13px}
+.staff-employee-position-head h3{
+  font:500 24px Georgia,"Times New Roman",serif;
+  color:#773044;margin-top:7px;
+}
+.staff-position-shortcut{font-size:11px;font-weight:750;color:#8a3b4d;text-decoration:none}
+.staff-position-shortcut:hover{text-decoration:underline}
+.staff-employee-position>p{font-size:12px;line-height:1.6;color:#7c6860;margin-top:10px}
+.staff-employee-position-facts{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:14px}
+.staff-employee-position-facts>div{background:#fffdfa;padding:15px;border-radius:7px;border:1px solid #eadcd3}
+.staff-employee-position-facts h4{font-size:12px;color:#713d43;margin-bottom:10px}
+.staff-employee-position-facts ul{padding-left:16px;margin:0;display:grid;gap:6px}
+.staff-employee-position-facts li{font-size:11px;color:#75675e;line-height:1.55}
+.staff-pay-section{
+  margin-top:22px;border:1px solid #e3c8d0;border-radius:10px;
+  background:linear-gradient(135deg,#fbf1f3,#fffaf7);
+  padding:23px;min-width:0;
+}
+.staff-pay-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.staff-pay-heading h3{
+  color:#742b3b;font:500 26px Georgia,"Times New Roman",serif;
+  letter-spacing:-.042em;margin:7px 0 13px;
+}
+.staff-pay-privacy-pill{
+  color:#7d4653;font-size:10px;font-weight:800;
+  border:1px solid #ddbdc5;background:#fff9f8;padding:8px 11px;
+  border-radius:100px;white-space:nowrap;
+}
+.staff-pay-explainer{font-size:12px;line-height:1.7;color:#725b57;margin:8px 0}
+.staff-pay-explainer strong{color:#5a3940}
+.staff-pay-caution{color:#806966;border-left:3px solid #bf8e91;padding:10px 13px;background:#f9e8e9;border-radius:0 6px 6px 0}
+.staff-pay-message{font-size:12px;color:#4b7257;line-height:1.5;margin:13px 0;padding:10px 13px;background:#eff7f0;border:1px solid #d8e5d7;border-radius:6px}
+.staff-pay-message:empty{display:none}
+.staff-pay-message.staff-pay-failure{color:#9b3b47;background:#fff0f1;border-color:#e7c7cc}
+.staff-pay-access{display:flex;flex-wrap:wrap;align-items:end;gap:10px;margin-top:18px}
+.staff-pay-access label,.staff-pay-wage label{display:grid;gap:7px;font-size:11px;font-weight:800;color:#654c4b}
+.staff-pay-access label{flex:1 1 180px}
+.staff-pay-access input,.staff-pay-wage input{
+  min-height:44px;padding:10px 12px;min-width:0;width:100%;
+  border-radius:7px;border:1px solid #d5c1be;background:#fffdfa;
+  color:#4b3430;font-size:15px;
+}
+.staff-pay-access .btn{min-height:44px;font-size:12px}
+.staff-pay-numbers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:19px 0}
+.staff-pay-numbers>div{border:1px solid #e4d1d2;border-radius:8px;padding:14px 12px;background:#fffdfa}
+.staff-pay-numbers small{display:block;color:#866d68;font-size:10px;line-height:1.4;min-height:27px}
+.staff-pay-numbers strong{display:block;color:#732c40;font:600 clamp(16px,2vw,24px)/1.26 Georgia,serif;letter-spacing:-.03em;margin-top:8px;overflow-wrap:anywhere}
+.staff-pay-wage{display:flex;align-items:end;gap:10px;flex-wrap:wrap}
+.staff-pay-wage label{flex:1 1 190px}
+.staff-pay-wage .btn{min-height:44px;font-size:11px}
+.staff-pay-foot{font-size:11px;line-height:1.65;color:#89746d;margin:14px 0 0}
+.staff-pay-backup{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-top:18px;padding-top:17px;border-top:1px solid #ebd8d7}
+.staff-pay-backup>span{font-size:10px;color:#856e69;line-height:1.55;flex:1}
+.staff-pay-section [hidden],.staff-position-dialog [hidden]{display:none!important}
+@media(max-width:1050px){
+  .staff-quick-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .staff-position-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .staff-position-detail-grid{grid-template-columns:1fr 1fr}
+  .staff-position-responsibility{grid-column:1/-1}
+  .staff-pay-numbers{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:750px){
+  .staff-positions{padding:20px 17px}
+  .staff-positions-head{align-items:flex-start;flex-direction:column}
+  .staff-position-grid{grid-template-columns:1fr 1fr}
+  .staff-employee-position-facts{grid-template-columns:1fr}
+  .staff-position-dialog form{padding:20px}
+}
+@media(max-width:560px){
+  .staff-quick-actions{grid-template-columns:1fr}
+  .staff-position-grid{grid-template-columns:1fr}
+  .staff-position-card{padding:18px}
+  .staff-position-detail{padding:17px}
+  .staff-position-detail-top{align-items:stretch;flex-direction:column}
+  .staff-position-detail-grid{grid-template-columns:1fr}
+  .staff-position-responsibility{grid-column:auto}
+  .staff-position-filters{align-items:stretch;flex-direction:column}
+  .staff-position-filters>span{align-self:flex-start}
+  .staff-employee-position{padding:16px}
+  .staff-employee-position-head{align-items:flex-start;flex-direction:column}
+  .staff-pay-section{padding:16px}
+  .staff-pay-heading{align-items:flex-start;flex-direction:column}
+  .staff-pay-heading h3{font-size:24px}
+  .staff-pay-numbers{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .staff-pay-wage .btn{flex:1 1 auto}
+}
+@media(max-width:370px){
+  .staff-pay-numbers{grid-template-columns:1fr}
+  .staff-pay-numbers small{min-height:0}
+  .staff-position-dialog .dialog-two{grid-template-columns:1fr}
+  .staff-pay-wage .btn{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  .staff-position-card{transition:none}
+}
+@media print{
+  .staff-pay-section,.staff-position-dialog,.staff-positions-head>.btn,.staff-position-filters,.staff-position-view{display:none!important}
+}

@@ -85,7 +85,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const p=personById(selectedId);
     const panel=$('staffProfile'),content=$('staffProfileContent');
     content.replaceChildren();
-    if(!p){panel.hidden=true;return;}
+    if(!p){
+      panel.hidden=true;
+      window.dispatchEvent(new CustomEvent('ladenfluss:employee-selected',{detail:null}));
+      return;
+    }
     panel.hidden=false;
     $('staffProfileTitle').textContent=p.name;
     const info=getPlanning(p);
@@ -131,6 +135,34 @@ document.addEventListener('DOMContentLoaded', () => {
       planning.append(node('p','staff-profile-hint','Noch nicht mit der Urlaubsplanung verknüpft. Dort kannst du das Team über „Team aus Personalplanung übernehmen“ hinzufügen.'));
     append(grid,person,planning);
     content.append(grid);
+
+    // Job descriptions are independent of the employee/team storage contract.
+    // Never move hourly pay to staff/profile objects: PEP imports these objects.
+    let role=null;
+    try{role=window.LadenflussJobProfiles?.byTitle(p.role)||null;}catch(_){}
+    const roleBlock=node('section','staff-employee-position');
+    const roleHead=node('div','staff-employee-position-head');
+    append(roleHead,node('span','eyebrow','STELLENPROFIL'),node('h3','',role?.title||p.role));
+    const positionLink=node('a','staff-position-shortcut','Stellenprofile ansehen →');
+    positionLink.href='#staffPositions';
+    append(roleHead,positionLink);
+    roleBlock.append(roleHead);
+    roleBlock.append(node('p','',role?.summary||'Für diese Stelle ist noch keine Aufgabenbeschreibung hinterlegt.'));
+    if(role){
+      roleBlock.append(node('p','staff-position-role-responsibility','Verantwortung: '+role.responsibility));
+      const facts=node('div','staff-employee-position-facts');
+      for(const [name,values] of [['Aufgaben',role.tasks.slice(0,3)],['Anforderungen',role.requirements.slice(0,3)]]){
+        const item=node('div');
+        item.append(node('h4','',name));
+        const ul=node('ul');
+        for(const value of values)ul.append(node('li','',value));
+        item.append(ul);facts.append(item);
+      }
+      roleBlock.append(facts);
+    }
+    content.append(roleBlock);
+    window.dispatchEvent(new CustomEvent('ladenfluss:employee-selected',
+      {detail:{id:p.id,name:p.name,hours:Number(p.hours),week:info.week,plannedHours:info.hours}}));
   }
   function render(){
     const visible=people.filter(matches);
@@ -204,6 +236,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if(!loadError)render();
   $('staffSearch').addEventListener('input',()=>{if(!loadError)render();});
   $('staffRoleFilter').addEventListener('change',()=>{if(!loadError)render();});
+  // Refresh role descriptions without changing team or PEP employee IDs.
+  window.addEventListener('ladenfluss:positions-updated',()=>{
+    if(!loadError){updateRoleFilter();render();}
+  });
   list.addEventListener('click',event=>{
     const b=event.target.closest('[data-profile-id]');
     if(!b)return;
