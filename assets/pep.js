@@ -9,6 +9,30 @@ document.addEventListener('DOMContentLoaded',()=> {
   let weekKey=store.mondayKey(weekStart);
   let shifts=store.ensureEmployeeShiftRows(team,store.getShifts(weekKey));
   let absences=store.ensureEmployeeAbsenceRows(team,store.getAbsences(weekKey));
+  const typed=window.LadenflussPepInput;
+  const periodSelect=document.getElementById('pepPeriod');
+  const searchInput=document.getElementById('pepSearch');
+  const gridMessage=document.getElementById('pepGridMessage');
+  let secondWeekKey='',secondShifts={},secondAbsences={};
+  function refreshSecond(){
+    const following=new Date(weekStart);following.setDate(following.getDate()+7);
+    secondWeekKey=store.mondayKey(following);
+    secondShifts=store.ensureEmployeeShiftRows(team,store.getShifts(secondWeekKey));
+    secondAbsences=store.ensureEmployeeAbsenceRows(team,store.getAbsences(secondWeekKey));
+  }
+  function dayCount(){return periodSelect.value==='14'?14:7;}
+  function rowShift(employee,index){
+    return index<7?employee.shifts[index]:secondShifts[employee.id]?.[index-7]??null;
+  }
+  function rowManualAbsence(employee,index){
+    return index<7?employee.absences[index]:secondAbsences[employee.id]?.[index-7]??null;
+  }
+  function weekFor(index){return index<7?weekKey:secondWeekKey;}
+  function gridNotice(text='',problem=false){
+    gridMessage.textContent=text;
+    gridMessage.classList.toggle('error',Boolean(text&&problem));
+  }
+
 
   let approvedVacations = [];
   let vacationError = false;
@@ -24,7 +48,8 @@ document.addEventListener('DOMContentLoaded',()=> {
     }
   }
   function absenceAt(employee, index) {
-    if (employee.absences[index]) return employee.absences[index];
+    const manual=rowManualAbsence(employee,index);
+    if (manual) return manual;
     if (!window.LadenflussVacation?.iso) return null;
     const date = new Date(weekStart);
     date.setDate(date.getDate() + index);
@@ -56,10 +81,16 @@ document.addEventListener('DOMContentLoaded',()=> {
   function applyEmployeeFilter(){
     if (!employeeFilter) return;
     const selected=employeeFilter.value;
+    const query=(searchInput?.value||'').trim().toLocaleLowerCase('de');
     body.querySelectorAll('tr[data-employee-id]').forEach(row=>{
-      row.hidden=selected!=='all'&&row.dataset.employeeId!==selected;
+      const person=team.find(e=>e.id===row.dataset.employeeId);
+      const matches=!query||[person?.name,person?.role,person?.branch].some(value=>
+        String(value||'').toLocaleLowerCase('de').includes(query));
+      row.hidden=(selected!=='all'&&row.dataset.employeeId!==selected)||!matches;
     });
   }
+  searchInput?.addEventListener('input',applyEmployeeFilter);
+  periodSelect?.addEventListener('change',()=>{gridNotice();render()});
   const dlg=document.getElementById('shiftDialog');
   const absenceDlg=document.getElementById('absenceDialog');
   const delBtn=document.getElementById('deleteShift');
@@ -112,6 +143,7 @@ document.addEventListener('DOMContentLoaded',()=> {
 
   function render(){
     reloadVacations();
+    if(dayCount()===14)refreshSecond();
     renderWeekHeader();
     renderDayCheck();
     renderPlanState();
