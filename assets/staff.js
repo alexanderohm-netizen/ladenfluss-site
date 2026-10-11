@@ -183,7 +183,16 @@ document.addEventListener('DOMContentLoaded', () => {
   try{
     // Fail closed on corrupt existing data; never replace it with demo values.
     const raw=localStorage.getItem('ladenfluss.team.v1');
-    if(raw!==null&&!Array.isArray(JSON.parse(raw)))throw new Error('Invalid team format');
+    if(raw!==null){
+      const previous=JSON.parse(raw);
+      if(!Array.isArray(previous)||
+        previous.some(p=>!p||typeof p.id!=='string'||!p.id||
+          typeof p.name!=='string'||typeof p.role!=='string'||
+          (p.branch!=null&&typeof p.branch!=='string')||
+          !Number.isFinite(Number(p.hours)))||
+        new Set(previous.map(p=>p.id)).size!==previous.length)
+        throw new Error('Invalid or duplicated team records');
+    }
     people=store.getTeam();
   }catch(_){
     loadError=true;people=[];
