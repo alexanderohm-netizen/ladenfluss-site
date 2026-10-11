@@ -205,7 +205,7 @@ for (const width of [1440, 768, 390, 320]) {
     const response=await page.goto(base+'/');
     assert.equal(response.status(),200);
     await page.locator('.ref-hero').waitFor({state:'visible'});
-    assert.match((await page.locator('#home-title').innerText()).replace(/\s+/g,' '),/Ein System für deinen Laden\./);
+    assert.match((await page.locator('#home-title').innerText()).replace(/\s+/g,' '),/Dein Laden\. Klar organisiert\./);
     assert.equal(await page.locator('.ref-module-card').count(),6);
     assert.equal(await page.locator('.ref-module-soon').count(),3);
     assert.equal(await page.locator('.ref-module-card[href="/pep"]').count(),1);
@@ -386,6 +386,7 @@ test('Personalfluss v2 – genehmigte Urlaubszeiträume sind im selben Teamprofi
   await page.locator('#vacSaveEntry').click();
   await page.goto(base+'/mitarbeiter');
   await page.locator('[data-profile-id=e1]').click();
+  await page.locator('.staff-planning-details summary').click();
   const labels=await page.locator('.staff-profile-metrics').innerText();
   assert.match(labels,/Bestätigte Urlaubszeiträume\s*1/);
   assert.equal(await page.locator('#staffProfile').isVisible(),true);
