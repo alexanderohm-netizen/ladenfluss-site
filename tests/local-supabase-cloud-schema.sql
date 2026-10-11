@@ -10,7 +10,7 @@ GRANT USAGE ON SCHEMA private TO authenticated;
 CREATE TABLE public.companies(
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
-  retail_type text,
+  -- Hosted companies.retail_type is deliberately absent before migration.
   created_by uuid NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT,
   created_at timestamptz NOT NULL DEFAULT now()
 );
