@@ -195,3 +195,57 @@ for(const width of [390,1440])test('App-Ansichten als Bild prüfen ('+width+' px
   await page.goto(base+'/tools/urlaubsplaner');
   await page.screenshot({path:path.join(folder,'vacation-'+width+'.png'),fullPage:true});
 });
+
+
+for (const width of [1440, 768, 390, 320]) {
+  test('Design v2 Startseite bleibt responsiv und die Produktnavigation funktioniert ('+width+'px)',async t=>{
+    const page=await session(t,{width,height:900});
+    const errors=[];
+    page.on('pageerror',e=>errors.push(e.message));
+    const response=await page.goto(base+'/');
+    assert.equal(response.status(),200);
+    await page.locator('.lf-demo-window').waitFor({state:'visible'});
+    assert.equal(await page.locator('#home-title').count(),1);
+    assert.equal(await page.locator('.lf-module-tile').count(),6);
+    assert.equal(await page.locator('.lf-module-tile-soon').count(),2);
+    assert.equal(await page.locator('.lf-module-tile[href="/pep"]').count(),1);
+    const styles=await page.evaluate(()=>({
+      hero:getComputedStyle(document.querySelector('.lf-hero-v2')).display,
+      grid:getComputedStyle(document.querySelector('.lf-module-grid')).gridTemplateColumns,
+      wine:getComputedStyle(document.documentElement).getPropertyValue('--wine').trim(),
+      overflow:document.documentElement.scrollWidth-innerWidth,
+    }));
+    assert.equal(styles.hero,'block');
+    assert.equal(styles.wine,'#732d43');
+    assert.ok(styles.overflow<=2,'Homepage horizontal overflow '+styles.overflow);
+    assert.deepEqual(errors,[]);
+    if(width>=1024)assert.equal(styles.grid.split(' ').length,3);
+    if(width<=390)assert.equal(styles.grid.split(' ').length,1);
+    const link=page.locator('.lf-module-tile[href="/pep"]');
+    await link.click();
+    assert.match(page.url(),/\/pep$/);
+  });
+}
+
+for (const width of [1440, 390, 320]) {
+  test('Design v2 Cockpit: neue Navigation behält alle Funktionen ('+width+'px)',async t=>{
+    const page=await session(t,{width,height:960});
+    const errors=[];
+    page.on('pageerror',e=>errors.push(e.message));
+    const response=await page.goto(base+'/mein-laden');
+    assert.equal(response.status(),200);
+    assert.equal(await page.locator('.workspace-breadcrumb').count(),1);
+    assert.equal(await page.locator('.workspace-nav-heading').count(),2);
+    assert.equal(await page.locator('.quick-links a').count(),3);
+    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+    assert.ok(overflow<=2,'Cockpit horizontal overflow '+overflow);
+    await page.locator('[data-cockpit-tab="profile"]').click();
+    assert.equal(await page.locator('[data-cockpit-panel="profile"]').isVisible(),true);
+    assert.equal(await page.locator('[data-cockpit-panel="overview"]').isVisible(),false);
+    await page.locator('[data-cockpit-tab="targets"]').click();
+    assert.equal(await page.locator('[data-cockpit-panel="targets"]').isVisible(),true);
+    await page.locator('[data-cockpit-tab="overview"]').click();
+    assert.equal(await page.locator('[data-cockpit-panel="overview"]').isVisible(),true);
+    assert.deepEqual(errors,[]);
+  });
+}
