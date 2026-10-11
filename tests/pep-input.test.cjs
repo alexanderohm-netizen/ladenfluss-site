@@ -15,4 +15,5 @@ test('PEP keyboard: absences and deletion map to explicit operations',()=>{
 });
 test('PEP keyboard: invalid times, short breaks and unknown commands fail closed',()=>{
   for(const value of ['25-17','18-08','12-21/0','08:99-18:00','acht bis vier','09:00-19:30/30'])assert.throws(()=>parse(value),/./,value);
+  assert.throws(()=>parse('10-20/0'),/mindestens 45 Minuten/);
 });
