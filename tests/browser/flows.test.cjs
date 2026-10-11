@@ -604,6 +604,9 @@ test('Personalfluss – Stundenlohn nur verschlüsselt, mit eigener Passphrase u
  await page.waitForFunction(()=>document.getElementById('staffPayRate').textContent.includes('19,66'));
  assert.match(await page.locator('#staffPayTarget').innerText(),/589,80/);
  assert.match(await page.locator('#staffPayMonth').innerText(),/2.555,80/);
+ assert.equal(await page.locator('#staffPayMonth').isVisible(),true);
+ assert.match(await page.locator('#staffPayContractBasis').innerText(),/30 Vertragsstunden\/Woche/);
+ assert.equal(await page.locator('#staffPayAdvanced').evaluate(el=>el.open),false);
  const raw=await page.evaluate(()=>{
    const v=localStorage.getItem('ladenfluss.hr-pay-vault.v1');
    return {payload:v,backup:window.LadenflussBackup?.capture?.().records||{},
@@ -647,6 +650,9 @@ test('Personalfluss v2: verschlüsselte Teamkosten und belastbare Budgetwarnunge
  await page.locator('#staffHourlyGross').fill('19.66');
  await page.locator('#staffPayWageForm button[type=submit]').click();
  await page.waitForFunction(()=>document.getElementById('staffPayRate')?.textContent.includes('19,66'));
+ // Advanced calculations are opt-in; everyday per-employee wages stay compact.
+ assert.equal(await page.locator('#staffPayAdvanced').evaluate(el=>el.open),false);
+ await page.locator('#staffPayAdvanced summary').click();
  await page.locator('#staffOverhead').fill('25');
  await page.locator('#staffMonthlyBudget').fill('9000');
  await page.locator('#staffBudgetForm button[type=submit]').click();
@@ -741,3 +747,40 @@ for(const width of [1440,768,390,320]){
   assert.deepEqual(errors,[]);
  });
 }
+
+
+test('Personalfluss: monatliches Brutto im Mitarbeiterprofil folgt den Vertragswochenstunden',async t=>{
+  const page=await session(t,{width:390,height:910});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base+'/mitarbeiter');
+  await page.locator('[data-profile-id=e1]').click();
+  const phrase='Separater eleganter Tresor mit einer langen Passphrase';
+  await page.locator('#staffVaultPass').fill(phrase);
+  await page.locator('#staffVaultConfirm').fill(phrase);
+  await page.locator('#staffVaultAccessBtn').click();
+  await page.locator('#staffPayUnlocked').waitFor({state:'visible'});
+  await page.locator('#staffHourlyGross').fill('19.66');
+  await page.locator('#staffPayWageForm button[type=submit]').click();
+  await page.waitForFunction(()=>document.getElementById('staffPayMonth')?.textContent.includes('2.555,80'));
+  assert.equal(await page.locator('.staff-pay-main-figures').isVisible(),true);
+  assert.match(await page.locator('#staffPayContractBasis').innerText(),/30 Vertragsstunden\/Woche/);
+  await page.locator('#editStaffProfile').click();
+  await page.locator('#employeeHours').fill('35');
+  await page.locator('#saveEmployee').click();
+  await page.waitForFunction(()=>document.getElementById('staffPayMonth')?.textContent.includes('2.982,43'));
+  assert.match(await page.locator('#staffPayContractBasis').innerText(),/35 Vertragsstunden\/Woche/);
+  assert.match(await page.locator('#staffPayRate').innerText(),/19,66/);
+  await page.locator('#closeStaffProfile').click();
+  await page.locator('[data-profile-id=e2]').click();
+  assert.match(await page.locator('#staffPayRate').innerText(),/Nicht hinterlegt/);
+  assert.equal(await page.locator('#staffPayMonth').innerText(),'–');
+  await page.locator('#staffHourlyGross').fill('22.25');
+  await page.locator('#staffPayWageForm button[type=submit]').click();
+  await page.waitForFunction(()=>document.getElementById('staffPayMonth')?.textContent.includes('3.374,58'));
+  // Different person, different weekly contract and independently stored hourly wage.
+  assert.match(await page.locator('#staffPayRate').innerText(),/22,25/);
+  await page.locator('#closeStaffProfile').click();
+  await page.locator('[data-profile-id=e1]').click();
+  assert.match(await page.locator('#staffPayMonth').innerText(),/2.982,43/);
+  assert.deepEqual(errors,[]);
+});
