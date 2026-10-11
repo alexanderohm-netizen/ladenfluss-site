@@ -31,7 +31,7 @@
       throw new Error('Die Vergütungsdaten sind beschädigt.');
     for(const [id,rate] of Object.entries(rates)){
       if(!id||id.length>150||typeof rate!=='number'||!Number.isFinite(rate)||rate<0||rate>MAX_RATE||
-        Math.round(rate*100)!==rate*100)throw new Error('Die Vergütungsdaten sind beschädigt.');
+        Math.abs(Math.round(rate*100)-rate*100)>1e-6)throw new Error('Die Vergütungsdaten sind beschädigt.');
     }
     return rates;
   }
@@ -111,7 +111,7 @@
       throw new Error('Ungültige Mitarbeiterzuordnung.');
     if(hourlyRate!==null&&
       (typeof hourlyRate!=='number'||!Number.isFinite(hourlyRate)||
-       hourlyRate<0||hourlyRate>MAX_RATE||Math.round(hourlyRate*100)!==hourlyRate*100))
+       hourlyRate<0||hourlyRate>MAX_RATE||Math.abs(Math.round(hourlyRate*100)-hourlyRate*100)>1e-6))
       throw new Error('Brutto-Stundenlohn muss zwischen 0 und 250 € liegen, mit maximal zwei Nachkommastellen.');
     if(readRaw()!==cipherSnapshot){
       lock();
