@@ -301,3 +301,61 @@
 @media print{
  .staff-cost-planner,.staff-pay-restore{display:none!important}
 }
+
+
+/* Simplified per-person compensation: salary is the center of the profile.
+   All advanced budgeting/restoration stays one optional collapsed click away. */
+.staff-pay-simple{background:#fffdfa;border-color:#eadbd3;padding:21px 22px}
+.staff-pay-simple .staff-pay-heading h3{font-size:27px;margin-bottom:6px}
+.staff-pay-simple .staff-pay-explainer{font-size:12px;color:#836a62;margin:6px 0 14px}
+.staff-pay-simple .staff-pay-access{margin-top:13px}
+.staff-pay-simple .staff-pay-access .btn{min-height:45px}
+.staff-pay-simple .staff-pay-wage-simple{display:flex;align-items:end;gap:10px;
+  margin:13px 0 17px;flex-wrap:wrap}
+.staff-pay-simple .staff-pay-wage-simple label{flex:1 1 155px;max-width:285px}
+.staff-pay-simple .staff-pay-wage-simple .btn{min-height:44px;border-radius:7px}
+.staff-pay-main-figures{display:grid;grid-template-columns:minmax(0,1fr);
+  border:1px solid #e6d3d1;background:linear-gradient(130deg,#fff7f3,#fffdf9);
+  border-radius:10px;padding:0 19px}
+.staff-pay-main-figures>div{padding:15px 0;min-width:0}
+.staff-pay-main-figures .staff-pay-hourly{border-bottom:1px solid #e8d8d5}
+.staff-pay-main-figures small{display:block;color:#826963;font-size:11px;
+  font-weight:700;letter-spacing:.012em;line-height:1.4}
+.staff-pay-main-figures strong{display:block;color:#772536;
+  font:550 30px/1.2 Georgia,"Times New Roman",serif;letter-spacing:-.035em;
+  margin:7px 0 0;overflow-wrap:anywhere}
+.staff-pay-main-figures .staff-pay-monthly strong{font-size:clamp(29px,3vw,38px)}
+#staffPayContractBasis{display:block;color:#8b7067;font-size:10px;
+  margin:7px 0 0;line-height:1.45}
+.staff-pay-advanced{margin:15px 0 0;border:1px solid #ecdcd6;
+  border-radius:8px;background:#fffaf7;overflow:hidden}
+.staff-pay-advanced>summary{display:list-item;padding:13px 17px;cursor:pointer;
+  color:#793847;font-size:12px;font-weight:760;background:#f8efed}
+.staff-pay-advanced[open]>summary{border-bottom:1px solid #ebdcd7}
+.staff-pay-extras{padding:15px}
+.staff-pay-extras .staff-cost-planner{margin-top:14px}
+.staff-pay-extra-figures{display:flex;flex-wrap:wrap;gap:11px;align-items:center;
+  font-size:11px;color:#755957}
+.staff-pay-extra-figures>span{flex:1 1 185px}
+.staff-pay-extra-figures strong{color:#703745;margin-left:5px}
+.staff-pay-simple .staff-pay-restore-simple{margin-top:13px;
+  border-color:#f0e5de;background:#fffcf9}
+.staff-pay-simple .staff-pay-restore-simple>summary{
+  background:#fff9f6;font-size:11px;color:#876c67;font-weight:680}
+.staff-pay-privacy-short{font-size:10px;line-height:1.55;
+  color:#937b72;margin:13px 0 0}
+.staff-pay-section [hidden]{display:none!important}
+@media(max-width:610px){
+ .staff-pay-simple{padding:16px}
+ .staff-pay-simple .staff-pay-wage-simple{display:grid;
+   grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .staff-pay-simple .staff-pay-wage-simple label{grid-column:1/-1;max-width:none}
+ .staff-pay-simple .staff-pay-wage-simple .btn{font-size:11px;min-width:0}
+ .staff-pay-main-figures{padding:0 14px}
+ .staff-pay-main-figures strong{font-size:26px}
+ .staff-pay-extras{padding:12px}
+}
+@media(max-width:355px){
+ .staff-pay-simple .staff-pay-wage-simple .btn{grid-column:1/-1}
+ .staff-pay-main-figures .staff-pay-monthly strong{font-size:27px}
+}
