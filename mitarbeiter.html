@@ -83,39 +83,48 @@
       <button type="button" class="btn btn-secondary" id="closeStaffProfile">Profil schließen</button>
     </div>
     <div id="staffProfileContent"></div>
-    <section class="staff-pay-section" id="staffPaySection" aria-labelledby="staffPayHeading">
-    <div class="staff-pay-heading">
-      <div><span class="eyebrow">VERTRAULICH · VERGÜTUNG</span><h3 id="staffPayHeading">Stundenlohn &amp; Personalkosten</h3></div>
-      <span class="staff-pay-privacy-pill">Separat verschlüsselt</span>
-    </div>
-    <p class="staff-pay-explainer">Für jedes Teammitglied einen eigenen <strong>Brutto-Stundenlohn</strong> hinterlegen. Der Tresor ist mit einer eigenen Passphrase verschlüsselt. Ohne Entsperrung sieht niemand die Beträge in Personalfluss oder PEP.</p>
-    <p class="staff-pay-explainer staff-pay-caution">Das ist <strong>kein geschütztes HR-Benutzerkonto</strong>: Andere Personen an einem entsperrten Gerät können auf angezeigte Beträge zugreifen. Die Daten bleiben nur in diesem Browser, sind nicht in der allgemeinen Sicherung enthalten und werden nicht in die Cloud übertragen. Passphrase verloren = Beträge nicht wiederherstellbar.</p>
-    <p id="staffPayMessage" class="staff-pay-message" role="status" aria-live="polite"></p>
-    <form id="staffPayAccessForm" class="staff-pay-access" autocomplete="off">
-      <label for="staffVaultPass">Tresor-Passphrase
-        <input id="staffVaultPass" type="password" autocomplete="off" minlength="12" maxlength="256" required placeholder="Mindestens 12 Zeichen">
+    <section class="staff-pay-section staff-pay-simple" id="staffPaySection" aria-labelledby="staffPayHeading">
+  <div class="staff-pay-heading"><div><span class="eyebrow">MITARBEITERPROFIL · VERGÜTUNG</span>
+    <h3 id="staffPayHeading">Stundenlohn</h3></div><span class="staff-pay-privacy-pill">Verschlüsselt</span></div>
+  <p class="staff-pay-explainer">Individueller Brutto-Stundenlohn – direkt im Mitarbeiterprofil ändern.</p>
+  <p id="staffPayMessage" class="staff-pay-message" role="status" aria-live="polite"></p>
+  <form id="staffPayAccessForm" class="staff-pay-access" autocomplete="off">
+    <label for="staffVaultPass">Vergütung einmal entsperren
+      <input id="staffVaultPass" type="password" autocomplete="off" minlength="12" maxlength="256" required placeholder="Deine Passphrase">
+    </label>
+    <label id="staffVaultConfirmRow" for="staffVaultConfirm">Passphrase wiederholen
+      <input id="staffVaultConfirm" type="password" autocomplete="off" minlength="12" maxlength="256" placeholder="Bei der ersten Einrichtung">
+    </label>
+    <button class="btn btn-primary" type="submit" id="staffVaultAccessBtn">Entsperren</button>
+  </form>
+  <div id="staffPayUnlocked" hidden>
+    <form id="staffPayWageForm" class="staff-pay-wage staff-pay-wage-simple" autocomplete="off">
+      <label for="staffHourlyGross">Brutto-Stundenlohn (€)
+        <input id="staffHourlyGross" type="number" inputmode="decimal" min="0" max="250" step="0.01" placeholder="z. B. 19,66">
       </label>
-      <label id="staffVaultConfirmRow" for="staffVaultConfirm">Passphrase wiederholen
-        <input id="staffVaultConfirm" type="password" autocomplete="off" minlength="12" maxlength="256" placeholder="Zur Kontrolle erneut eingeben">
-      </label>
-      <button class="btn btn-primary" type="submit" id="staffVaultAccessBtn">Tresor einrichten</button>
+      <button type="submit" class="btn btn-primary">Speichern</button>
+      <button type="button" class="btn btn-secondary" id="staffPayRemove">Entfernen</button>
+      <button type="button" class="btn btn-secondary" id="staffPayLock">Sperren</button>
     </form>
-    <div id="staffPayUnlocked" hidden>
-      <div class="staff-pay-numbers">
-        <div><small>Brutto-Stundenlohn</small><strong id="staffPayRate">Nicht hinterlegt</strong></div>
-        <div><small>Soll pro Woche · brutto</small><strong id="staffPayTarget">–</strong></div>
-        <div><small>Ø Monat · brutto</small><strong id="staffPayMonth">–</strong></div>
-        <div><small>Geplante Woche · brutto</small><strong id="staffPayPlanned">–</strong></div>
+    <div class="staff-pay-main-figures" aria-live="polite">
+      <div class="staff-pay-hourly">
+        <small>Gespeicherter Brutto-Stundenlohn</small>
+        <strong id="staffPayRate">Nicht hinterlegt</strong>
       </div>
-      <form id="staffPayWageForm" class="staff-pay-wage" autocomplete="off">
-        <label for="staffHourlyGross">Brutto-Stundenlohn (EUR)
-          <input id="staffHourlyGross" type="number" inputmode="decimal" min="0" max="250" step="0.01" placeholder="z. B. 19,66">
-        </label>
-        <button type="submit" class="btn btn-primary">Stundenlohn speichern</button>
-        <button type="button" class="btn btn-secondary" id="staffPayRemove">Betrag entfernen</button>
-        <button type="button" class="btn btn-secondary" id="staffPayLock">Tresor sperren</button>
-      </form>
-      <section class="staff-cost-planner" id="staffCostPlanner" aria-labelledby="staffCostHeading">
+      <div class="staff-pay-monthly">
+        <small>Monatliches Brutto (laut Vertrag)</small>
+        <strong id="staffPayMonth">–</strong>
+        <span id="staffPayContractBasis">Vertragliche Wochenstunden × 52 ÷ 12</span>
+      </div>
+    </div>
+    <details id="staffPayAdvanced" class="staff-pay-advanced">
+      <summary>Weitere Personalkosten &amp; Einstellungen</summary>
+      <div class="staff-pay-extras">
+        <div class="staff-pay-extra-figures">
+          <span>Wochen-Soll brutto <strong id="staffPayTarget">–</strong></span>
+          <span>Geplante PEP-Woche brutto <strong id="staffPayPlanned">–</strong></span>
+        </div>
+        <section class="staff-cost-planner" id="staffCostPlanner" aria-labelledby="staffCostHeading">
         <div class="staff-cost-heading"><span class="eyebrow">TEAM · PERSONALKOSTEN</span><h4 id="staffCostHeading">Monatsbudget &amp; Arbeitgeberkosten</h4>
           <p>Erstelle eine einfache Kostenprognose auf Basis der gespeicherten Brutto-Stundenlöhne und Sollstunden. Ein Arbeitgeber-Aufschlag ist frei wählbar, keine automatisch ermittelte gesetzliche Abgabe.</p></div>
         <form id="staffBudgetForm" class="staff-cost-form" autocomplete="off">
@@ -142,13 +151,17 @@
         </div>
         <p class="staff-pay-foot">Berechnungsgrundlage: Brutto-Stundenlohn × Sollstunden × 52 ÷ 12; anschließend der selbst eingestellte Aufschlag. Die PEP-Woche zeigt nur geplante Schichten. <strong>Keine Lohnabrechnung</strong>: Zuschläge, bezahlte Ausfallzeiten, tarifliche Regeln und tatsächliche Abgaben werden nicht automatisch berücksichtigt. Bei fehlenden Stundenlöhnen ist kein verlässlicher Budgetvergleich möglich.</p>
       </section>
-      <p class="staff-pay-foot">Einzelne Brutto-Werte sind unverbindliche Richtwerte; keine Lohnabrechnung oder automatische Zuschlagsberechnung.</p>
-    </div>
-    <div class="staff-pay-backup">
+        <div class="staff-pay-backup">
       <button type="button" class="btn btn-secondary" id="staffPayExport" hidden>Verschlüsselten Tresor sichern</button>
       <span>Die Sicherungsdatei enthält keine lesbaren Stundenlöhne, aber sämtliche geschützten Vergütungs- und Budgetangaben. Die Passphrase separat aufbewahren.</span>
     </div>
-    <details class="staff-pay-restore" id="staffPayRestore">
+    
+      </div>
+    </details>
+  </div>
+  <details class="staff-pay-restore staff-pay-restore-simple" id="staffPayRestore">
+    <summary>Verschlüsselte Vergütungsdatei wiederherstellen</summary>
+    
       <summary>Verschlüsselte Vergütungsdatei wiederherstellen</summary>
       <p>Eine frühere, verschlüsselte JSON-Sicherung prüfen und übernehmen. <strong>Vorhandene Vergütungsdaten werden vollständig ersetzt, nicht zusammengeführt.</strong> Vorher die aktuelle Sicherung herunterladen. Die Wiederherstellung benötigt die Passphrase der Sicherungsdatei; bei vorhandenem Tresor muss außerdem der aktuelle Tresor entsperrt sein.</p>
       <form id="staffPayRestoreForm" autocomplete="off">
@@ -170,8 +183,10 @@
         <button type="button" id="staffRestoreCancel" class="btn btn-secondary">Abbrechen</button>
       </div>
       <p id="staffRestoreMessage" class="staff-pay-message" role="status" aria-live="polite"></p>
-    </details>
-  </section>
+    
+  </details>
+  <p class="staff-pay-privacy-short">Nur lokal verschlüsselt gespeichert, nicht in die Cloud übertragen. Auf gemeinsam genutzten Geräten nicht als geschütztes HR-System geeignet.</p>
+</section>
     <div class="staff-profile-actions">
       <button type="button" class="btn btn-primary" id="editStaffProfile">Stammdaten bearbeiten</button>
       <a class="btn btn-secondary" href="/pep">Schichten planen ↗</a>
