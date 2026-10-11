@@ -256,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const input=$('employeeHourlyGross').value.trim();
     const rate=input===''?null:Number(input);
     if(rate!==null&&(!Number.isFinite(rate)||rate<0||rate>250||
-        Math.round(rate*100)!==rate*100)){
+        Math.abs(rate*100-Math.round(rate*100))>1e-7)){
       warn('Brutto-Stundenlohn zwischen 0 und 250 € mit maximal zwei Nachkommastellen eingeben.');
       return;
     }
