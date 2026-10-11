@@ -178,11 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
     $('employeeDialogTitle').textContent=p?'Profil bearbeiten':'Mitarbeiter hinzufügen';
     $('saveEmployee').textContent=p?'Profil speichern':'Mitarbeiter hinzufügen';
     $('employeeName').value=p?.name||'';
-    const role=$('employeeRole');
-    if(p&&![...role.options].some(opt=>opt.value===p.role)){
-      const opt=node('option','',p.role);opt.value=p.role;role.append(opt);
-    }
-    role.value=p?.role||'Verkauf';
+    $('employeeRole').value=p?.role||'Verkauf';
     $('employeeHours').value=p?String(p.hours):'20';
     $('employeeBranch').value=p?.branch||'Hauptfiliale';
     $('employeeHourlyGross').value=p&&hourly(p.id)!==null?String(hourly(p.id)):'';
