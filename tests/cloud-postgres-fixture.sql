@@ -48,7 +48,7 @@ GRANT EXECUTE ON FUNCTION private.module_allowed(uuid,text) TO authenticated;
 CREATE TABLE public.companies (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
-  retail_type text,
+  -- retail_type deliberately ABSENT: hosted companies needs a reviewed migration.
   created_by uuid NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now()
 );
