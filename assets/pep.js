@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded',()=> {
   const periodSelect=document.getElementById('pepPeriod');
   const searchInput=document.getElementById('pepSearch');
   const gridMessage=document.getElementById('pepGridMessage');
+  const clipboardBar=document.getElementById('pepClipboardBar');
+  const clipboardLabel=document.getElementById('pepClipboardLabel');
+  let copiedShift=null;
   let secondWeekKey='',secondShifts={},secondAbsences={};
   function refreshSecond(){
     const following=new Date(weekStart);following.setDate(following.getDate()+7);
@@ -32,6 +35,12 @@ document.addEventListener('DOMContentLoaded',()=> {
     gridMessage.textContent=text;
     gridMessage.classList.toggle('error',Boolean(text&&problem));
   }
+  function updateClipboardBar(){
+    clipboardBar.hidden=!copiedShift;
+    clipboardLabel.textContent=copiedShift
+      ? typed.format(copiedShift).replace('-', '–').replace('/', ' · ')+' Min Pause' : '';
+  }
+
 
 
   let approvedVacations = [];
@@ -144,6 +153,7 @@ document.addEventListener('DOMContentLoaded',()=> {
   function render(){
     reloadVacations();
     if(dayCount()===14)refreshSecond();
+    updateClipboardBar();
     renderWeekHeader();
     renderDayCheck();
     renderPlanState();
@@ -158,7 +168,7 @@ document.addEventListener('DOMContentLoaded',()=> {
         const vacation=absence==='Urlaub'&&!rowManualAbsence(e,i);
         const title=escape(e.name+', '+String(i+1)+'. Tag: ');
         if(shift){
-          return `<td class="pep-grid-slot ${absence?'has-conflict':''}"><button type="button" class="shift-chip pep-grid-trigger" data-grid-e="${escape(e.id)}" data-grid-d="${i}" aria-label="${title}Schicht ${escape(shift[0])} bis ${escape(shift[1])}, direkt bearbeiten" title="Klicken und Schichtzeit eintippen"><strong>${escape(shift[0])}–${escape(shift[1])}</strong><span>${fmt(hours(shift))} h · ${escape(String(shift[2]))} Min Pause</span></button></td>`;
+          return `<td class="pep-grid-slot ${absence?'has-conflict':''}"><div class="pep-cell-actions"><button type="button" class="shift-chip pep-grid-trigger" data-grid-e="${escape(e.id)}" data-grid-d="${i}" aria-label="${title}Schicht ${escape(shift[0])} bis ${escape(shift[1])}, direkt bearbeiten" title="Klicken und Schichtzeit eintippen"><strong>${escape(shift[0])}–${escape(shift[1])}</strong><span>${fmt(hours(shift))} h · ${escape(String(shift[2]))} Min Pause</span></button><button type="button" class="pep-copy-btn" data-copy-e="${escape(e.id)}" data-copy-d="${i}" aria-label="Schicht von ${title}kopieren" title="Schicht kopieren">⧉</button>${copiedShift?`<button type="button" class="pep-paste-btn" data-paste-e="${escape(e.id)}" data-paste-d="${i}" aria-label="Kopierte Schicht bei ${title}einfügen" title="Hier einfügen">Einfügen</button>`:''}</div></td>`;
         }
         if(absence){
           const before=i>0&&absenceAt(e,i-1)===absence;
@@ -166,7 +176,7 @@ document.addEventListener('DOMContentLoaded',()=> {
           const group=absence==='Urlaub'?(' pep-vacation '+(before?'run-mid':'run-first')+(after?' run-cont':' run-last')):'';
           return `<td class="pep-grid-slot pep-absence-slot"><button type="button" class="absence-chip${group}${vacation?' pep-approved-vacation':' pep-grid-trigger'}" ${vacation?`data-ae="${escape(e.id)}" data-ad="${i}"`:`data-grid-e="${escape(e.id)}" data-grid-d="${i}"`} aria-label="${title}${escape(absence)}${vacation?', im Urlaubsplaner ändern':', direkt bearbeiten'}"><strong>${escape(absence)}</strong><span>${vacation?'Genehmigt':'Abwesend'}</span></button></td>`;
         }
-        return `<td class="pep-grid-slot"><button type="button" class="empty-shift pep-grid-trigger" data-grid-e="${escape(e.id)}" data-grid-d="${i}" aria-label="${title}Schicht eingeben"><span aria-hidden="true">+</span><small>Eintragen</small></button></td>`;
+        return `<td class="pep-grid-slot"><div class="pep-cell-actions"><button type="button" class="empty-shift pep-grid-trigger" data-grid-e="${escape(e.id)}" data-grid-d="${i}" aria-label="${title}Schicht eingeben"><span aria-hidden="true">+</span><small>Eintragen</small></button>${copiedShift?`<button type="button" class="pep-paste-btn" data-paste-e="${escape(e.id)}" data-paste-d="${i}" aria-label="Kopierte Schicht bei ${title}einfügen" title="Hier einfügen">Einfügen</button>`:''}</div></td>`;
       }).join('');
       const deltaClass=difference>5?'high':difference< -8?'low':'ok';
       const signed=(difference>0?'+':'')+fmt(difference)+' h';
@@ -363,6 +373,57 @@ document.addEventListener('DOMContentLoaded',()=> {
     gridNotice(change+' · '+weekday+' · '+employee.name+(day>=7?' · Woche 2':'')+'.');
     return true;
   }
+  function copyGridShift(eid,day){
+    const employee=employees.find(p=>p.id===eid);
+    if(!employee||!Number.isInteger(day)||day<0||day>=dayCount()){
+      gridNotice('Diese Schicht ist nicht mehr verfügbar.',true);return;
+    }
+    const shift=rowShift(employee,day);
+    if(!shift){gridNotice('Bitte zuerst eine eingetragene Schicht auswählen.',true);return;}
+    try{
+      copiedShift=typed.parse(typed.format(shift)).shift;
+      render();
+      gridNotice('Schicht kopiert: '+typed.format(copiedShift)+'. Jetzt bei beliebigen Mitarbeitenden und Tagen auf Einfügen klicken.');
+    }catch(error){gridNotice('Diese Schicht lässt sich nicht kopieren: '+error.message,true);}
+  }
+  function pasteGridShift(eid,day){
+    if(!copiedShift){gridNotice('Bitte zuerst eine Schicht kopieren.',true);return;}
+    const employee=employees.find(p=>p.id===eid);
+    if(!employee||!Number.isInteger(day)||day<0||day>=dayCount()){
+      gridNotice('Das Zielfeld ist nicht mehr verfügbar.',true);return;
+    }
+    const current=rowShift(employee,day);
+    const manual=rowManualAbsence(employee,day);
+    if(absenceAt(employee,day)==='Urlaub'&&!manual){
+      gridNotice('Genehmigter Urlaub kann nicht mit einer Schicht überschrieben werden.',true);return;
+    }
+    if(manual){
+      gridNotice('Hier ist eine Abwesenheit eingetragen. Diese bitte zuerst entfernen.',true);return;
+    }
+    if(current && typed.format(current)===typed.format(copiedShift)){
+      gridNotice('Diese Schicht ist hier bereits eingetragen.');return;
+    }
+    if(current&&!window.confirm('Hier steht bereits eine Schicht ('+typed.format(current)+'). Mit der kopierten Schicht ersetzen?'))return;
+    try{
+      saveGridEntry(eid,day,typed.format(copiedShift));
+      gridNotice('Schicht eingefügt bei '+employee.name+' · Tag '+(day+1)+'. Weitere Felder können mit derselben Kopie gefüllt werden.');
+    }catch(error){gridNotice(error.message,true);}
+  }
+  document.getElementById('pepClipboardClear').addEventListener('click',()=>{
+    copiedShift=null;
+    render();
+    gridNotice('Kopiermodus beendet.');
+  });
+  body.addEventListener('keydown',event=>{
+    if(!(event.ctrlKey||event.metaKey)||event.altKey||event.target.closest('.pep-inline-editor'))return;
+    const key=event.key.toLocaleLowerCase('de');
+    const target=event.target.closest('[data-grid-e],[data-copy-e],[data-paste-e]');
+    if(!target)return;
+    const eid=target.dataset.gridE||target.dataset.copyE||target.dataset.pasteE;
+    const day=Number(target.dataset.gridD??target.dataset.copyD??target.dataset.pasteD);
+    if(key==='c'){event.preventDefault();copyGridShift(eid,day);}
+    else if(key==='v'){event.preventDefault();pasteGridShift(eid,day);}
+  });
   function activateCell(button,firstKey=null){
     const eid=button.dataset.gridE,day=Number(button.dataset.gridD);
     const employee=employees.find(p=>p.id===eid);
@@ -413,6 +474,12 @@ document.addEventListener('DOMContentLoaded',()=> {
     if(firstKey===null)input.select();
   }
   function bindCells(){
+    body.querySelectorAll('.pep-copy-btn').forEach(button=>{
+      button.addEventListener('click',()=>copyGridShift(button.dataset.copyE,Number(button.dataset.copyD)));
+    });
+    body.querySelectorAll('.pep-paste-btn').forEach(button=>{
+      button.addEventListener('click',()=>pasteGridShift(button.dataset.pasteE,Number(button.dataset.pasteD)));
+    });
     body.querySelectorAll('.pep-grid-trigger').forEach(button=>{
       button.addEventListener('click',()=>activateCell(button));
       button.addEventListener('keydown',event=>{
