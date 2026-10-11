@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="/assets/site.css">
 <link rel="stylesheet" href="/assets/staff.css">
 <link rel="stylesheet" href="/assets/staff-v2.css">
+<link rel="stylesheet" href="/assets/staff-roles-pay.css">
 </head>
 <body class="staff-v2-body">
 <a class="skip-link" href="#main">Zum Inhalt</a>
@@ -26,7 +27,7 @@
       <span class="eyebrow">Ladenfluss · Personalfluss</span>
       <h1 id="staffTitle">Dein Team.<br><em>Alles im Blick.</em></h1>
       <p>Mitarbeiter verwalten, Schichten überblicken und die Urlaubsplanung verbinden. Ein Team – eine Grundlage für deinen Arbeitsalltag.</p>
-      <div class="staff-hero-meta"><span>✓ Im PEP verwendbar</span><span>✓ Mit dem Urlaubsplaner verknüpfbar</span><span>✓ Lokal auf diesem Gerät</span></div>
+      <div class="staff-hero-meta"><span>✓ Im PEP verwendbar</span><span>✓ Mit dem Urlaubsplaner verknüpfbar</span><span>✓ Lokal auf diesem Gerät</span><span>✓ Individuelle Stellenprofile</span></div>
     </div>
     <div class="staff-head-actions">
       <span class="staff-local-tag"><span aria-hidden="true">●</span> Lokaler Arbeitsbereich</span>
@@ -56,6 +57,7 @@
   <nav class="staff-quick-actions" aria-label="Weitere Personalaufgaben">
     <a href="/pep"><span class="staff-quick-symbol" aria-hidden="true">▦</span><span><strong>Dienstplan</strong><small>Schichten und Stunden planen</small></span><span aria-hidden="true">↗</span></a>
     <a href="/tools/urlaubsplaner"><span class="staff-quick-symbol" aria-hidden="true">◫</span><span><strong>Urlaubsplaner</strong><small>Urlaubszeiten und Resttage prüfen</small></span><span aria-hidden="true">↗</span></a>
+    <a href="#staffPositions"><span class="staff-quick-symbol" aria-hidden="true">▧</span><span><strong>Stellenprofile</strong><small>Aufgaben und Anforderungen definieren</small></span><span aria-hidden="true">↘</span></a>
     <a href="#staffRecruiting"><span class="staff-quick-symbol" aria-hidden="true">♧</span><span><strong>Bewerbungen</strong><small>Geplanter nächster Bereich</small></span><span aria-hidden="true">↘</span></a>
   </nav>
 
@@ -81,11 +83,62 @@
       <button type="button" class="btn btn-secondary" id="closeStaffProfile">Profil schließen</button>
     </div>
     <div id="staffProfileContent"></div>
+    <section class="staff-pay-section" id="staffPaySection" aria-labelledby="staffPayHeading">
+    <div class="staff-pay-heading">
+      <div><span class="eyebrow">VERTRAULICH · VERGÜTUNG</span><h3 id="staffPayHeading">Stundenlohn &amp; Personalkosten</h3></div>
+      <span class="staff-pay-privacy-pill">Separat verschlüsselt</span>
+    </div>
+    <p class="staff-pay-explainer">Für jedes Teammitglied einen eigenen <strong>Brutto-Stundenlohn</strong> hinterlegen. Der Tresor ist mit einer eigenen Passphrase verschlüsselt. Ohne Entsperrung sieht niemand die Beträge in Personalfluss oder PEP.</p>
+    <p class="staff-pay-explainer staff-pay-caution">Das ist <strong>kein geschütztes HR-Benutzerkonto</strong>: Andere Personen an einem entsperrten Gerät können auf angezeigte Beträge zugreifen. Die Daten bleiben nur in diesem Browser, sind nicht in der allgemeinen Sicherung enthalten und werden nicht in die Cloud übertragen. Passphrase verloren = Beträge nicht wiederherstellbar.</p>
+    <p id="staffPayMessage" class="staff-pay-message" role="status" aria-live="polite"></p>
+    <form id="staffPayAccessForm" class="staff-pay-access" autocomplete="off">
+      <label for="staffVaultPass">Tresor-Passphrase
+        <input id="staffVaultPass" type="password" autocomplete="off" minlength="12" maxlength="256" required placeholder="Mindestens 12 Zeichen">
+      </label>
+      <label id="staffVaultConfirmRow" for="staffVaultConfirm">Passphrase wiederholen
+        <input id="staffVaultConfirm" type="password" autocomplete="off" minlength="12" maxlength="256" placeholder="Zur Kontrolle erneut eingeben">
+      </label>
+      <button class="btn btn-primary" type="submit" id="staffVaultAccessBtn">Tresor einrichten</button>
+    </form>
+    <div id="staffPayUnlocked" hidden>
+      <div class="staff-pay-numbers">
+        <div><small>Brutto-Stundenlohn</small><strong id="staffPayRate">Nicht hinterlegt</strong></div>
+        <div><small>Soll pro Woche · brutto</small><strong id="staffPayTarget">–</strong></div>
+        <div><small>Ø Monat · brutto</small><strong id="staffPayMonth">–</strong></div>
+        <div><small>Geplante Woche · brutto</small><strong id="staffPayPlanned">–</strong></div>
+      </div>
+      <form id="staffPayWageForm" class="staff-pay-wage" autocomplete="off">
+        <label for="staffHourlyGross">Brutto-Stundenlohn (EUR)
+          <input id="staffHourlyGross" type="number" inputmode="decimal" min="0" max="250" step="0.01" placeholder="z. B. 19,66">
+        </label>
+        <button type="submit" class="btn btn-primary">Stundenlohn speichern</button>
+        <button type="button" class="btn btn-secondary" id="staffPayRemove">Betrag entfernen</button>
+        <button type="button" class="btn btn-secondary" id="staffPayLock">Tresor sperren</button>
+      </form>
+      <p class="staff-pay-foot">Richtwerte: Sollstunden × Brutto-Stundenlohn; Ø Monat = Wochenwert × 52 ÷ 12. Geplante Woche nach PEP-Schichten. Keine Lohnabrechnung – ohne Zuschläge, Feiertage, Steuern oder Arbeitgebernebenkosten.</p>
+    </div>
+    <div class="staff-pay-backup">
+      <button type="button" class="btn btn-secondary" id="staffPayExport" hidden>Verschlüsselten Tresor sichern</button>
+      <span>Die verschlüsselte Datei enthält keine lesbaren Stundenlöhne. Ohne die Passphrase ist sie unbrauchbar.</span>
+    </div>
+  </section>
     <div class="staff-profile-actions">
       <button type="button" class="btn btn-primary" id="editStaffProfile">Stammdaten bearbeiten</button>
       <a class="btn btn-secondary" href="/pep">Schichten planen ↗</a>
       <a class="btn btn-secondary" href="/tools/urlaubsplaner">Urlaub verwalten ↗</a>
     </div>
+  </section>
+
+<section class="staff-positions" id="staffPositions" aria-labelledby="staffPositionsTitle">
+    <div class="staff-positions-head"><div><span class="eyebrow">PERSONALFLUSS · ORGANISATION</span>
+      <h2 id="staffPositionsTitle">Stellenprofile</h2><p>Beschreibe Aufgaben, Voraussetzungen und Verantwortungsbereiche. Die Profile dienen der internen Organisation – nicht als öffentliche Stellenanzeigen.</p>
+    </div><button id="staffAddPosition" class="btn btn-primary" type="button">+ Eigenes Stellenprofil</button></div>
+    <div class="staff-position-filters"><label for="staffPositionSearch">Stelle suchen
+      <input type="search" id="staffPositionSearch" placeholder="z. B. Filialleitung, Verkauf, Lager" autocomplete="off"></label>
+      <span id="staffPositionCount">0 Stellenprofile</span></div>
+    <div id="staffPositionError" class="staff-error" hidden role="alert"></div>
+    <div id="staffPositionList" class="staff-position-grid"></div>
+    <div id="staffPositionDetail" class="staff-position-detail" hidden aria-live="polite"></div>
   </section>
 
   <section class="staff-recruiting" id="staffRecruiting" aria-labelledby="staffRecruitTitle">
@@ -114,11 +167,39 @@
   </form>
 </dialog>
 
+<dialog id="staffPositionDialog" class="staff-position-dialog">
+<form id="staffPositionForm" autocomplete="off">
+  <div class="dialog-head"><div><span class="eyebrow">STELLENPROFIL</span><h2 id="staffPositionDialogTitle">Neue Stelle definieren</h2></div>
+  <button type="button" class="dialog-close" id="staffPositionClose" aria-label="Dialog schließen">×</button></div>
+  <p class="employee-dialog-note">Diese Beschreibungen gelten nur für die lokale Teamorganisation. Keine personenbezogenen Daten oder Bewerbungen eintragen.</p>
+  <label for="staffPositionTitleInput">Stellenbezeichnung
+    <input id="staffPositionTitleInput" maxlength="70" required placeholder="z. B. Warenverantwortliche">
+  </label>
+  <div class="dialog-two"><label for="staffPositionDepartment">Einsatzbereich
+    <input id="staffPositionDepartment" maxlength="70" required placeholder="z. B. Verkauf & Waren"></label>
+    <label for="staffPositionResponsibility">Verantwortung
+    <input id="staffPositionResponsibility" maxlength="100" required placeholder="z. B. Tagesgeschäft"></label></div>
+  <label for="staffPositionSummary">Kurzbeschreibung
+    <textarea id="staffPositionSummary" rows="2" maxlength="400" required placeholder="Was macht diese Stelle aus?"></textarea></label>
+  <label for="staffPositionTasks">Typische Aufgaben · eine je Zeile
+    <textarea id="staffPositionTasks" rows="4" required placeholder="Kunden beraten&#10;Ware einräumen"></textarea></label>
+  <label for="staffPositionRequirements">Anforderungen · eine je Zeile
+    <textarea id="staffPositionRequirements" rows="4" required placeholder="Teamfähigkeit&#10;Sorgfalt"></textarea></label>
+  <p id="staffPositionFormError" class="staff-error" role="alert" hidden></p>
+  <div class="dialog-actions"><button class="btn btn-secondary" type="button" id="staffPositionCancel">Abbrechen</button>
+    <button class="btn btn-primary" type="submit" id="staffPositionSubmit">Stellenprofil speichern</button></div>
+</form>
+</dialog>
+
 <script src="/assets/site.js" defer></script>
 <script src="/assets/team-store.js" defer></script>
+<script src="/assets/job-profiles.js" defer></script>
+<script src="/assets/pay-vault.js" defer></script>
 <script src="/assets/de-holidays.js" defer></script>
 <script src="/assets/urlaubsplaner-store.js" defer></script>
 <script src="/assets/planning-engine.js" defer></script>
 <script src="/assets/staff.js" defer></script>
+<script src="/assets/job-profiles-ui.js" defer></script>
+<script src="/assets/staff-pay.js" defer></script>
 </body>
 </html>
