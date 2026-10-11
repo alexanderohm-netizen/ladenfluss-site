@@ -351,3 +351,50 @@ body:not(.lf-reference-home):not(.lf-reference-dashboard) .store-default-note st
 @media(prefers-reduced-motion:reduce){
  .calc-app-body .keypad button:active{transform:none}
 }
+
+
+/* Immediately accessible category strip for the eight-mode tool. */
+.calc-app-body .calc-breadcrumb{
+  display:flex;align-items:center;gap:10px;color:#957c74;font-size:11px;
+  margin:22px 0 -12px;
+}
+.calc-app-body .calc-breadcrumb a{
+  text-decoration:none;color:#7e343d;font-weight:700;
+}
+.calc-app-body .calc-breadcrumb a:hover{text-decoration:underline}
+.calc-app-body .calc-title h1 em{font-style:normal;color:#7c101c}
+.calc-app-body .calc-title .ref-calc-lead{
+  font-size:13px;line-height:1.65;color:#755b58;margin:13px 0 0;max-width:580px;
+}
+.calc-app-body .ref-calc-shortcuts{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;
+  margin:0 0 20px;
+}
+.calc-app-body .ref-calc-shortcuts a{
+  display:flex;align-items:center;gap:9px;padding:12px 14px;min-width:0;
+  min-height:47px;text-decoration:none;color:#714148;font-size:11px;
+  font-weight:750;border:1px solid #e7d8d0;background:#fffdfa;
+  border-radius:8px;transition:border-color .15s,background .15s,box-shadow .15s;
+}
+.calc-app-body .ref-calc-shortcuts a>span{
+  display:inline-grid;place-items:center;color:#893546;font-size:17px;
+  background:#f7e8e8;border-radius:6px;width:27px;height:27px;flex:0 0 27px;
+}
+.calc-app-body .ref-calc-shortcuts a:hover{
+  border-color:#bd8996;background:#fff9f6;box-shadow:0 4px 12px #5b333313;
+}
+.calc-app-body .ref-calc-shortcuts a[aria-current=true]{
+  background:#792333;border-color:#792333;color:#fff;
+}
+.calc-app-body .ref-calc-shortcuts a[aria-current=true]>span{
+  background:#a65b6b;color:#fff;
+}
+@media(max-width:800px){
+ .calc-app-body .ref-calc-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .calc-app-body .calc-breadcrumb{margin:16px 0 -4px}
+}
+@media(max-width:400px){
+ .calc-app-body .ref-calc-shortcuts{gap:7px}
+ .calc-app-body .ref-calc-shortcuts a{font-size:10px;padding:10px 8px;gap:6px}
+ .calc-app-body .ref-calc-shortcuts a>span{font-size:15px;width:23px;height:23px;flex-basis:23px}
+}
