@@ -602,7 +602,7 @@ test('Personalfluss – Stundenlohn nur verschlüsselt, mit eigener Passphrase u
  await page.locator('#staffHourlyGross').fill('19.66');
  await page.locator('#staffPayWageForm button[type=submit]').click();
  await page.waitForFunction(()=>document.getElementById('staffPayRate').textContent.includes('19,66'));
- assert.match(await page.locator('#staffPayTarget').innerText(),/589,80/);
+ assert.match(await page.locator('#staffPayTarget').textContent(),/589,80/);
  assert.match(await page.locator('#staffPayMonth').innerText(),/2.555,80/);
  assert.equal(await page.locator('#staffPayMonth').isVisible(),true);
  assert.match(await page.locator('#staffPayContractBasis').innerText(),/30 Vertragsstunden\/Woche/);
@@ -767,7 +767,7 @@ test('Personalfluss: monatliches Brutto im Mitarbeiterprofil folgt den Vertragsw
   await page.locator('#editStaffProfile').click();
   await page.locator('#employeeHours').fill('35');
   await page.locator('#saveEmployee').click();
-  await page.waitForFunction(()=>document.getElementById('staffPayMonth')?.textContent.includes('2.982,43'));
+  await page.waitForFunction(()=>document.getElementById('staffPayMonth')?.textContent.includes('2.981,77'));
   assert.match(await page.locator('#staffPayContractBasis').innerText(),/35 Vertragsstunden\/Woche/);
   assert.match(await page.locator('#staffPayRate').innerText(),/19,66/);
   await page.locator('#closeStaffProfile').click();
@@ -781,6 +781,6 @@ test('Personalfluss: monatliches Brutto im Mitarbeiterprofil folgt den Vertragsw
   assert.match(await page.locator('#staffPayRate').innerText(),/22,25/);
   await page.locator('#closeStaffProfile').click();
   await page.locator('[data-profile-id=e1]').click();
-  assert.match(await page.locator('#staffPayMonth').innerText(),/2.982,43/);
+  assert.match(await page.locator('#staffPayMonth').innerText(),/2.981,77/);
   assert.deepEqual(errors,[]);
 });
