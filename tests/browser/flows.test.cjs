@@ -645,7 +645,7 @@ for(const width of [1440,390]){
     assert.match(await page.locator('#pepGridMessage').innerText(),/gespeichert/);
     assert.equal(await page.locator('#planStatus').innerText(),'Entwurf');
     await page.locator('[data-grid-e="e1"][data-grid-d="6"]').click();
-    await page.locator('.pep-inline-input').fill('10-19/0');
+    await page.locator('.pep-inline-input').fill('10-20/0');
     await page.locator('.pep-inline-input').press('Enter');
     assert.match(await page.locator('#pepGridMessage').innerText(),/mindestens 45 Minuten/i);
     assert.equal(await page.locator('.pep-inline-input').count(),1,'Invalid entry remains editable');
