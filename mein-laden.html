@@ -16,13 +16,16 @@
 <button class="menu-toggle" aria-expanded="false" aria-controls="mobile-nav">Menü</button></div>
 <nav id="mobile-nav" class="mobile-nav" aria-label="Mobile Navigation"><a href="/mein-laden">Mein Laden</a><a href="/mitarbeiter">Team</a><a href="/pep">Dienstplan</a><a href="/tools/urlaubsplaner">Urlaub</a><a href="/tools">Werkzeuge</a></nav></header>
 <main id="main" class="container workspace">
-<div class="workspace-heading"><div><span class="eyebrow">Dein Arbeitsbereich</span><h1 id="storeGreeting">Mein Laden</h1><p>Was zählt heute? Was ist als Nächstes dran?</p></div><div class="workspace-date"><span id="cockpitDate"></span><small>Lokale Planung · auf diesem Gerät</small></div></div>
+<div class="workspace-breadcrumb"><a href="/">Startseite</a><span aria-hidden="true">/</span><span>Mein Laden</span><span class="workspace-breadcrumb-state">Lokaler Arbeitsbereich</span></div>
+<div class="workspace-heading"><div><span class="eyebrow">Dein Arbeitsbereich</span><h1 id="storeGreeting">Mein Laden</h1><p>Alles im Blick. Klar priorisiert. Direkt handeln.</p></div><div class="workspace-date"><span id="cockpitDate"></span><small><span class="workspace-local-dot" aria-hidden="true"></span> Daten auf diesem Gerät</small></div></div>
 <div id="cockpitError" class="workspace-alert" role="alert" hidden></div>
 <div class="workspace-grid">
 <nav class="workspace-nav" aria-label="Bereiche im Cockpit">
+<div class="workspace-nav-heading">DEIN ARBEITSPLATZ</div>
 <button type="button" class="active" data-cockpit-tab="overview" aria-pressed="true">Überblick</button>
 <button type="button" data-cockpit-tab="profile" aria-pressed="false">Ladenprofil</button>
 <button type="button" data-cockpit-tab="targets" aria-pressed="false">Meine Richtwerte</button>
+<div class="workspace-nav-heading workspace-nav-heading-later">EINSTELLUNGEN</div>
 <button type="button" data-cockpit-tab="backup" aria-pressed="false">Datensicherung</button>
 <button type="button" data-cockpit-tab="modules" aria-pressed="false">Module & Stand</button>
 <div class="workspace-nav-note">Kostenlos starten.<br>Im eigenen Tempo wachsen.</div>
@@ -31,7 +34,7 @@
 <div class="workspace-main">
 <section data-cockpit-panel="overview" aria-label="Überblick">
 <div id="demoNotice" class="workspace-note" hidden><strong>Beispielteam aktiv.</strong> Hinweise beziehen sich auf die mitgelieferten Mitarbeiter und deine lokale Planung. <a href="/mitarbeiter">Eigenes Team anlegen →</a></div>
-<div class="overview-head"><h2>Dein nächster Schritt</h2><span id="analysisTime"></span></div>
+<div class="overview-head"><div><span class="workspace-section-kicker">DEIN TAGESÜBERBLICK</span><h2>Das hat gerade Priorität.</h2></div><span id="analysisTime"></span></div>
 <div class="focus-card" id="decisionCard" aria-live="polite"></div>
 <div class="signal-counts" aria-label="Hinweise nach Dringlichkeit">
 <div><span class="status-dot critical"></span><strong id="countCritical">0</strong><span>Dringend prüfen</span></div>
@@ -40,7 +43,7 @@
 </div>
 <section class="workspace-section" aria-label="Handlungshinweise"><div class="section-line"><div><h2>Was Aufmerksamkeit braucht</h2><p>Mit Ursache, Auswirkung und direktem Weg zur Klärung.</p></div><label class="filter-label">Anzeigen<select id="signalFilter"><option value="all">Alle Hinweise</option><option value="critical">Dringend</option><option value="important">Im Blick</option><option value="info">Einordnung</option></select></label></div>
 <div id="storeSignals" class="signal-list"></div><button id="showAllSignals" type="button" class="btn btn-secondary" hidden>Weitere Hinweise zeigen</button></section>
-<div class="quick-links"><a href="/pep"><strong>Dienstplan</strong><span>Die Woche organisieren →</span></a><a href="/tools/urlaubsplaner"><strong>Urlaub</strong><span>Freie Tage abstimmen →</span></a><a href="/tools"><strong>Werkzeuge</strong><span>Eine Frage klären →</span></a></div>
+<div class="quick-links"><a href="/pep"><span class="quick-link-symbol" aria-hidden="true">▦</span><strong>Personalplanung</strong><span>Dienstplan öffnen ↗</span></a><a href="/tools/urlaubsplaner"><span class="quick-link-symbol" aria-hidden="true">◫</span><strong>Urlaub</strong><span>Freie Tage abstimmen ↗</span></a><a href="/tools"><span class="quick-link-symbol" aria-hidden="true">⌗</span><strong>Werkzeuge</strong><span>Berechnungen starten ↗</span></a></div>
 <section class="workspace-section"><div class="section-line"><div><h2>Deine Richtwerte</h2><p>Planungsannahmen, keine gemessenen Geschäftszahlen.</p></div><button type="button" class="text-button" data-open-panel="targets">Anpassen →</button></div>
 <div class="target-grid"><div><small>Stundenleistung</small><strong id="dashProductivity">–</strong></div><div><small>Personalkostenquote</small><strong id="dashLabor">–</strong></div><div><small>Handelsspanne</small><strong id="dashMargin">–</strong></div><div><small>Lieferzeit</small><strong id="dashLead">–</strong></div></div></section>
 <section class="workspace-section"><div class="section-line"><div><h2>Letzte Berechnungen</h2><p>Gespeicherte Ergebnisse auf diesem Gerät. Hinweise daraus gelten höchstens sieben Tage.</p></div></div><div id="recentCalculations" class="calculation-list"></div></section>
