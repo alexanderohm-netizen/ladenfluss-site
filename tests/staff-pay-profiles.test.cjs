@@ -31,7 +31,9 @@ test('Vergütungstresor: Einzelstundenlohn AES-GCM verschlüsselt, erst nach Pas
   await api.set('e1',19.66);
   const raw=db.getItem(api.key);
   assert.ok(raw);
-  assert.doesNotMatch(raw,/19\.66|e1|Anna/);
+  // Random AES-GCM ciphertext may coincidentally contain short text such as 'e1'.
+  // Instead assert plaintext employee identifiers or JSON values are absent.
+  assert.doesNotMatch(raw,/\"e1\"|\"19\.66\"|Anna/);
   assert.deepEqual(Object.keys(JSON.parse(raw)).sort(),['ciphertext','iv','rounds','salt','version']);
   assert.equal(api.get('e1'),19.66);
   assert.equal(api.get('e2'),null);

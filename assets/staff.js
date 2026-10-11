@@ -1,10 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
   'use strict';
   const store=window.LadenflussTeamStore;
+  const wages=window.LadenflussHourlyRates;
+  const legacy=window.LadenflussPayVault;
   const $=id=>document.getElementById(id);
   const list=$('staffList'), dialog=$('employeeDialog'), form=$('employeeForm');
   const days=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
-  let people=[],selectedId=null,editingId=null,loadError=false;
+  let people=[],selectedId=null,editingId=null,loadError=false,wageError=false;
+  let hourlyRates=Object.create(null);
 
   function node(tag,className,text){
     const e=document.createElement(tag);
@@ -17,6 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function clearWarn(){$('staffError').textContent='';$('staffError').hidden=true;}
   function announce(text){$('staffStatus').textContent=text;}
   function number(n){return Number(n||0).toLocaleString('de-DE',{maximumFractionDigits:1});}
+  function money(value){return Number(value).toLocaleString('de-DE',{style:'currency',currency:'EUR'});}
+  function hourly(id){return Object.hasOwn(hourlyRates,id)?hourlyRates[id]:null;}
+  function grossMonth(p){const rate=hourly(p.id);return rate===null?null:rate*Number(p.hours)*52/12;}
   function initials(name){return String(name||'').trim().split(/\s+/).slice(0,2).map(p=>p[0]).join('').toUpperCase();}
   function personById(id){return people.find(p=>p.id===id);}
   function isDemo(p){return ['e1','e2','e3'].includes(p.id)&&['Anna Müller','Ben Weber','Mira Klein'].includes(p.name);}
@@ -41,20 +47,10 @@ document.addEventListener('DOMContentLoaded', () => {
       return false;
     }
   }
-  function updateRoleFilter(){
-    const select=$('staffRoleFilter'),old=select.value;
-    select.replaceChildren();
-    const all=node('option','', 'Alle Rollen');all.value='all';select.append(all);
-    for(const role of [...new Set(people.map(p=>p.role).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'de'))){
-      const option=node('option','',role);option.value=role;select.append(option);
-    }
-    select.value=[...select.options].some(opt=>opt.value===old)?old:'all';
-  }
   function matches(p){
     const q=$('staffSearch').value.trim().toLocaleLowerCase('de');
-    const role=$('staffRoleFilter').value;
-    return (role==='all'||p.role===role)&&
-      (!q||[p.name,p.role,p.branch].some(x=>String(x||'').toLocaleLowerCase('de').includes(q)));
+    return !q||[p.name,p.role,p.branch].some(value=>
+      String(value||'').toLocaleLowerCase('de').includes(q));
   }
   function getPlanning(p){
     const week=currentWeek(),empty=Array(7).fill(null);
@@ -102,8 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(isDemo(p))person.append(node('p','staff-sample-note','Beispielprofil – ersetze die Demodaten vor der eigenen Planung.'));
     const facts=node('dl','staff-profile-facts');
     for(const [label,value] of [
-      ['Sollstunden',number(p.hours)+' h / Woche'],['Einsatzort',p.branch],
-      ['Unterlagen-Kennzeichnung',p.docs?'Als vollständig markiert':'Noch offen']
+      ['Wochenstunden',number(p.hours)+' h'],['Einsatzort',p.branch]
     ]){
       const div=node('div');append(div,node('dt','',label),node('dd','',value));facts.append(div);
     }
@@ -133,34 +128,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if(info.warnVacation)planning.append(node('p','staff-read-warning',info.warnVacation));
     if(!info.matched&&!info.warnVacation)
       planning.append(node('p','staff-profile-hint','Noch nicht mit der Urlaubsplanung verknüpft. Dort kannst du das Team über „Team aus Personalplanung übernehmen“ hinzufügen.'));
-    append(grid,person,planning);
+    grid.append(person);
     content.append(grid);
+    const weekDetails=node('details','staff-planning-details');
+    weekDetails.append(node('summary','','Dienstplan dieser Woche ansehen'),planning);
+    content.append(weekDetails);
 
-    // Job descriptions are independent of the employee/team storage contract.
-    // Never move hourly pay to staff/profile objects: PEP imports these objects.
-    let role=null;
-    try{role=window.LadenflussJobProfiles?.byTitle(p.role)||null;}catch(_){}
-    const roleBlock=node('section','staff-employee-position');
-    const roleHead=node('div','staff-employee-position-head');
-    append(roleHead,node('span','eyebrow','STELLENPROFIL'),node('h3','',role?.title||p.role));
-    const positionLink=node('a','staff-position-shortcut','Stellenprofile ansehen →');
-    positionLink.href='#staffPositions';
-    append(roleHead,positionLink);
-    roleBlock.append(roleHead);
-    roleBlock.append(node('p','',role?.summary||'Für diese Stelle ist noch keine Aufgabenbeschreibung hinterlegt.'));
-    if(role){
-      roleBlock.append(node('p','staff-position-role-responsibility','Verantwortung: '+role.responsibility));
-      const facts=node('div','staff-employee-position-facts');
-      for(const [name,values] of [['Aufgaben',role.tasks.slice(0,3)],['Anforderungen',role.requirements.slice(0,3)]]){
-        const item=node('div');
-        item.append(node('h4','',name));
-        const ul=node('ul');
-        for(const value of values)ul.append(node('li','',value));
-        item.append(ul);facts.append(item);
-      }
-      roleBlock.append(facts);
-    }
-    content.append(roleBlock);
+    const rate=hourly(p.id),month=grossMonth(p);
+    $('staffHourlyDisplay').textContent=rate===null?'Nicht hinterlegt':money(rate)+' / h';
+    $('staffMonthlyDisplay').textContent=month===null?'–':money(month);
     window.dispatchEvent(new CustomEvent('ladenfluss:employee-selected',
       {detail:{id:p.id,name:p.name,hours:Number(p.hours),week:info.week,plannedHours:info.hours}}));
   }
@@ -175,41 +151,37 @@ document.addEventListener('DOMContentLoaded', () => {
       append(main,node('strong','',p.name),node('span','',p.role+' · '+p.branch));
       if(isDemo(p))main.append(node('small','','Beispiel'));
       const h=node('div','staff-hours');append(h,node('small','','Sollstunden'),node('strong','',number(p.hours)+' h'));
-      const docs=node('div','staff-docs '+(p.docs?'ok':'open'));
-      append(docs,node('small','','Unterlagen'),node('strong','',p.docs?'Markiert':'Offen'));
-      const button=node('button','staff-more','Profil ansehen ↗');
+      const wage=node('div','staff-wage-cell');
+      const rate=hourly(p.id);
+      append(wage,node('small','','Brutto / Stunde'),node('strong','',rate===null?'Noch offen':money(rate)));
+      const button=node('button','staff-more','Profil öffnen →');
       button.type='button';button.dataset.profileId=p.id;
       button.setAttribute('aria-label','Profil von '+p.name+' öffnen');
-      append(card,main,h,docs,button);
+      append(card,main,h,wage,button);
       list.append(card);
     }
     if(!visible.length)list.append(node('p','staff-empty','Keine passenden Mitarbeiter gefunden. Bitte Suche oder Rollenfilter prüfen.'));
     $('activeEmployees').textContent=String(people.length);
     $('targetHours').textContent=number(people.reduce((a,p)=>a+Number(p.hours||0),0))+' h';
-    const missing=people.filter(p=>!p.docs).length;
-    $('missingDocs').textContent=String(missing);
-    $('staffFocusTitle').textContent=missing
-      ? missing+' Unterlagen-Kennzeichnung'+(missing===1?'':'en')+' prüfen'
-      : 'Team-Grunddaten im Blick.';
-    $('staffFocusText').textContent=missing
-      ? 'Bei einigen Personen sind Unterlagen noch nicht als vollständig markiert. Diese Kennzeichnung prüft keine Dokumente.'
-      : 'Es gibt momentan keine offenen Unterlagen-Kennzeichnungen. Diese Angaben beruhen auf deiner lokalen Eingabe.';
+    const missing=people.filter(p=>hourly(p.id)===null).length;
+    const gross=people.reduce((sum,p)=>sum+(grossMonth(p)||0),0);
+    $('teamGrossOverview').textContent=!people.length||missing?'–':money(gross);
+    $('teamGrossCoverage').textContent=!people.length
+      ? 'Mitarbeiter anlegen, um zu starten'
+      : missing ? 'Noch '+missing+' Stundenlohn'+(missing===1?'':'angaben')+' fehlt'+(missing===1?'':'en')
+        : 'Geschätzt aus Wochenstunden · brutto';
     renderProfile();
   }
   function openDialog(p){
     clearWarn();editingId=p?.id||null;form.reset();
     $('employeeDialogEyebrow').textContent=p?'PROFIL BEARBEITEN':'MITARBEITER HINZUFÜGEN';
-    $('employeeDialogTitle').textContent=p?'Stammdaten bearbeiten':'Mitarbeiter hinzufügen';
-    $('saveEmployee').textContent=p?'Änderungen speichern':'Mitarbeiter übernehmen';
+    $('employeeDialogTitle').textContent=p?'Profil bearbeiten':'Mitarbeiter hinzufügen';
+    $('saveEmployee').textContent=p?'Profil speichern':'Mitarbeiter hinzufügen';
     $('employeeName').value=p?.name||'';
-    const role=$('employeeRole');
-    if(p&&![...role.options].some(opt=>opt.value===p.role)){
-      const opt=node('option','',p.role);opt.value=p.role;role.append(opt);
-    }
-    role.value=p?.role||'Verkauf';
+    $('employeeRole').value=p?.role||'Verkauf';
     $('employeeHours').value=p?String(p.hours):'20';
     $('employeeBranch').value=p?.branch||'Hauptfiliale';
-    $('employeeDocs').checked=Boolean(p?.docs);
+    $('employeeHourlyGross').value=p&&hourly(p.id)!==null?String(hourly(p.id)):'';
     dialog.showModal();$('employeeName').focus();
   }
   try{
@@ -226,20 +198,18 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error('Invalid or duplicated team records');
     }
     people=store.getTeam();
+    if(!wages)throw new Error('Hourly wage storage missing');
+    hourlyRates=wages.load();
   }catch(_){
     loadError=true;people=[];
     warn('Teamdaten sind beschädigt oder der Browserspeicher ist nicht erreichbar. Die Daten wurden nicht überschrieben. Vor weiteren Änderungen bitte den Browserspeicher sichern.');
     $('addEmployee').disabled=true;
     list.append(node('p','staff-empty','Teamdaten konnten nicht sicher geladen werden.'));
   }
-  updateRoleFilter();
+  // Simple search only: role catalog/filter is no longer part of this workflow.
   if(!loadError)render();
   $('staffSearch').addEventListener('input',()=>{if(!loadError)render();});
-  $('staffRoleFilter').addEventListener('change',()=>{if(!loadError)render();});
-  // Refresh role descriptions without changing team or PEP employee IDs.
-  window.addEventListener('ladenfluss:positions-updated',()=>{
-    if(!loadError){updateRoleFilter();render();}
-  });
+
   list.addEventListener('click',event=>{
     const b=event.target.closest('[data-profile-id]');
     if(!b)return;
@@ -266,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
       candidate=validate({
         id,name:$('employeeName').value,role:$('employeeRole').value,
         hours:$('employeeHours').value,branch:$('employeeBranch').value,
-        docs:$('employeeDocs').checked
+        docs:editingId?Boolean(personById(editingId)?.docs):false
       });
     }catch(e){warn(e.message);return;}
     let next;
@@ -277,9 +247,63 @@ document.addEventListener('DOMContentLoaded', () => {
       if(people.some(p=>p.id===candidate.id)){warn('Diese Mitarbeiter-ID ist bereits vergeben.');return;}
       next=[...people,candidate];
     }
-    if(!save(next))return;
-    selectedId=candidate.id;updateRoleFilter();render();
-    announce('Profil von '+candidate.name+' gespeichert. Die Daten stehen auch der Personalplanung zur Verfügung.');
+    // Keep hourly pay outside the shared PEP/team storage. Store pay first,
+    // then team, and restore the previous pay blob if saving the team fails.
+    const input=$('employeeHourlyGross').value.trim();
+    const rate=input===''?null:Number(input);
+    if(rate!==null&&(!Number.isFinite(rate)||rate<0||rate>250||
+        Math.abs(rate*100-Math.round(rate*100))>1e-7)){
+      warn('Brutto-Stundenlohn zwischen 0 und 250 € mit maximal zwei Nachkommastellen eingeben.');
+      return;
+    }
+    let previous;
+    try{
+      previous=localStorage.getItem(wages.KEY);
+      wages.set(candidate.id,rate);
+    }catch(_){
+      warn('Stundenlohn konnte nicht gespeichert werden. Das Profil wurde nicht geändert.');
+      return;
+    }
+    if(!save(next)){
+      try{
+        if(previous===null)localStorage.removeItem(wages.KEY);
+        else localStorage.setItem(wages.KEY,previous);
+      }catch(_){warn('Team konnte nicht gespeichert werden. Prüfe die Stundenlohndaten vor erneutem Versuch.');}
+      return;
+    }
+    hourlyRates=wages.load();
+    selectedId=candidate.id;render();
+    announce('Profil von '+candidate.name+' gespeichert. Name, Wochenstunden und Einsatzort bleiben mit dem Dienstplan verbunden.');
     dialog.close();form.reset();
   });
+  $('legacyWageForm')?.addEventListener('submit',async event=>{
+    event.preventDefault();
+    const message=$('legacyWageMessage'),pass=$('legacyWagePassword');
+    const button=event.currentTarget.querySelector('button[type=submit]');
+    if(!legacy||!pass?.value)return;
+    button.disabled=true;
+    try{
+      await legacy.unlock(pass.value);
+      const prior=legacy.getAllRates();
+      const teamIds=new Set(people.map(person=>person.id));
+      const matching=Object.fromEntries(Object.entries(prior).filter(([id])=>teamIds.has(id)));
+      hourlyRates=wages.mergeMissing(matching);
+      message.textContent='Vorhandene Stundenlöhne übernommen. Bereits neu eingetragene Werte bleiben erhalten.';
+      $('legacyWageTransfer').hidden=true;
+      render();
+    }catch(_){
+      message.textContent='Übernahme nicht möglich. Bitte die bisherige Passphrase prüfen. Die alten Daten bleiben erhalten.';
+    }finally{
+      pass.value='';legacy?.lock();button.disabled=false;
+    }
+  });
+  try{$('legacyWageTransfer').hidden=!legacy?.exists();}catch(_){
+    $('legacyWageTransfer').hidden=true;
+  }
+  window.addEventListener('storage',event=>{
+    if(event.key!==wages?.KEY)return;
+    try{hourlyRates=wages.load();if(!loadError)render();}
+    catch(_){warn('Stundenlohndaten wurden in einem anderen Tab beschädigt. Bitte die Daten zuerst sichern.');}
+  });
+
 });
