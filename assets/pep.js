@@ -384,6 +384,7 @@ document.addEventListener('DOMContentLoaded',()=> {
     const shift=rowShift(employee,day);
     if(!shift){gridNotice('Bitte zuerst eine eingetragene Schicht auswählen.',true);return;}
     try{
+      pendingReplacement=null;
       copiedShift=typed.parse(typed.format(shift)).shift;
       render();
       gridNotice('Schicht kopiert: '+typed.format(copiedShift)+'. Jetzt bei beliebigen Mitarbeitenden und Tagen auf Einfügen klicken.');
@@ -406,14 +407,44 @@ document.addEventListener('DOMContentLoaded',()=> {
     if(current && typed.format(current)===typed.format(copiedShift)){
       gridNotice('Diese Schicht ist hier bereits eingetragen.');return;
     }
-    if(current&&!window.confirm('Hier steht bereits eine Schicht ('+typed.format(current)+'). Mit der kopierten Schicht ersetzen?'))return;
+    if(current){
+      pendingReplacement={eid,day,previous:typed.format(current),paste:typed.format(copiedShift)};
+      render();
+      gridNotice('Hier steht bereits eine Schicht. Bitte Ersetzen oder Abbrechen direkt im Feld wählen.');
+      return;
+    }
     try{
+      pendingReplacement=null;
       saveGridEntry(eid,day,typed.format(copiedShift));
       gridNotice('Schicht eingefügt bei '+employee.name+' · Tag '+(day+1)+'. Weitere Felder können mit derselben Kopie gefüllt werden.');
     }catch(error){gridNotice(error.message,true);}
   }
+  function confirmReplacement(){
+    const request=pendingReplacement;
+    if(!request||!copiedShift)return;
+    const person=employees.find(p=>p.id===request.eid);
+    const active=person&&rowShift(person,request.day);
+    const stored=store.getShifts(weekFor(request.day))?.[request.eid]?.[request.day%7];
+    if(!active||typed.format(active)!==request.previous||
+      !stored||typed.format(stored)!==request.previous||
+      typed.format(copiedShift)!==request.paste){
+      pendingReplacement=null;render();
+      gridNotice('Diese Schicht wurde inzwischen geändert. Bitte erneut prüfen.',true);
+      return;
+    }
+    try{
+      pendingReplacement=null;
+      saveGridEntry(request.eid,request.day,request.paste);
+      gridNotice('Schicht bei '+person.name+' ersetzt. Die Kopie bleibt verfügbar.');
+    }catch(error){render();gridNotice(error.message,true);}
+  }
+  function cancelReplacement(){
+    pendingReplacement=null;render();
+    gridNotice('Einfügen abgebrochen. Die ursprüngliche Schicht bleibt erhalten.');
+  }
   document.getElementById('pepClipboardClear').addEventListener('click',()=>{
     copiedShift=null;
+    pendingReplacement=null;
     render();
     gridNotice('Kopiermodus beendet.');
   });
@@ -452,10 +483,11 @@ document.addEventListener('DOMContentLoaded',()=> {
     const editor=document.createElement('div');editor.className='pep-inline-editor';
     editor.append(input,status);
     td.replaceChildren(editor);
-    let finished=false;
+    let finished=false,saving=false;
     const cancel=()=>{if(finished)return;finished=true;render();};
     const commit=()=>{
-      if(finished)return;
+      if(finished||saving)return;
+      saving=true;
       try{
         const didSave=saveGridEntry(eid,day,input.value);
         finished=true;
@@ -466,7 +498,7 @@ document.addEventListener('DOMContentLoaded',()=> {
         gridNotice(error.message,true);
         input.setAttribute('aria-invalid','true');
         input.focus();
-      }
+      }finally{saving=false;}
     };
     input.addEventListener('keydown',event=>{
       if(event.key==='Enter'){event.preventDefault();commit();}
@@ -477,6 +509,10 @@ document.addEventListener('DOMContentLoaded',()=> {
     if(firstKey===null)input.select();
   }
   function bindCells(){
+    body.querySelectorAll('.pep-confirm-replace').forEach(button=>
+      button.addEventListener('click',confirmReplacement));
+    body.querySelectorAll('.pep-cancel-replace').forEach(button=>
+      button.addEventListener('click',cancelReplacement));
     body.querySelectorAll('.pep-copy-btn').forEach(button=>{
       button.addEventListener('click',()=>copyGridShift(button.dataset.copyE,Number(button.dataset.copyD)));
     });
