@@ -23,7 +23,10 @@ document.addEventListener('DOMContentLoaded',()=>{
     return lines;
   }
   function readTeam(){
-    try{return store.getTeam()||[];}catch{return [];}
+    try{
+      const team=store.getTeam();
+      return Array.isArray(team)?team.filter(p=>p&&typeof p.role==='string'):[];
+    }catch{return [];}
   }
   function assigned(title){
     return readTeam().filter(p=>p.role?.toLocaleLowerCase('de')===title.toLocaleLowerCase('de')).length;
