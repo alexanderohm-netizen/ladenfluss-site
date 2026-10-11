@@ -115,12 +115,62 @@
         <button type="button" class="btn btn-secondary" id="staffPayRemove">Betrag entfernen</button>
         <button type="button" class="btn btn-secondary" id="staffPayLock">Tresor sperren</button>
       </form>
-      <p class="staff-pay-foot">Richtwerte: Sollstunden × Brutto-Stundenlohn; Ø Monat = Wochenwert × 52 ÷ 12. Geplante Woche nach PEP-Schichten. Keine Lohnabrechnung – ohne Zuschläge, Feiertage, Steuern oder Arbeitgebernebenkosten.</p>
+      <section class="staff-cost-planner" id="staffCostPlanner" aria-labelledby="staffCostHeading">
+        <div class="staff-cost-heading"><span class="eyebrow">TEAM · PERSONALKOSTEN</span><h4 id="staffCostHeading">Monatsbudget &amp; Arbeitgeberkosten</h4>
+          <p>Erstelle eine einfache Kostenprognose auf Basis der gespeicherten Brutto-Stundenlöhne und Sollstunden. Ein Arbeitgeber-Aufschlag ist frei wählbar, keine automatisch ermittelte gesetzliche Abgabe.</p></div>
+        <form id="staffBudgetForm" class="staff-cost-form" autocomplete="off">
+          <label for="staffOverhead">Geschätzter Arbeitgeber-Aufschlag (%)
+            <input id="staffOverhead" type="number" inputmode="decimal" min="0" max="100" step="0.01" value="0" required>
+            <small>Selbst festlegen, zum Beispiel für Arbeitgeberanteile und sonstige Personalkosten</small>
+          </label>
+          <label for="staffMonthlyBudget">Monatliches Personalbudget (€)
+            <input id="staffMonthlyBudget" type="number" inputmode="decimal" min="0" max="10000000" step="0.01" placeholder="Optional">
+            <small>Ohne Budgeteintrag erfolgt kein Budgetvergleich</small>
+          </label>
+          <button type="submit" class="btn btn-primary">Kostenrahmen speichern</button>
+        </form>
+        <div class="staff-cost-metrics" aria-live="polite">
+          <div><small>Monatliches Brutto · hinterlegte Löhne</small><strong id="staffTeamGrossMonth">–</strong></div>
+          <div><small>Monatliche Arbeitgeberkosten · Schätzung</small><strong id="staffTeamEmployerMonth">–</strong></div>
+          <div><small>Aktuelle PEP-Woche · inkl. Aufschlag</small><strong id="staffTeamPlannedCost">–</strong></div>
+          <div><small>Restbudget / Überschreitung</small><strong id="staffTeamBudgetDiff">–</strong></div>
+        </div>
+        <p id="staffBudgetCoverage" class="staff-cost-coverage" role="status"></p>
+        <div id="staffBudgetProgressArea" class="staff-cost-progress-area" hidden>
+          <label for="staffBudgetProgress">Auslastung des Monatsbudgets <strong id="staffBudgetPercent">–</strong></label>
+          <progress id="staffBudgetProgress" max="100" value="0"></progress>
+        </div>
+        <p class="staff-pay-foot">Berechnungsgrundlage: Brutto-Stundenlohn × Sollstunden × 52 ÷ 12; anschließend der selbst eingestellte Aufschlag. Die PEP-Woche zeigt nur geplante Schichten. <strong>Keine Lohnabrechnung</strong>: Zuschläge, bezahlte Ausfallzeiten, tarifliche Regeln und tatsächliche Abgaben werden nicht automatisch berücksichtigt. Bei fehlenden Stundenlöhnen ist kein verlässlicher Budgetvergleich möglich.</p>
+      </section>
+      <p class="staff-pay-foot">Einzelne Brutto-Werte sind unverbindliche Richtwerte; keine Lohnabrechnung oder automatische Zuschlagsberechnung.</p>
     </div>
     <div class="staff-pay-backup">
       <button type="button" class="btn btn-secondary" id="staffPayExport" hidden>Verschlüsselten Tresor sichern</button>
-      <span>Die verschlüsselte Datei enthält keine lesbaren Stundenlöhne. Ohne die Passphrase ist sie unbrauchbar.</span>
+      <span>Die Sicherungsdatei enthält keine lesbaren Stundenlöhne, aber sämtliche geschützten Vergütungs- und Budgetangaben. Die Passphrase separat aufbewahren.</span>
     </div>
+    <details class="staff-pay-restore" id="staffPayRestore">
+      <summary>Verschlüsselte Vergütungsdatei wiederherstellen</summary>
+      <p>Eine frühere, verschlüsselte JSON-Sicherung prüfen und übernehmen. <strong>Vorhandene Vergütungsdaten werden vollständig ersetzt, nicht zusammengeführt.</strong> Vorher die aktuelle Sicherung herunterladen. Die Wiederherstellung benötigt die Passphrase der Sicherungsdatei; bei vorhandenem Tresor muss außerdem der aktuelle Tresor entsperrt sein.</p>
+      <form id="staffPayRestoreForm" autocomplete="off">
+        <label for="staffRestoreFile">Verschlüsselte JSON-Datei
+          <input id="staffRestoreFile" type="file" accept=".json,application/json" required>
+        </label>
+        <label for="staffRestorePass">Passphrase der Sicherungsdatei
+          <input id="staffRestorePass" type="password" autocomplete="off" minlength="12" maxlength="256" required>
+        </label>
+        <button class="btn btn-secondary" id="staffRestoreCheck" type="submit">Sicherungsdatei prüfen</button>
+      </form>
+      <div id="staffRestorePreview" class="staff-restore-preview" hidden>
+        <p id="staffRestoreDescription"></p>
+        <label class="staff-restore-confirm" for="staffRestoreConsent">
+          <input id="staffRestoreConsent" type="checkbox">
+          Ich habe meine aktuelle verschlüsselte Sicherung gesichert und stimme dem vollständigen Ersetzen zu.
+        </label>
+        <button type="button" id="staffRestoreApply" class="btn btn-primary">Verschlüsselten Tresor bewusst ersetzen</button>
+        <button type="button" id="staffRestoreCancel" class="btn btn-secondary">Abbrechen</button>
+      </div>
+      <p id="staffRestoreMessage" class="staff-pay-message" role="status" aria-live="polite"></p>
+    </details>
   </section>
     <div class="staff-profile-actions">
       <button type="button" class="btn btn-primary" id="editStaffProfile">Stammdaten bearbeiten</button>
@@ -195,6 +245,7 @@
 <script src="/assets/team-store.js" defer></script>
 <script src="/assets/job-profiles.js" defer></script>
 <script src="/assets/pay-vault.js" defer></script>
+<script src="/assets/staff-costs.js" defer></script>
 <script src="/assets/de-holidays.js" defer></script>
 <script src="/assets/urlaubsplaner-store.js" defer></script>
 <script src="/assets/planning-engine.js" defer></script>
