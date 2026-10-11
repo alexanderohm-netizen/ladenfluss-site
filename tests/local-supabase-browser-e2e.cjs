@@ -234,6 +234,14 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
     phase='A: Passwort-Wiederherstellung';
     await page.goto(await redirectFromEmail(recoveryLink),{waitUntil:'domcontentloaded'});
     await page.locator('#passwordResetForm').waitFor({state:'visible',timeout:30000});
+    // Ensure the SDK has finished consuming the one-time PKCE code and that
+    // the recovery-only authorization remains valid before interacting.
+    // This is a UI readiness requirement, not a test-only workaround.
+    await page.waitForFunction(() =>
+      !new URLSearchParams(window.location.search).has('code') &&
+      !!window.LadenflussSupabase?.getRecoveryUserId?.() &&
+      !document.getElementById('passwordResetForm').hidden,
+      null,{timeout:18000});
     const changedPassword='Changed-browser-password-2026';
     await page.locator('#newPassword').fill(changedPassword);
     await page.locator('#confirmPassword').fill(changedPassword);
