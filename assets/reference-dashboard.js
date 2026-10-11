@@ -240,6 +240,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelector('.ref-all-insights')?.addEventListener('click',()=>{
     $('refDetailedSignals').open=true;
   });
+  window.addEventListener('ladenfluss:profile-updated',redraw);
   window.addEventListener('storage',e=>{
     if(e.key===null||e.key.startsWith('ladenfluss.'))redraw();
   });
