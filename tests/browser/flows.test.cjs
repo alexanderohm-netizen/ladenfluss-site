@@ -249,3 +249,74 @@ for (const width of [1440, 390, 320]) {
     assert.deepEqual(errors,[]);
   });
 }
+
+
+for (const width of [1440, 768, 390, 320]) {
+  test('PEP v2: Teamfilter und Wochenplan bleiben bedienbar ('+width+'px)',async t=>{
+    const page=await session(t,{width,height:900});
+    const errors=[];
+    page.on('pageerror',error=>errors.push(error.message));
+    const response=await page.goto(base+'/pep');
+    assert.equal(response.status(),200);
+    assert.equal(await page.locator('.pep-daycheck>div').count(),7);
+    assert.equal(await page.locator('#pepEmployeeFilter option').count(),(await page.locator('#pepBody tr').count())+1);
+    const all=await page.locator('#pepBody tr').count();
+    assert.ok(all>=1,'At least one employee should be displayed');
+    if(all>=2){
+      const id=await page.locator('#pepEmployeeFilter option').nth(1).getAttribute('value');
+      await page.locator('#pepEmployeeFilter').selectOption(id);
+      assert.equal(await page.locator('#pepBody tr:visible').count(),1);
+      assert.equal(await page.locator('#pepBody tr:visible').first().getAttribute('data-employee-id'),id);
+      await page.locator('#nextWeek').click();
+      assert.equal(await page.locator('#pepBody tr:visible').count(),1);
+      await page.locator('#pepEmployeeFilter').selectOption('all');
+      assert.equal(await page.locator('#pepBody tr:visible').count(),all);
+    }
+    await page.locator('#addShift').click();
+    assert.equal(await page.locator('#shiftDialog').evaluate(el=>el.open),true);
+    await page.locator('#shiftDialog button[value=cancel]').first().click();
+    assert.equal(await page.locator('#shiftDialog').evaluate(el=>el.open),false);
+    const layout=await page.evaluate(()=>({
+      overflow:document.documentElement.scrollWidth-innerWidth,
+      table:document.querySelector('.pep-table-wrap').scrollWidth,
+      viewport:document.querySelector('.pep-table-wrap').clientWidth,
+    }));
+    assert.ok(layout.overflow<=2,'Unexpected PEP full-page horizontal overflow: '+layout.overflow);
+    if(width<=390)assert.ok(layout.table>layout.viewport,'Weekly grid must scroll inside its own container on phones');
+    assert.deepEqual(errors,[]);
+  });
+}
+
+for(const width of [1440,390,320]){
+  test('Urlaubsplaner v2: Schnellzugriff, Anträge und Resturlaub ('+width+'px)',async t=>{
+    const page=await session(t,{width,height:950});
+    const errors=[];
+    page.on('pageerror',error=>errors.push(error.message));
+    const response=await page.goto(base+'/tools/urlaubsplaner');
+    assert.equal(response.status(),200);
+    assert.equal(await page.locator('.vac-v2-shortcuts button').count(),3);
+    await page.locator('[data-vac-shortcut=team]').click();
+    assert.equal(await page.locator('[data-vac-panel=team]').first().isVisible(),true);
+    assert.equal(await page.locator('[data-vac-panel=calendar]').first().isVisible(),false);
+    await page.locator('#vacEmployeeName').fill('Design Test');
+    await page.locator('#vacAllowance').fill('30');
+    await page.locator('#vacEmployeeForm button[type=submit]').click();
+    assert.match(await page.locator('#vacEmployees').innerText(),/Design Test/);
+    await page.locator('[data-vac-shortcut=entry]').click();
+    assert.equal(await page.locator('[data-vac-panel=entry]').isVisible(),true);
+    await page.locator('#vacPerson').selectOption({label:'Design Test'});
+    await page.locator('#vacFrom').fill('2026-11-02');
+    await page.locator('#vacTo').fill('2026-11-06');
+    await page.locator('#vacStatus').selectOption('approved');
+    assert.match(await page.locator('#vacPreview').innerText(),/5/);
+    await page.locator('#vacSaveEntry').click();
+    await page.locator('[data-vac-shortcut=calendar]').click();
+    assert.equal(await page.locator('[data-vac-panel=calendar]').first().isVisible(),true);
+    assert.match(await page.locator('#vacEntries').innerText(),/Design Test/);
+    await page.reload();
+    assert.match(await page.locator('#vacEntries').innerText(),/Design Test/);
+    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+    assert.ok(overflow<=2,'Unexpected vacation full-page horizontal overflow: '+overflow);
+    assert.deepEqual(errors,[]);
+  });
+}
