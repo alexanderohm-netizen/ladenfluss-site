@@ -108,9 +108,27 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
     await page.locator('#branch_name').fill('Testfiliale');
     await page.locator('#branch_days').fill('6');
     await page.locator('#branch_hours').fill('9.5');
+    const onboardingValidity=await page.locator('#companyOnboarding').evaluate(form=>({
+      valid:form.checkValidity(),
+      problems:[...form.querySelectorAll('input,select')].filter(x=>!x.validity.valid)
+        .map(x=>({id:x.id,error:x.validationMessage})),
+    }));
+    assert.equal(onboardingValidity.valid,true,'Onboarding inputs invalid: '+JSON.stringify(onboardingValidity.problems));
     await page.locator('#companyOnboarding button[type=submit]').click();
-    await page.waitForFunction(()=>document.getElementById('onboardingStatus')?.textContent.includes('Unternehmen angelegt'),
-      {timeout:20000});
+    try{
+      await page.waitForFunction(()=>{
+        const status=document.getElementById('onboardingStatus')?.textContent||'';
+        return status.includes('Unternehmen angelegt')||status.includes('Einrichtung fehlgeschlagen')||
+          status.includes('Eingaben prüfen')||status.includes('Anmeldung erforderlich');
+      },null,{timeout:18000});
+      assert.match(await page.locator('#onboardingStatus').textContent(),/Unternehmen angelegt/);
+    }catch(e){
+      const state=await page.locator('#companyOnboarding').evaluate(form=>({
+        valid:form.checkValidity(),hidden:form.hidden,
+        submitDisabled:form.querySelector('button[type=submit]')?.disabled,
+      }));
+      throw new Error(e.message+' Onboarding state: '+JSON.stringify(state));
+    }
     // DEVICE A: Save local Ladenprofil through the actual UI and RPC.
     phase='A: Ladenprofil in Cloud speichern';
     await page.goto(base+'/mein-laden',{waitUntil:'domcontentloaded'});
