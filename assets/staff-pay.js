@@ -231,6 +231,16 @@ document.addEventListener('DOMContentLoaded',()=>{
     $('staffRestoreFile').value='';
     importStatus('');
   }
+  // A preview is only valid for the exact file and passphrase that were checked.
+  // Changing either input cannot leave an old approval attached to a new file.
+  function invalidatePreview(){
+    pendingImport=null;
+    $('staffRestorePreview').hidden=true;
+    $('staffRestoreConsent').checked=false;
+    importStatus('Eingaben geändert. Bitte die Sicherungsdatei erneut prüfen.');
+  }
+  $('staffRestoreFile').addEventListener('change',invalidatePreview);
+  $('staffRestorePass').addEventListener('input',invalidatePreview);
   restoreForm.addEventListener('submit',async event=>{
     event.preventDefault();
     if(busy||!restoreForm.reportValidity()||!api.supported())return;
@@ -240,11 +250,15 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
     pendingImport=null;
     $('staffRestorePreview').hidden=true;
+    const checkedPassword=$('staffRestorePass').value;
     busy=true;$('staffRestoreCheck').disabled=true;
     importStatus('Die verschlüsselte Sicherung wird geprüft …');
     try{
       const raw=await file.text();
-      const preview=await api.previewImport(raw,$('staffRestorePass').value);
+      const preview=await api.previewImport(raw,checkedPassword);
+      if($('staffRestoreFile').files?.[0]!==file||
+        $('staffRestorePass').value!==checkedPassword)
+        throw new Error('Die Datei oder Passphrase wurde während der Prüfung geändert. Bitte erneut prüfen.');
       pendingImport=raw;
       const hasVault=api.exists();
       $('staffRestoreDescription').textContent=preview.employeeCount+
