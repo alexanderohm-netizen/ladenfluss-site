@@ -72,6 +72,20 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
       if(request.url().startsWith('https://esm.sh/'))
         errors.push('Pinned browser SDK failed to load: '+(request.failure()?.errorText||'network failure'));
     });
+    // CI-only instrumentation: observe the sequence of Supabase Auth event
+    // types without logging session tokens or user-identifying fields.
+    await page.route('**/assets/supabase-browser.js',async route=>{
+      const response=await route.fetch();
+      const source=await response.text();
+      const needle='  function applyAuthEvent(event, session) {';
+      if(!source.includes(needle))throw new Error('Auth event instrumentation anchor missing');
+      const instrumented=source.replace(needle,needle+`
+    (root.__lfTestAuthEvents ||= []).push({event,hasSession:!!session,
+      sameRecoveryUser:!!session?.user?.id && session.user.id===recoveryUserId,
+      hadRecovery:!!recoveryUserId});
+`);
+      await route.fulfill({response,body:instrumented,contentType:'application/javascript'});
+    });
     // In CI only, replace the disabled production switch with disposable local credentials.
     await page.route('**/assets/cloud-config.js', async route=>{
       await route.fulfill({
@@ -261,6 +275,7 @@ test('real Ladenfluss UI registers, confirms email, creates company and resets p
         try{data.status[id]=(await p.locator('#'+id).count())?(await p.locator('#'+id).textContent()).slice(0,240):null;}
         catch(_){data.status[id]='unavailable';}
       }
+      try {data.authEvents=await p.evaluate(()=>window.__lfTestAuthEvents?.slice(-20)||[]);}catch(_){data.authEvents=[];}
       return JSON.stringify(data);
     };
     throw new Error(e.message+'\nPhase: '+phase+'\nPage A: '+await inspect(page)+
