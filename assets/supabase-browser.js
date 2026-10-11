@@ -11,7 +11,12 @@
   function applyAuthEvent(event, session) {
     if (event === 'PASSWORD_RECOVERY') {
       recoveryUserId = typeof session?.user?.id === 'string' ? session.user.id : null;
-    } else if (event === 'SIGNED_OUT' || event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+    } else if (event === 'SIGNED_IN') {
+      // Supabase may emit SIGNED_IN again while finalizing the *same* PKCE
+      // recovery redirect. Do not accidentally erase PASSWORD_RECOVERY then.
+      // A different identity always clears the one-time in-memory grant.
+      if (session?.user?.id !== recoveryUserId) recoveryUserId = null;
+    } else if (event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
       recoveryUserId = null;
     } else return;
     for (const listener of recoveryListeners) listener(recoveryUserId);
