@@ -100,7 +100,8 @@
   }
   function createProfile(data,items=read()){
     if(!Array.isArray(items))throw new Error('Stellenprofile sind nicht lesbar.');
-    const next=validate({...data,id:data.id||('custom-'+root.crypto?.randomUUID?.()||'custom-'+Date.now().toString(36))});
+    const uuid=root.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+    const next=validate({...data,id:data.id||('custom-'+uuid)});
     if(byTitle(next.title,items))throw new Error('Diese Stellenbezeichnung existiert bereits.');
     return save([...items,next]);
   }
