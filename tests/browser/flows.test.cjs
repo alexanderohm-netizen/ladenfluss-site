@@ -347,11 +347,12 @@ for(const width of [1440,768,390,320]){
     assert.equal(await page.locator('.staff-card').count(),1);
     assert.match(await page.locator('.staff-card').innerText(),/Ben Weber/);
     await page.locator('#staffSearch').fill('');
-    await page.locator('#staffRoleFilter').selectOption('Aushilfe');
+    await page.locator('#staffSearch').fill('Aushilfe');
     assert.equal(await page.locator('.staff-card').count(),1);
-    await page.locator('#staffRoleFilter').selectOption('all');
+    await page.locator('#staffSearch').fill('');
     await page.locator('[data-profile-id="e1"]').click();
     assert.equal(await page.locator('#staffProfileTitle').innerText(),'Anna Müller');
+    await page.locator('.staff-planning-details summary').click();
     assert.match(await page.locator('#staffProfileContent').innerText(),/Schichten & Anwesenheit/);
     assert.match(await page.locator('#staffProfileContent').innerText(),/Geplante Stunden/);
     assert.equal(await page.locator('#staffProfile').isVisible(),true);
@@ -535,252 +536,90 @@ test('Neue Kopfzeile: auf dem iPhone Tools und Mein Laden erreichbar',async t=>{
 });
 
 
+
 for(const width of [1440,768,390,320]){
-  test('Personalfluss – Stellenprofile und sichere Vergütungsansicht ('+width+'px)',async t=>{
+  test('Personalfluss einfach: Profil und Brutto-Lohn ohne Schlüssel ('+width+'px)',async t=>{
     const page=await session(t,{width,height:960});
     const errors=[];page.on('pageerror',e=>errors.push(e.message));
     const response=await page.goto(base+'/mitarbeiter');
     assert.equal(response.status(),200);
-    assert.equal(await page.locator('.staff-position-card').count(),10);
-    assert.equal(await page.locator('#staffPositionCount').innerText(),'10 von 10 Stellenprofile');
-    await page.locator('#staffPositionSearch').fill('Filialleitung');
-    assert.equal(await page.locator('.staff-position-card').count(),2);
-    await page.locator('#staffPositionSearch').fill('');
-    await page.locator('.staff-position-view').first().click();
-    assert.match(await page.locator('#staffPositionDetail').innerText(),/Typische Aufgaben/);
-    assert.match(await page.locator('#staffPositionDetail').innerText(),/Anforderungen/);
+    assert.equal(await page.locator('.staff-position-card').count(),0);
+    assert.equal(await page.locator('#staffAddPosition').count(),0);
+    assert.equal(await page.locator('#staffVaultPass').count(),0);
     await page.locator('[data-profile-id=e1]').click();
-    assert.match(await page.locator('.staff-employee-position').innerText(),/Stellenprofil/i);
-    assert.match(await page.locator('.staff-employee-position').innerText(),/Kunden beraten/);
-    assert.equal(await page.locator('#staffPayUnlocked').isVisible(),false);
-    assert.equal(await page.locator('#staffVaultConfirmRow').isVisible(),true);
+    assert.match(await page.locator('#staffHourlyDisplay').innerText(),/Nicht hinterlegt/);
+    await page.locator('#editStaffProfile').click();
+    await page.locator('#employeeHourlyGross').fill('19.66');
+    await page.locator('#employeeName').fill('Anna Einfach');
+    await page.locator('#saveEmployee').click();
+    await page.waitForFunction(()=>document.getElementById('staffHourlyDisplay')?.textContent.includes('19,66'));
+    assert.match(await page.locator('#staffMonthlyDisplay').innerText(),/2.555,80/);
+    const saved=await page.evaluate(()=>({
+      team:JSON.parse(localStorage.getItem('ladenfluss.team.v1')),
+      wages:JSON.parse(localStorage.getItem('ladenfluss.hr-wages-simple.v1'))
+    }));
+    assert.equal(saved.team.find(p=>p.id==='e1').name,'Anna Einfach');
+    assert.equal(saved.team.find(p=>p.id==='e1').hourlyGross,undefined,
+      'Wages must not appear in the shared team data');
+    assert.equal(saved.wages.rates.e1,19.66);
+    assert.equal(await page.locator('#teamGrossOverview').innerText(),'–',
+      'Do not show partial team gross as a complete sum');
     const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
-    assert.ok(overflow<=2,'Personalfluss: '+width+'px horizontal overflow '+overflow);
+    assert.ok(overflow<=2,'Personalfluss horizontal overflow '+width+'px: '+overflow);
     assert.deepEqual(errors,[]);
+    await page.goto(base+'/pep');
+    assert.match(await page.locator('#pepBody').innerText(),/Anna Einfach/);
   });
 }
 
-test('Personalfluss – eigene Stelle bleibt mit Mitarbeiter-ID und PEP verknüpft',async t=>{
- const page=await session(t,{width:390,height:920});
- const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto(base+'/mitarbeiter');
- await page.locator('#staffAddPosition').click();
- await page.locator('#staffPositionTitleInput').fill('Warenverantwortliche');
- await page.locator('#staffPositionDepartment').fill('Waren & Aktionen');
- await page.locator('#staffPositionResponsibility').fill('Warenannahme');
- await page.locator('#staffPositionSummary').fill('Bestände und Warenfluss steuern.');
- await page.locator('#staffPositionTasks').fill('Wareneingang prüfen\nBestände überwachen');
- await page.locator('#staffPositionRequirements').fill('Teamarbeit\nSorgfältig zählen');
- await page.locator('#staffPositionSubmit').click();
- await page.locator('#staffPositionDialog').waitFor({state:'hidden'});
- assert.equal(await page.locator('.staff-position-card').count(),11);
- await page.locator('[data-profile-id=e2]').click();
- await page.locator('#editStaffProfile').click();
- await page.locator('#employeeRole').selectOption('Warenverantwortliche');
- await page.locator('#saveEmployee').click();
- assert.match(await page.locator('#staffProfileContent').innerText(),/Warenannahme/);
- const people=await page.evaluate(()=>JSON.parse(localStorage.getItem('ladenfluss.team.v1')));
- assert.equal(people.find(x=>x.id==='e2').role,'Warenverantwortliche');
- const positionRecord=await page.evaluate(()=>JSON.parse(localStorage.getItem('ladenfluss.positions.v1')));
- assert.equal(positionRecord.profiles.length,11);
- await page.goto(base+'/pep');
- assert.match(await page.locator('#pepBody').innerText(),/Warenverantwortliche/);
- assert.deepEqual(errors,[]);
-});
-
-test('Personalfluss – Stundenlohn nur verschlüsselt, mit eigener Passphrase und geschützter Anzeige',async t=>{
- const page=await session(t,{width:390,height:920});
- const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto(base+'/mitarbeiter');
- assert.equal(await page.evaluate(()=>Boolean(crypto.subtle)),true,'WebCrypto required for encrypted pay');
- await page.locator('[data-profile-id=e1]').click();
- const phrase='Ladenfluss eine sehr lange eigene Passphrase 2026!';
- await page.locator('#staffVaultPass').fill(phrase);
- await page.locator('#staffVaultConfirm').fill(phrase);
- await page.locator('#staffVaultAccessBtn').click();
- await page.locator('#staffPayUnlocked').waitFor({state:'visible'});
- await page.locator('#staffHourlyGross').fill('19.66');
- await page.locator('#staffPayWageForm button[type=submit]').click();
- await page.waitForFunction(()=>document.getElementById('staffPayRate').textContent.includes('19,66'));
- assert.match(await page.locator('#staffPayTarget').textContent(),/589,80/);
- assert.match(await page.locator('#staffPayMonth').innerText(),/2.555,80/);
- assert.equal(await page.locator('#staffPayMonth').isVisible(),true);
- assert.match(await page.locator('#staffPayContractBasis').innerText(),/30 Vertragsstunden\/Woche/);
- assert.equal(await page.locator('#staffPayAdvanced').evaluate(el=>el.open),false);
- const raw=await page.evaluate(()=>{
-   const v=localStorage.getItem('ladenfluss.hr-pay-vault.v1');
-   return {payload:v,backup:window.LadenflussBackup?.capture?.().records||{},
-     team:localStorage.getItem('ladenfluss.team.v1')};
- });
- assert.ok(raw.payload);
- assert.doesNotMatch(raw.payload,/19\.66|e1|Anna Müller/);
- assert.doesNotMatch(raw.team,/hourlyRate|19\.66/);
- assert.equal(Object.hasOwn(raw.backup,'ladenfluss.hr-pay-vault.v1'),false);
- await page.locator('#staffPayLock').click();
- assert.equal(await page.locator('#staffPayUnlocked').isVisible(),false);
- assert.doesNotMatch(await page.locator('#staffPaySection').innerText(),/19,66|589,80/);
- await page.reload();
- await page.locator('[data-profile-id=e1]').click();
- assert.equal(await page.locator('#staffVaultConfirmRow').isVisible(),false);
- await page.locator('#staffVaultPass').fill('eine wirklich falsche Passphrase');
- await page.locator('#staffVaultAccessBtn').click();
- await page.waitForFunction(()=>document.getElementById('staffPayMessage')?.textContent.includes('Passphrase falsch'));
- assert.equal(await page.locator('#staffPayUnlocked').isVisible(),false);
- await page.locator('#staffVaultPass').fill(phrase);
- await page.locator('#staffVaultAccessBtn').click();
- await page.locator('#staffPayUnlocked').waitFor({state:'visible'});
- assert.match(await page.locator('#staffPayRate').innerText(),/19,66/);
- await page.locator('#closeStaffProfile').click();
- await page.locator('[data-profile-id=e2]').click();
- assert.match(await page.locator('#staffPayRate').innerText(),/Nicht hinterlegt/);
- assert.deepEqual(errors,[]);
-});
-
-
-test('Personalfluss v2: verschlüsselte Teamkosten und belastbare Budgetwarnungen',async t=>{
- const page=await session(t,{width:390,height:930});
- const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto(base+'/mitarbeiter');
- await page.locator('[data-profile-id=e1]').click();
- const phrase='Meine starke Ladenfluss Budget Tresor Passphrase';
- await page.locator('#staffVaultPass').fill(phrase);
- await page.locator('#staffVaultConfirm').fill(phrase);
- await page.locator('#staffVaultAccessBtn').click();
- await page.locator('#staffPayUnlocked').waitFor({state:'visible'});
- await page.locator('#staffHourlyGross').fill('19.66');
- await page.locator('#staffPayWageForm button[type=submit]').click();
- await page.waitForFunction(()=>document.getElementById('staffPayRate')?.textContent.includes('19,66'));
- // Advanced calculations are opt-in; everyday per-employee wages stay compact.
- assert.equal(await page.locator('#staffPayAdvanced').evaluate(el=>el.open),false);
- await page.locator('#staffPayAdvanced summary').click();
- await page.locator('#staffOverhead').fill('25');
- await page.locator('#staffMonthlyBudget').fill('9000');
- await page.locator('#staffBudgetForm button[type=submit]').click();
- await page.waitForFunction(()=>document.getElementById('staffBudgetCoverage')?.textContent.includes('Unvollständig'));
- assert.equal(await page.locator('#staffTeamBudgetDiff').innerText(),'–');
- assert.equal(await page.locator('#staffBudgetProgressArea').isVisible(),false);
- assert.match(await page.locator('#staffBudgetCoverage').innerText(),/1 von 3/);
- await page.locator('#closeStaffProfile').click();
- await page.locator('[data-profile-id=e2]').click();
- await page.locator('#staffHourlyGross').fill('21.25');
- await page.locator('#staffPayWageForm button[type=submit]').click();
- await page.waitForFunction(()=>document.getElementById('staffPayRate')?.textContent.includes('21,25'));
- await page.locator('#closeStaffProfile').click();
- await page.locator('[data-profile-id=e3]').click();
- await page.locator('#staffHourlyGross').fill('20');
- await page.locator('#staffPayWageForm button[type=submit]').click();
- await page.waitForFunction(()=>document.getElementById('staffBudgetCoverage')?.textContent.includes('Budgetwarnung'));
- assert.match(await page.locator('#staffTeamEmployerMonth').innerText(),/9.390,06/);
- assert.match(await page.locator('#staffTeamBudgetDiff').innerText(),/Über Budget.*390,06/);
- assert.equal(await page.locator('#staffBudgetProgressArea').isVisible(),true);
- const stored=await page.evaluate(()=>({
-   vault:localStorage.getItem('ladenfluss.hr-pay-vault.v1'),
-   team:localStorage.getItem('ladenfluss.team.v1'),
-   backup:window.LadenflussBackup?.capture?.().records||{}
- }));
- assert.equal(JSON.parse(stored.vault).version,2);
- assert.doesNotMatch(stored.vault,/9000|21\.25|19\.66|e1/);
- assert.doesNotMatch(stored.team,/9000|21\.25|19\.66/);
- assert.equal(Object.hasOwn(stored.backup,'ladenfluss.hr-pay-vault.v1'),false);
- await page.locator('#staffPayLock').click();
- assert.equal(await page.locator('#staffPayUnlocked').isVisible(),false);
- assert.doesNotMatch(await page.locator('#staffPaySection').innerText(),/9.390,06|390,06|21,25/);
- const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
- assert.ok(overflow<=2,'Responsive budget overflows by '+overflow);
- assert.deepEqual(errors,[]);
-});
-
-test('Personalfluss v2: verschlüsselte Sicherung wird geprüft und nur nach Bestätigung ersetzt',async t=>{
- const page=await session(t,{width:390,height:920});
- const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto(base+'/mitarbeiter');
- await page.locator('[data-profile-id=e1]').click();
- const phrase='Sicheres langes Backup Passwort für Ladenfluss';
- await page.locator('#staffVaultPass').fill(phrase);
- await page.locator('#staffVaultConfirm').fill(phrase);
- await page.locator('#staffVaultAccessBtn').click();
- await page.locator('#staffPayUnlocked').waitFor({state:'visible'});
- await page.locator('#staffHourlyGross').fill('19.66');
- await page.locator('#staffPayWageForm button[type=submit]').click();
- await page.waitForFunction(()=>document.getElementById('staffPayRate')?.textContent.includes('19,66'));
- const backup=await page.evaluate(()=>localStorage.getItem('ladenfluss.hr-pay-vault.v1'));
- await page.locator('#staffHourlyGross').fill('24.50');
- await page.locator('#staffPayWageForm button[type=submit]').click();
- await page.waitForFunction(()=>document.getElementById('staffPayRate')?.textContent.includes('24,50'));
- await page.locator('#staffPayRestore summary').click();
- await page.locator('#staffRestoreFile').setInputFiles({
-   name:'lohn-sicherung.json',mimeType:'application/json',buffer:Buffer.from(backup,'utf8')
- });
- await page.locator('#staffRestorePass').fill('eine andere falsche und ausreichend lange Passphrase');
- await page.locator('#staffRestoreCheck').click();
- await page.waitForFunction(()=>document.getElementById('staffRestoreMessage')?.textContent.includes('Passphrase falsch'));
- assert.equal(await page.locator('#staffRestorePreview').isVisible(),false);
- assert.match(await page.locator('#staffPayRate').innerText(),/24,50/);
- await page.locator('#staffRestorePass').fill(phrase);
- await page.locator('#staffRestoreCheck').click();
- await page.locator('#staffRestorePreview').waitFor({state:'visible'});
- assert.match(await page.locator('#staffRestoreDescription').innerText(),/1 gesicherte Stundenlohn-Einträge/);
- await page.locator('#staffRestoreApply').click();
- assert.match(await page.locator('#staffRestoreMessage').innerText(),/Bestätigung ankreuzen/);
- await page.locator('#staffRestoreConsent').check();
- await page.locator('#staffRestoreApply').click();
- await page.waitForFunction(()=>document.getElementById('staffRestoreMessage')?.textContent.includes('Einträge importiert'));
- assert.equal(await page.locator('#staffPayUnlocked').isVisible(),false);
- assert.equal(await page.evaluate(()=>window.LadenflussPayVault.isUnlocked()),false);
- await page.locator('#staffVaultPass').fill(phrase);
- await page.locator('#staffVaultAccessBtn').click();
- await page.locator('#staffPayUnlocked').waitFor({state:'visible'});
- assert.match(await page.locator('#staffPayRate').innerText(),/19,66/);
- assert.deepEqual(errors,[]);
-});
-
-for(const width of [1440,768,390,320]){
- test('Personalfluss v2: Budget und Wiederherstellung auch mobil benutzbar ('+width+'px)',async t=>{
-  const page=await session(t,{width,height:930});
+test('Personalfluss: verschiedene Stundenlöhne, klare Monatsbrutto-Summe und direkte Bearbeitung',async t=>{
+  const page=await session(t,{width:390,height:930});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'/mitarbeiter');
+  for(const [id,rate] of [['e1','19.66'],['e2','21.25'],['e3','20']]){
+    await page.locator('[data-profile-id='+id+']').click();
+    await page.locator('#editStaffProfile').click();
+    await page.locator('#employeeHourlyGross').fill(rate);
+    await page.locator('#saveEmployee').click();
+  }
+  assert.match(await page.locator('#teamGrossOverview').innerText(),/7.512,05/);
+  await page.locator('#closeStaffProfile').click();
   await page.locator('[data-profile-id=e1]').click();
-  await page.locator('#staffPayRestore summary').click();
-  assert.equal(await page.locator('#staffRestoreFile').isVisible(),true);
-  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
-  assert.ok(overflow<=2,width+'px: horizontal overflow '+overflow);
-  assert.deepEqual(errors,[]);
- });
-}
-
-
-test('Personalfluss: monatliches Brutto im Mitarbeiterprofil folgt den Vertragswochenstunden',async t=>{
-  const page=await session(t,{width:390,height:910});
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(base+'/mitarbeiter');
-  await page.locator('[data-profile-id=e1]').click();
-  const phrase='Separater eleganter Tresor mit einer langen Passphrase';
-  await page.locator('#staffVaultPass').fill(phrase);
-  await page.locator('#staffVaultConfirm').fill(phrase);
-  await page.locator('#staffVaultAccessBtn').click();
-  await page.locator('#staffPayUnlocked').waitFor({state:'visible'});
-  await page.locator('#staffHourlyGross').fill('19.66');
-  await page.locator('#staffPayWageForm button[type=submit]').click();
-  await page.waitForFunction(()=>document.getElementById('staffPayMonth')?.textContent.includes('2.555,80'));
-  assert.equal(await page.locator('.staff-pay-main-figures').isVisible(),true);
-  assert.match(await page.locator('#staffPayContractBasis').innerText(),/30 Vertragsstunden\/Woche/);
+  assert.match(await page.locator('#staffMonthlyDisplay').innerText(),/2.555,80/);
   await page.locator('#editStaffProfile').click();
   await page.locator('#employeeHours').fill('35');
   await page.locator('#saveEmployee').click();
-  await page.waitForFunction(()=>document.getElementById('staffPayMonth')?.textContent.includes('2.981,77'));
-  assert.match(await page.locator('#staffPayContractBasis').innerText(),/35 Vertragsstunden\/Woche/);
-  assert.match(await page.locator('#staffPayRate').innerText(),/19,66/);
-  await page.locator('#closeStaffProfile').click();
+  assert.match(await page.locator('#staffMonthlyDisplay').innerText(),/2.981,77/);
+  assert.match(await page.locator('#staffHourlyDisplay').innerText(),/19,66/);
+  await page.reload();
   await page.locator('[data-profile-id=e2]').click();
-  assert.match(await page.locator('#staffPayRate').innerText(),/Nicht hinterlegt/);
-  assert.equal(await page.locator('#staffPayMonth').innerText(),'–');
-  await page.locator('#staffHourlyGross').fill('22.25');
-  await page.locator('#staffPayWageForm button[type=submit]').click();
-  await page.waitForFunction(()=>document.getElementById('staffPayMonth')?.textContent.includes('3.374,58'));
-  // Different person, different weekly contract and independently stored hourly wage.
-  assert.match(await page.locator('#staffPayRate').innerText(),/22,25/);
-  await page.locator('#closeStaffProfile').click();
+  assert.match(await page.locator('#staffHourlyDisplay').innerText(),/21,25/);
+  const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('ladenfluss.team.v1')));
+  assert.equal(stored.find(p=>p.id==='e1').hours,35);
+  assert.ok(stored.every(p=>!Object.hasOwn(p,'hourlyGross')));
+  assert.deepEqual(errors,[]);
+});
+
+test('Personalfluss: alte verschlüsselte Löhne bleiben erhalten und sind einmalig übernehmbar',async t=>{
+  const page=await session(t,{width:390,height:920});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base+'/mitarbeiter');
+  const phrase='Eine bestehende sehr lange private Passphrase';
+  await page.evaluate(async phrase=>{
+    const api=window.LadenflussPayVault;
+    await api.initialize(phrase);
+    await api.set('e1',19.66);
+    api.lock();
+  },phrase);
+  const oldVault=await page.evaluate(()=>localStorage.getItem('ladenfluss.hr-pay-vault.v1'));
+  await page.reload();
   await page.locator('[data-profile-id=e1]').click();
-  assert.match(await page.locator('#staffPayMonth').innerText(),/2.981,77/);
+  assert.equal(await page.locator('#legacyWageTransfer').isVisible(),true);
+  await page.locator('#legacyWageTransfer summary').click();
+  await page.locator('#legacyWagePassword').fill(phrase);
+  await page.locator('#legacyWageForm button[type=submit]').click();
+  await page.waitForFunction(()=>document.getElementById('staffHourlyDisplay')?.textContent.includes('19,66'));
+  assert.equal(await page.evaluate(()=>localStorage.getItem('ladenfluss.hr-pay-vault.v1')),oldVault);
+  assert.equal(await page.evaluate(()=>window.LadenflussPayVault.isUnlocked()),false);
   assert.deepEqual(errors,[]);
 });
