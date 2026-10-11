@@ -259,3 +259,50 @@ body:not(.lf-reference-home):not(.lf-reference-dashboard) :where(.account-card,.
  body:not(.lf-reference-home):not(.lf-reference-dashboard) .tool-card:hover,
  body:not(.lf-reference-home):not(.lf-reference-dashboard) .product-catalog>a:hover{transform:none}
 }
+
+
+/* Individual calculators: fast discovery within the revamped tool library. */
+.ref-tools-library{margin-top:43px}
+.ref-tools-heading{display:flex;justify-content:space-between;gap:23px;align-items:end;margin-bottom:23px}
+.ref-tools-heading>div{min-width:0}
+.ref-tools-heading .eyebrow{font-size:10px;letter-spacing:.12em}
+.ref-tools-heading h2{
+  font:550 clamp(29px,3.5vw,43px)/1.17 Georgia,"Times New Roman",serif;
+  color:#77212c;letter-spacing:-.055em;margin:11px 0 10px;
+}
+.ref-tools-heading p{font-size:13px;color:#79665f;line-height:1.6;margin:0}
+.ref-tools-heading .btn{white-space:nowrap}
+.ref-tools-list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+.ref-tool-choice{
+  display:flex;align-items:flex-start;gap:13px;min-height:153px;padding:22px 18px;
+  border:1px solid #e4d5cd;background:#fffdfa;border-radius:9px;
+  text-decoration:none;box-shadow:0 5px 18px rgba(70,37,36,.035);
+  transition:transform .17s,border-color .17s,box-shadow .17s;
+}
+.ref-tool-choice:hover{
+  transform:translateY(-3px);border-color:#bf9096;
+  box-shadow:0 9px 24px rgba(93,37,47,.1)
+}
+.ref-tool-symbol{
+ display:grid;place-items:center;flex:0 0 35px;width:35px;height:35px;
+ border-radius:8px;background:#f5e7e9;color:#8a2e40;font-size:21px;
+}
+.ref-tool-choice-text{display:grid;gap:5px;min-width:0}
+.ref-tool-choice-text>small{
+ font-size:9px;letter-spacing:.09em;color:#8f5760;font-weight:850;text-transform:uppercase;
+}
+.ref-tool-choice-text>strong{
+ font-size:15px;font-weight:850;letter-spacing:-.028em;color:#603037;line-height:1.26;
+}
+.ref-tool-choice-text>span{font-size:10px;color:#89756c;line-height:1.54}
+.ref-tool-arrow{color:#8d4753;margin-left:auto;font-size:15px}
+@media(max-width:1150px){.ref-tools-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:840px){
+ .ref-tools-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .ref-tools-heading{align-items:flex-start;flex-direction:column;gap:17px}
+}
+@media(max-width:480px){
+ .ref-tools-list{grid-template-columns:1fr;gap:8px}
+ .ref-tool-choice{min-height:105px;padding:16px;gap:12px}
+ .ref-tools-library{margin-top:31px}
+}
