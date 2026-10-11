@@ -646,6 +646,10 @@ for(const width of [1440,390]){
     assert.equal(await page.locator('#planStatus').innerText(),'Entwurf');
     await page.locator('[data-grid-e="e1"][data-grid-d="6"]').click();
     await page.locator('.pep-inline-input').fill('10-20/0');
+    assert.equal(await page.locator('.pep-inline-input').inputValue(),'10-20/0');
+    assert.match(await page.evaluate(()=>{
+      try{window.LadenflussPepInput.parse('10-20/0');return '';}catch(error){return error.message;}
+    }),/mindestens 45 Minuten/i);
     await page.locator('.pep-inline-input').press('Enter');
     assert.match(await page.locator('#pepGridMessage').innerText(),/mindestens 45 Minuten/i);
     assert.equal(await page.locator('.pep-inline-input').count(),1,'Invalid entry remains editable');
@@ -714,10 +718,15 @@ test('PEP Raster: Schicht kopieren, wiederholt einfÃ¼gen und belegte Felder schÃ
   await page.locator('[data-paste-e="e3"][data-paste-d="0"]').click();
   assert.match(await page.locator('tr[data-employee-id="e3"] .pep-grid-slot').nth(0).innerText(),/08:00/);
   const before=await page.evaluate(()=>JSON.parse(localStorage.getItem('ladenfluss.pep.weeks.v2'))[window.LadenflussTeamStore.mondayKey()].e2[0]);
-  page.once('dialog',dialog=>dialog.dismiss());
   await page.locator('[data-paste-e="e2"][data-paste-d="0"]').click();
+  assert.equal(await page.locator('.pep-replace-confirm').isVisible(),true);
+  await page.locator('.pep-cancel-replace').click();
   const after=await page.evaluate(()=>JSON.parse(localStorage.getItem('ladenfluss.pep.weeks.v2'))[window.LadenflussTeamStore.mondayKey()].e2[0]);
   assert.deepEqual(after,before,'Cancel must not overwrite an existing shift');
+  await page.locator('[data-paste-e="e2"][data-paste-d="0"]').click();
+  await page.locator('.pep-confirm-replace').click();
+  const replaced=await page.evaluate(()=>JSON.parse(localStorage.getItem('ladenfluss.pep.weeks.v2'))[window.LadenflussTeamStore.mondayKey()].e2[0]);
+  assert.deepEqual(replaced,['08:00','14:00',30],'Explicit replacement must write the copied shift');
   await page.locator('#pepClipboardClear').click();
   assert.equal(await page.locator('#pepClipboardBar').isVisible(),false);
   assert.equal(await page.locator('.pep-paste-btn').count(),0);
