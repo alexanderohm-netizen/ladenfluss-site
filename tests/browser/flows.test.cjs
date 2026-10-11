@@ -699,3 +699,47 @@ test('PEP: Abwesenheit und Mitarbeitersuche direkt im Raster',async t=>{
   assert.equal(await page.locator('tr[data-employee-id=e1] .pep-vacation').count(),1);
   assert.deepEqual(errors,[]);
 });
+
+
+test('PEP Raster: Schicht kopieren, wiederholt einfügen und belegte Felder schützen',async t=>{
+  const page=await session(t,{width:1280,height:900});
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.goto(base+'/pep');
+  assert.equal(await page.locator('#pepClipboardBar').isVisible(),false);
+  await page.locator('[data-copy-e="e1"][data-copy-d="0"]').click();
+  assert.equal(await page.locator('#pepClipboardBar').isVisible(),true);
+  assert.match(await page.locator('#pepClipboardLabel').innerText(),/08:00/);
+  await page.locator('[data-paste-e="e2"][data-paste-d="1"]').click();
+  assert.match(await page.locator('tr[data-employee-id="e2"] .pep-grid-slot').nth(1).innerText(),/08:00/);
+  await page.locator('[data-paste-e="e3"][data-paste-d="0"]').click();
+  assert.match(await page.locator('tr[data-employee-id="e3"] .pep-grid-slot').nth(0).innerText(),/08:00/);
+  const before=await page.evaluate(()=>JSON.parse(localStorage.getItem('ladenfluss.pep.weeks.v2'))[window.LadenflussTeamStore.mondayKey()].e2[0]);
+  page.once('dialog',dialog=>dialog.dismiss());
+  await page.locator('[data-paste-e="e2"][data-paste-d="0"]').click();
+  const after=await page.evaluate(()=>JSON.parse(localStorage.getItem('ladenfluss.pep.weeks.v2'))[window.LadenflussTeamStore.mondayKey()].e2[0]);
+  assert.deepEqual(after,before,'Cancel must not overwrite an existing shift');
+  await page.locator('#pepClipboardClear').click();
+  assert.equal(await page.locator('#pepClipboardBar').isVisible(),false);
+  assert.equal(await page.locator('.pep-paste-btn').count(),0);
+  assert.deepEqual(errors,[]);
+});
+test('PEP Raster: Tastatur-Kopieren und Einfügen funktioniert über beide Wochen',async t=>{
+  const page=await session(t,{width:1440,height:880});
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.goto(base+'/pep');
+  await page.locator('#pepPeriod').selectOption('14');
+  assert.equal(await page.locator('#pepDays th').count(),18,'name + 3 KPI + 14 days');
+  await page.locator('[data-grid-e="e1"][data-grid-d="3"]').focus();
+  await page.keyboard.press('Control+c');
+  assert.match(await page.locator('#pepClipboardLabel').innerText(),/12:00/);
+  await page.locator('[data-grid-e="e3"][data-grid-d="7"]').focus();
+  await page.keyboard.press('Control+v');
+  const saved=await page.evaluate(()=>{
+    const monday=window.LadenflussTeamStore.mondayKey();
+    const next=new Date(monday+'T12:00:00');next.setDate(next.getDate()+7);
+    return JSON.parse(localStorage.getItem('ladenfluss.pep.weeks.v2'))[window.LadenflussTeamStore.mondayKey(next)].e3[0];
+  });
+  assert.equal(saved[0],'12:00');assert.equal(saved[1],'18:00');assert.equal(saved[2],30);
+  assert.match(await page.locator('tr[data-employee-id="e3"] .pep-grid-slot').nth(7).innerText(),/12:00/);
+  assert.deepEqual(errors,[]);
+});
