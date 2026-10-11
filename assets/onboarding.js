@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const branch = document.getElementById('branch_name')?.value.trim() || '';
     const days = Number(document.getElementById('branch_days')?.value);
     const hours = Number(document.getElementById('branch_hours')?.value);
-    if (name.length < 2 || branch.length < 2 || !retail ||
+    if (name.length < 2 || name.length > 120 || branch.length < 2 || branch.length > 80 || !retail ||
         !Number.isInteger(days) || days < 1 || days > 7 ||
         !Number.isFinite(hours) || hours <= 0 || hours > 24 || hours * 2 !== Math.trunc(hours * 2)) {
       message('Eingaben prüfen','Bitte kontrolliere Unternehmen, Standort und die gültigen Öffnungszeiten.');
