@@ -632,3 +632,112 @@ test('Personalfluss – Stundenlohn nur verschlüsselt, mit eigener Passphrase u
  assert.match(await page.locator('#staffPayRate').innerText(),/Nicht hinterlegt/);
  assert.deepEqual(errors,[]);
 });
+
+
+test('Personalfluss v2: verschlüsselte Teamkosten und belastbare Budgetwarnungen',async t=>{
+ const page=await session(t,{width:390,height:930});
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(base+'/mitarbeiter');
+ await page.locator('[data-profile-id=e1]').click();
+ const phrase='Meine starke Ladenfluss Budget Tresor Passphrase';
+ await page.locator('#staffVaultPass').fill(phrase);
+ await page.locator('#staffVaultConfirm').fill(phrase);
+ await page.locator('#staffVaultAccessBtn').click();
+ await page.locator('#staffPayUnlocked').waitFor({state:'visible'});
+ await page.locator('#staffHourlyGross').fill('19.66');
+ await page.locator('#staffPayWageForm button[type=submit]').click();
+ await page.waitForFunction(()=>document.getElementById('staffPayRate')?.textContent.includes('19,66'));
+ await page.locator('#staffOverhead').fill('25');
+ await page.locator('#staffMonthlyBudget').fill('9000');
+ await page.locator('#staffBudgetForm button[type=submit]').click();
+ await page.waitForFunction(()=>document.getElementById('staffBudgetCoverage')?.textContent.includes('Unvollständig'));
+ assert.equal(await page.locator('#staffTeamBudgetDiff').innerText(),'–');
+ assert.equal(await page.locator('#staffBudgetProgressArea').isVisible(),false);
+ assert.match(await page.locator('#staffBudgetCoverage').innerText(),/1 von 3/);
+ await page.locator('#closeStaffProfile').click();
+ await page.locator('[data-profile-id=e2]').click();
+ await page.locator('#staffHourlyGross').fill('21.25');
+ await page.locator('#staffPayWageForm button[type=submit]').click();
+ await page.waitForFunction(()=>document.getElementById('staffPayRate')?.textContent.includes('21,25'));
+ await page.locator('#closeStaffProfile').click();
+ await page.locator('[data-profile-id=e3]').click();
+ await page.locator('#staffHourlyGross').fill('20');
+ await page.locator('#staffPayWageForm button[type=submit]').click();
+ await page.waitForFunction(()=>document.getElementById('staffBudgetCoverage')?.textContent.includes('Budgetwarnung'));
+ assert.match(await page.locator('#staffTeamEmployerMonth').innerText(),/9.390,06/);
+ assert.match(await page.locator('#staffTeamBudgetDiff').innerText(),/Über Budget.*390,06/);
+ assert.equal(await page.locator('#staffBudgetProgressArea').isVisible(),true);
+ const stored=await page.evaluate(()=>({
+   vault:localStorage.getItem('ladenfluss.hr-pay-vault.v1'),
+   team:localStorage.getItem('ladenfluss.team.v1'),
+   backup:window.LadenflussBackup?.capture?.().records||{}
+ }));
+ assert.equal(JSON.parse(stored.vault).version,2);
+ assert.doesNotMatch(stored.vault,/9000|21\.25|19\.66|e1/);
+ assert.doesNotMatch(stored.team,/9000|21\.25|19\.66/);
+ assert.equal(Object.hasOwn(stored.backup,'ladenfluss.hr-pay-vault.v1'),false);
+ await page.locator('#staffPayLock').click();
+ assert.equal(await page.locator('#staffPayUnlocked').isVisible(),false);
+ assert.doesNotMatch(await page.locator('#staffPaySection').innerText(),/9.390,06|390,06|21,25/);
+ const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+ assert.ok(overflow<=2,'Responsive budget overflows by '+overflow);
+ assert.deepEqual(errors,[]);
+});
+
+test('Personalfluss v2: verschlüsselte Sicherung wird geprüft und nur nach Bestätigung ersetzt',async t=>{
+ const page=await session(t,{width:390,height:920});
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(base+'/mitarbeiter');
+ await page.locator('[data-profile-id=e1]').click();
+ const phrase='Sicheres langes Backup Passwort für Ladenfluss';
+ await page.locator('#staffVaultPass').fill(phrase);
+ await page.locator('#staffVaultConfirm').fill(phrase);
+ await page.locator('#staffVaultAccessBtn').click();
+ await page.locator('#staffPayUnlocked').waitFor({state:'visible'});
+ await page.locator('#staffHourlyGross').fill('19.66');
+ await page.locator('#staffPayWageForm button[type=submit]').click();
+ await page.waitForFunction(()=>document.getElementById('staffPayRate')?.textContent.includes('19,66'));
+ const backup=await page.evaluate(()=>localStorage.getItem('ladenfluss.hr-pay-vault.v1'));
+ await page.locator('#staffHourlyGross').fill('24.50');
+ await page.locator('#staffPayWageForm button[type=submit]').click();
+ await page.waitForFunction(()=>document.getElementById('staffPayRate')?.textContent.includes('24,50'));
+ await page.locator('#staffPayRestore summary').click();
+ await page.locator('#staffRestoreFile').setInputFiles({
+   name:'lohn-sicherung.json',mimeType:'application/json',buffer:Buffer.from(backup,'utf8')
+ });
+ await page.locator('#staffRestorePass').fill('eine andere falsche und ausreichend lange Passphrase');
+ await page.locator('#staffRestoreCheck').click();
+ await page.waitForFunction(()=>document.getElementById('staffRestoreMessage')?.textContent.includes('Passphrase falsch'));
+ assert.equal(await page.locator('#staffRestorePreview').isVisible(),false);
+ assert.match(await page.locator('#staffPayRate').innerText(),/24,50/);
+ await page.locator('#staffRestorePass').fill(phrase);
+ await page.locator('#staffRestoreCheck').click();
+ await page.locator('#staffRestorePreview').waitFor({state:'visible'});
+ assert.match(await page.locator('#staffRestoreDescription').innerText(),/1 gesicherte Stundenlohn-Einträge/);
+ await page.locator('#staffRestoreApply').click();
+ assert.match(await page.locator('#staffRestoreMessage').innerText(),/Bestätigung ankreuzen/);
+ await page.locator('#staffRestoreConsent').check();
+ await page.locator('#staffRestoreApply').click();
+ await page.waitForFunction(()=>document.getElementById('staffRestoreMessage')?.textContent.includes('Einträge importiert'));
+ assert.equal(await page.locator('#staffPayUnlocked').isVisible(),false);
+ assert.equal(await page.evaluate(()=>window.LadenflussPayVault.isUnlocked()),false);
+ await page.locator('#staffVaultPass').fill(phrase);
+ await page.locator('#staffVaultAccessBtn').click();
+ await page.locator('#staffPayUnlocked').waitFor({state:'visible'});
+ assert.match(await page.locator('#staffPayRate').innerText(),/19,66/);
+ assert.deepEqual(errors,[]);
+});
+
+for(const width of [1440,768,390,320]){
+ test('Personalfluss v2: Budget und Wiederherstellung auch mobil benutzbar ('+width+'px)',async t=>{
+  const page=await session(t,{width,height:930});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base+'/mitarbeiter');
+  await page.locator('[data-profile-id=e1]').click();
+  await page.locator('#staffPayRestore summary').click();
+  assert.equal(await page.locator('#staffRestoreFile').isVisible(),true);
+  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+  assert.ok(overflow<=2,width+'px: horizontal overflow '+overflow);
+  assert.deepEqual(errors,[]);
+ });
+}
