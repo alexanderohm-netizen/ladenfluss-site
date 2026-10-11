@@ -213,3 +213,10 @@ body:has(.pep-shell){background:#f7f0e9}
 .pep-replace-confirm .pep-confirm-replace:hover{background:#591929}
 .pep-replace-confirm .pep-cancel-replace:hover{background:#f4e5e1}
 @media print{.pep-replace-confirm{display:none!important}}
+
+/* Time-of-day position from 06:00 through 22:00, visually echoing the reference timeline. */
+.pep-shift-timeline{display:block;position:relative;height:6px;margin-top:5px;
+  width:100%;overflow:hidden;border-radius:5px;background:#dbe5f3}
+.pep-shift-timeline i{position:absolute;top:0;bottom:0;background:#5381b4;border-radius:5px}
+.pep-cell-actions .shift-chip:focus-visible .pep-shift-timeline i{background:#315e98}
+@media print{.pep-shift-timeline{display:none!important}}
