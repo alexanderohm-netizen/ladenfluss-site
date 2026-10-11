@@ -205,7 +205,7 @@ for (const width of [1440, 768, 390, 320]) {
     const response=await page.goto(base+'/');
     assert.equal(response.status(),200);
     await page.locator('.ref-hero').waitFor({state:'visible'});
-    assert.match((await page.locator('#home-title').innerText()).replace(/\\s+/g,' '),/Ein System für deinen Laden\\./);
+    assert.match((await page.locator('#home-title').innerText()).replace(/\s+/g,' '),/Ein System für deinen Laden\./);
     assert.equal(await page.locator('.ref-module-card').count(),6);
     assert.equal(await page.locator('.ref-module-soon').count(),3);
     assert.equal(await page.locator('.ref-module-card[href="/pep"]').count(),1);
@@ -218,7 +218,7 @@ for (const width of [1440, 768, 390, 320]) {
     }));
     assert.equal(styles.hero,'block');
     assert.equal(styles.wine,'#7c101c');
-    assert.match(styles.photo,/images\\.pexels\\.com/);
+    assert.match(styles.photo,/images\.pexels\.com/);
     assert.ok(styles.overflow<=2,'Homepage horizontal overflow '+styles.overflow);
     assert.deepEqual(errors,[]);
     const cols=styles.grid.split(' ').length;
