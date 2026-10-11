@@ -47,20 +47,10 @@ document.addEventListener('DOMContentLoaded', () => {
       return false;
     }
   }
-  function updateRoleFilter(){
-    const select=$('staffRoleFilter'),old=select.value;
-    select.replaceChildren();
-    const all=node('option','', 'Alle Rollen');all.value='all';select.append(all);
-    for(const role of [...new Set(people.map(p=>p.role).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'de'))){
-      const option=node('option','',role);option.value=role;select.append(option);
-    }
-    select.value=[...select.options].some(opt=>opt.value===old)?old:'all';
-  }
   function matches(p){
     const q=$('staffSearch').value.trim().toLocaleLowerCase('de');
-    const role=$('staffRoleFilter').value;
-    return (role==='all'||p.role===role)&&
-      (!q||[p.name,p.role,p.branch].some(x=>String(x||'').toLocaleLowerCase('de').includes(q)));
+    return !q||[p.name,p.role,p.branch].some(value=>
+      String(value||'').toLocaleLowerCase('de').includes(q));
   }
   function getPlanning(p){
     const week=currentWeek(),empty=Array(7).fill(null);
