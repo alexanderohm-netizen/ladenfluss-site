@@ -215,3 +215,147 @@
 @media print{
   .staff-pay-section,.staff-position-dialog,.staff-positions-head>.btn,.staff-position-filters,.staff-position-view{display:none!important}
 }
+
+/* Personalfluss · wage-vault v2: monthly cost frame and guarded restore */
+.staff-cost-planner{
+  margin-top:24px;padding:21px;background:#fffdfa;border:1px solid #e4d4d4;
+  border-radius:10px;box-shadow:0 8px 22px #602f3410
+}
+.staff-cost-heading .eyebrow{color:#9a5864;font-size:9px;letter-spacing:.13em}
+.staff-cost-heading h4{font:550 25px/1.16 Georgia,"Times New Roman",serif;
+  color:#742737;letter-spacing:-.05em;margin:9px 0}
+.staff-cost-heading p{color:#7b665d;line-height:1.65;font-size:12px;max-width:850px}
+.staff-cost-form{display:flex;flex-wrap:wrap;align-items:end;gap:13px;margin:20px 0 16px}
+.staff-cost-form label{flex:1 1 205px;display:grid;gap:7px;
+  font-size:11px;line-height:1.4;font-weight:800;color:#643e48}
+.staff-cost-form label small{color:#927c74;line-height:1.5;font-size:10px;
+  font-weight:500;min-height:30px}
+.staff-cost-form input{height:45px;padding:10px 12px;border-radius:7px;
+  width:100%;min-width:0;background:#fff;border:1px solid #ddc8c5;
+  font-size:15px;color:#3b282b}
+.staff-cost-form .btn{min-height:45px;font-size:11px;margin-bottom:28px}
+.staff-cost-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:9px;margin-top:17px}
+.staff-cost-metrics>div{background:#fbf4f1;border:1px solid #ead9d5;
+  padding:13px;border-radius:8px;min-width:0}
+.staff-cost-metrics small{display:block;color:#816965;line-height:1.4;
+  font-size:10px;min-height:28px}
+.staff-cost-metrics strong{display:block;font:600 clamp(16px,1.8vw,23px)/1.25 Georgia,serif;
+  letter-spacing:-.025em;color:#762e3d;margin-top:8px;overflow-wrap:anywhere}
+.staff-cost-metrics .staff-cost-alert{color:#a33142}
+.staff-cost-coverage{font-size:11px;color:#406f57;line-height:1.65;
+  background:#eff6ef;border:1px solid #dae7d8;padding:11px 14px;
+  border-radius:7px;margin-top:15px}
+.staff-cost-coverage.staff-cost-incomplete{color:#88404b;background:#fff1ed;
+  border-color:#e9d0cf}
+.staff-cost-progress-area{margin:16px 0}
+.staff-cost-progress-area[hidden]{display:none!important}
+.staff-cost-progress-area label{display:flex;justify-content:space-between;
+  gap:9px;font-size:11px;color:#755358;font-weight:750}
+.staff-cost-progress-area progress{display:block;width:100%;height:13px;
+  accent-color:#842739;margin-top:8px}
+.staff-pay-restore{margin-top:21px;background:#fffdfa;border:1px solid #e2d2cb;
+  border-radius:9px;overflow:hidden}
+.staff-pay-restore>summary{padding:16px 19px;color:#7f3040;font-size:12px;
+  font-weight:800;cursor:pointer;background:#f8eeeb}
+.staff-pay-restore[open]>summary{border-bottom:1px solid #eadbd5}
+.staff-pay-restore>p,.staff-pay-restore>form,
+.staff-pay-restore>.staff-restore-preview,.staff-pay-restore>.staff-pay-message{
+  margin:15px 18px}
+.staff-pay-restore>p{color:#7b655f;font-size:11px;line-height:1.65}
+.staff-pay-restore p strong{color:#782e3c}
+.staff-pay-restore form{display:flex;align-items:end;flex-wrap:wrap;gap:11px}
+.staff-pay-restore form label{display:grid;gap:7px;flex:1 1 205px;
+  font-size:11px;color:#704a4f;font-weight:760}
+.staff-pay-restore input[type=file],.staff-pay-restore input[type=password]{
+  min-height:43px;border-radius:7px;border:1px solid #e0cbc5;padding:10px;
+  min-width:0;width:100%;background:#fffefa;color:#5e4144;font-size:11px}
+.staff-pay-restore form .btn{min-height:43px}
+.staff-restore-preview{border:1px solid #d9bdc6;border-radius:9px;
+  background:#faf1f2;padding:16px}
+.staff-restore-preview[hidden]{display:none!important}
+.staff-restore-preview>p{font-size:12px;color:#6d3a46;line-height:1.7}
+.staff-restore-confirm{display:flex;align-items:flex-start;gap:10px;
+  font-size:11px;line-height:1.65;color:#634749;margin:15px 0}
+.staff-restore-confirm input{margin-top:3px;flex-shrink:0}
+.staff-restore-preview .btn{margin:5px 8px 5px 0;font-size:11px;white-space:normal}
+.staff-pay-restore .staff-pay-message{font-size:11px}
+.staff-pay-restore .staff-pay-message:empty{display:none}
+@media(max-width:1050px){
+ .staff-cost-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:620px){
+ .staff-cost-planner{padding:16px}
+ .staff-cost-form{display:grid;grid-template-columns:1fr;gap:13px}
+ .staff-cost-form label small{min-height:0}
+ .staff-cost-form .btn{margin-bottom:0}
+ .staff-pay-restore form{display:grid;grid-template-columns:1fr;gap:13px}
+ .staff-pay-restore form .btn{justify-self:start}
+}
+@media(max-width:350px){
+ .staff-cost-metrics{grid-template-columns:1fr}
+ .staff-cost-metrics small{min-height:0}
+ .staff-pay-restore form .btn{width:100%}
+ .staff-restore-preview .btn{width:100%;margin:5px 0}
+}
+@media print{
+ .staff-cost-planner,.staff-pay-restore{display:none!important}
+}
+
+
+/* Simplified per-person compensation: salary is the center of the profile.
+   All advanced budgeting/restoration stays one optional collapsed click away. */
+.staff-pay-simple{background:#fffdfa;border-color:#eadbd3;padding:21px 22px}
+.staff-pay-simple .staff-pay-heading h3{font-size:27px;margin-bottom:6px}
+.staff-pay-simple .staff-pay-explainer{font-size:12px;color:#836a62;margin:6px 0 14px}
+.staff-pay-simple .staff-pay-access{margin-top:13px}
+.staff-pay-simple .staff-pay-access .btn{min-height:45px}
+.staff-pay-simple .staff-pay-wage-simple{display:flex;align-items:end;gap:10px;
+  margin:13px 0 17px;flex-wrap:wrap}
+.staff-pay-simple .staff-pay-wage-simple label{flex:1 1 155px;max-width:285px}
+.staff-pay-simple .staff-pay-wage-simple .btn{min-height:44px;border-radius:7px}
+.staff-pay-main-figures{display:grid;grid-template-columns:minmax(0,1fr);
+  border:1px solid #e6d3d1;background:linear-gradient(130deg,#fff7f3,#fffdf9);
+  border-radius:10px;padding:0 19px}
+.staff-pay-main-figures>div{padding:15px 0;min-width:0}
+.staff-pay-main-figures .staff-pay-hourly{border-bottom:1px solid #e8d8d5}
+.staff-pay-main-figures small{display:block;color:#826963;font-size:11px;
+  font-weight:700;letter-spacing:.012em;line-height:1.4}
+.staff-pay-main-figures strong{display:block;color:#772536;
+  font:550 30px/1.2 Georgia,"Times New Roman",serif;letter-spacing:-.035em;
+  margin:7px 0 0;overflow-wrap:anywhere}
+.staff-pay-main-figures .staff-pay-monthly strong{font-size:clamp(29px,3vw,38px)}
+#staffPayContractBasis{display:block;color:#8b7067;font-size:10px;
+  margin:7px 0 0;line-height:1.45}
+.staff-pay-advanced{margin:15px 0 0;border:1px solid #ecdcd6;
+  border-radius:8px;background:#fffaf7;overflow:hidden}
+.staff-pay-advanced>summary{display:list-item;padding:13px 17px;cursor:pointer;
+  color:#793847;font-size:12px;font-weight:760;background:#f8efed}
+.staff-pay-advanced[open]>summary{border-bottom:1px solid #ebdcd7}
+.staff-pay-extras{padding:15px}
+.staff-pay-extras .staff-cost-planner{margin-top:14px}
+.staff-pay-extra-figures{display:flex;flex-wrap:wrap;gap:11px;align-items:center;
+  font-size:11px;color:#755957}
+.staff-pay-extra-figures>span{flex:1 1 185px}
+.staff-pay-extra-figures strong{color:#703745;margin-left:5px}
+.staff-pay-simple .staff-pay-restore-simple{margin-top:13px;
+  border-color:#f0e5de;background:#fffcf9}
+.staff-pay-simple .staff-pay-restore-simple>summary{
+  background:#fff9f6;font-size:11px;color:#876c67;font-weight:680}
+.staff-pay-privacy-short{font-size:10px;line-height:1.55;
+  color:#937b72;margin:13px 0 0}
+.staff-pay-section [hidden]{display:none!important}
+@media(max-width:610px){
+ .staff-pay-simple{padding:16px}
+ .staff-pay-simple .staff-pay-wage-simple{display:grid;
+   grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .staff-pay-simple .staff-pay-wage-simple label{grid-column:1/-1;max-width:none}
+ .staff-pay-simple .staff-pay-wage-simple .btn{font-size:11px;min-width:0}
+ .staff-pay-main-figures{padding:0 14px}
+ .staff-pay-main-figures strong{font-size:26px}
+ .staff-pay-extras{padding:12px}
+}
+@media(max-width:355px){
+ .staff-pay-simple .staff-pay-wage-simple .btn{grid-column:1/-1}
+ .staff-pay-main-figures .staff-pay-monthly strong{font-size:27px}
+}
