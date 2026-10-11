@@ -1,0 +1,163 @@
+/* Ladenfluss PEP grid v3 – photographic reference inspired workflows,
+ * independently designed in the approved cream / burgundy brand. */
+body:has(.pep-shell){background:#f7f0e9}
+.pep-shell{width:min(1660px,calc(100% - 44px));padding-top:25px}
+.pep-head{padding:31px 36px;margin-bottom:20px;border-radius:12px;
+ background:linear-gradient(115deg,#fffaf6 0%,#f5e8e0 100%);
+ border:1px solid #e4d2c8;box-shadow:0 8px 24px #542d2610}
+.pep-head h1{font-size:clamp(38px,4.2vw,58px);line-height:1.07}
+.pep-head p{font-size:13px;max-width:640px}
+.pep-actions .btn{white-space:nowrap}
+.pep-summary{margin:13px 0 17px}
+.pep-board{border:1px solid #e3d3cb;border-radius:12px;overflow:hidden;
+ box-shadow:0 12px 33px #52302310;background:#fffbf8}
+.pep-board-head{padding:19px 22px;align-items:center}
+.pep-board-head h2{font:550 clamp(20px,2.4vw,28px)/1.15 Georgia,serif;letter-spacing:-.045em;color:#6c2534}
+.week-nav{gap:5px;flex-wrap:wrap}
+.week-nav button{border:1px solid #dfcfc7;background:#fffdfa;border-radius:7px!important;
+ min-height:36px;padding:7px 11px;margin-left:0;color:#743644;font-size:11px;font-weight:750}
+.week-nav button:hover{background:#f7e9e7}
+.pep-board-tools-direct{display:flex;flex-wrap:wrap;align-items:end;gap:12px;
+ padding:16px 21px 12px;border-bottom:0;background:#fffaf7}
+.pep-board-tools-direct label{display:grid;gap:7px;min-width:140px;flex:1 1 165px;
+ font-size:11px;font-weight:800;color:#69534e}
+.pep-board-tools-direct label:nth-child(2){flex:2 1 205px}
+.pep-board-tools-direct label:nth-child(3){max-width:165px}
+.pep-board-tools-direct input,.pep-board-tools-direct select{width:100%;min-height:42px;
+ border:1px solid #dfcec7;border-radius:7px;padding:9px 12px;
+ background:#fff;outline-color:#ab6574;font-size:12px;color:#4c3937}
+.pep-edit-guide{display:flex;gap:10px 20px;align-items:center;flex-wrap:wrap;
+ border-top:1px solid #f1e6df;border-bottom:1px solid #e9d9d0;
+ padding:11px 22px;background:#fffdfa;font-size:10px;color:#725e59}
+.pep-edit-guide>span:not(.pep-board-guide){display:inline-flex;gap:6px;align-items:center;
+ font-weight:740;white-space:nowrap}
+.pep-legend-dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+.pep-legend-work{background:#577aab}.pep-legend-leave{background:#3c9972}.pep-legend-absence{background:#aaa3b6}
+.pep-edit-guide .pep-board-guide{flex:1 1 410px;color:#74615b;font-size:10px;line-height:1.5}
+.pep-edit-guide code,.pep-help code{color:#752d3f;background:#f5e8e5;
+ padding:2px 5px;border-radius:4px;font-size:11px}
+.pep-grid-message{margin:0;padding:0 22px;color:#396952;font-size:11px;line-height:1.65}
+.pep-grid-message:not(:empty){padding-top:9px;padding-bottom:9px;border-bottom:1px solid #e6d9cf}
+.pep-grid-message.error{color:#aa343f;background:#fff1ee}
+.pep-mobile-scroll-note{color:#947d73;padding:9px 22px 12px;margin:0;background:#fffdfa;font-size:10px}
+.pep-table-wrap{overflow:auto;max-width:100%;scrollbar-gutter:stable;
+ background:#fff;overscroll-behavior-inline:contain}
+.pep-table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;table-layout:fixed}
+.pep-table thead th{position:sticky;top:0;z-index:4;
+ background:#f5e9e3;color:#674c49;font-size:10px;text-align:center;
+ border-right:1px solid #e1d2ca;border-bottom:2px solid #d7bcb5;
+ padding:8px 8px;min-width:128px}
+.pep-table th,.pep-table td{vertical-align:middle;padding:7px;border-right:1px solid #eee4df;
+ border-bottom:1px solid #eee6e1}
+.pep-table tbody tr:nth-child(odd) td,.pep-table tbody tr:nth-child(odd) th{background:#fffdfa}
+.pep-table tbody tr:nth-child(even) td,.pep-table tbody tr:nth-child(even) th{background:#fcf7f2}
+.pep-table tbody tr:hover td,.pep-table tbody tr:hover th{background:#faf0ed}
+.pep-table .pep-employee,.pep-table .pep-sticky-employee{
+ position:sticky;left:0;min-width:184px;width:184px;max-width:184px;
+ z-index:5;text-align:left;border-right:1px solid #e4d4cc;
+ box-shadow:4px 0 8px rgba(60,34,32,.045)}
+.pep-table thead .pep-sticky-employee{z-index:9}
+.pep-table tbody .pep-employee{background:#fffdfa}
+.pep-table .pep-employee strong{display:block;font-size:12px;
+ color:#4b3534;overflow-wrap:anywhere;font-weight:800;line-height:1.4}
+.pep-table .pep-employee span{display:block;font-size:10px;color:#826e67;
+ font-weight:550;line-height:1.45;margin-top:4px}
+.pep-table .pep-sticky-metric,.pep-table .pep-compare{
+ min-width:85px;width:85px;max-width:85px;text-align:center;font-size:11px;
+ color:#543e3b;font-weight:750;white-space:nowrap}
+.pep-table thead .pep-sticky-metric{z-index:8}
+.pep-table :is(thead th:nth-child(2),tbody td:nth-child(2),tfoot td:nth-child(2)){
+ position:sticky;left:184px;z-index:5}
+.pep-table :is(thead th:nth-child(3),tbody td:nth-child(3),tfoot td:nth-child(3)){
+ position:sticky;left:269px;z-index:5}
+.pep-table :is(thead th:nth-child(4),tbody td:nth-child(4),tfoot td:nth-child(4)){
+ position:sticky;left:354px;z-index:5;box-shadow:4px 0 8px #3823240a}
+.pep-table thead th:nth-child(2),.pep-table thead th:nth-child(3),.pep-table thead th:nth-child(4){z-index:8}
+.pep-table .pep-target{color:#786960}
+.pep-table .pep-planned{color:#6b2436;font-weight:850}
+.pep-table .pep-delta.ok{background:#eaf5eb!important;color:#376d4b}
+.pep-table .pep-delta.low{background:#fff3e2!important;color:#9c5b25}
+.pep-table .pep-delta.high{background:#ffe9e5!important;color:#ab4744}
+.pep-table .pep-week-label{display:block;color:#98796d;font-size:9px;
+ letter-spacing:.075em;min-height:14px}
+.pep-table .pep-day-label{display:block;color:#694b49;font-size:10px;font-weight:850;margin-top:2px}
+.pep-table thead th.pep-today{background:#efe0dc}
+.pep-table thead th.pep-second-week{border-left:3px solid #a78d87}
+.pep-table .pep-grid-slot{min-width:130px;width:130px;max-width:130px;padding:6px!important}
+.pep-table .pep-grid-slot:nth-child(11){border-left:3px solid #d7beb9}
+.pep-grid-slot :is(.shift-chip,.empty-shift,.absence-chip){
+ border-radius:6px;min-height:54px;width:100%;text-align:left;outline-offset:1px;
+ box-shadow:none!important;transition:background .12s ease}
+.pep-grid-slot .shift-chip{background:#eaf0fa;color:#355679;
+ border:1px solid #c8d9ef;padding:8px 10px;gap:2px}
+.pep-grid-slot .shift-chip:hover{background:#dce9fa;border-color:#789bca}
+.pep-grid-slot .shift-chip strong{color:#2d5281;font-size:11px;font-variant-numeric:tabular-nums}
+.pep-grid-slot .shift-chip span{color:#5c718a;font-size:9px}
+.pep-grid-slot .empty-shift{background:transparent;color:#b9a5a0;
+ border:1px dashed #e8d9d3;display:flex;align-items:center;justify-content:center;gap:8px;
+ font-size:17px;font-weight:600}
+.pep-grid-slot .empty-shift small{font-size:10px;color:#a18c83}
+.pep-grid-slot .empty-shift:hover{background:#f7eeea;border-color:#ae7c7e;color:#783040}
+.pep-grid-slot .absence-chip{background:#edeaf1;border:1px solid #d9d4e0;
+ color:#675575;padding:8px 10px}
+.pep-grid-slot .absence-chip strong{font-size:11px}
+.pep-grid-slot .absence-chip span{font-size:9px;color:#81738a}
+.pep-grid-slot .pep-vacation{background:#dcf2e6;color:#216746;
+ border:1px solid #8fcbaa;border-radius:5px}
+.pep-grid-slot .pep-vacation strong{color:#236e4b}
+.pep-grid-slot .pep-vacation span{color:#417b5d}
+.pep-grid-slot .pep-vacation.run-first.run-cont{border-top-right-radius:0;border-bottom-right-radius:0}
+.pep-grid-slot .pep-vacation.run-mid{border-left-width:4px;border-radius:0}
+.pep-grid-slot .pep-vacation.run-last{border-top-left-radius:0;border-bottom-left-radius:0}
+.pep-grid-slot.has-conflict{background:#ffe9e5!important}
+.pep-grid-slot.has-conflict .shift-chip{background:#fff1ef;border-color:#cf6961}
+.pep-inline-editor{display:grid;gap:5px;padding:4px;background:#fff9f5;border:1px solid #b97883;
+ border-radius:7px;min-height:60px}
+.pep-inline-input{min-width:0;width:100%;min-height:34px;background:#fff;border:1px solid #d5bac0;
+ color:#613747;font-size:12px;padding:5px 7px;border-radius:4px;font-variant-numeric:tabular-nums}
+.pep-inline-input:focus{outline:2px solid #914f5d;outline-offset:0}
+.pep-inline-input[aria-invalid="true"]{border-color:#b7424c}
+.pep-inline-status{font-size:9px;color:#836c65;line-height:1.35}
+.pep-inline-status.error{color:#a22d3b;font-weight:700}
+.pep-table tfoot th,.pep-table tfoot td{background:#f2e7e2!important;color:#614346;
+ font-size:10px;font-weight:850;text-align:center;padding:11px 7px}
+.pep-table tfoot th{position:sticky;left:0;z-index:5;text-align:left}
+.pep-table tfoot td:nth-child(2),.pep-table tfoot td:nth-child(3),.pep-table tfoot td:nth-child(4){background:#f2e7e2!important}
+.pep-table [hidden]{display:none!important}
+.pep-help{gap:10px}
+.pep-help article{background:#fffaf6;border:1px solid #eadbd0;border-radius:8px;padding:14px 16px}
+@media(max-width:950px){
+ .pep-head{padding:25px}
+ .pep-shell{width:calc(100% - 30px)}
+ .pep-table .pep-employee,.pep-table .pep-sticky-employee{width:155px;min-width:155px;max-width:155px}
+ .pep-table :is(thead th:nth-child(2),tbody td:nth-child(2),tfoot td:nth-child(2)){left:155px}
+ .pep-table :is(thead th:nth-child(3),tbody td:nth-child(3),tfoot td:nth-child(3)){left:240px}
+ .pep-table :is(thead th:nth-child(4),tbody td:nth-child(4),tfoot td:nth-child(4)){left:325px}
+}
+@media(max-width:650px){
+ .pep-head{padding:22px 19px}
+ .pep-head h1{font-size:39px}
+ .pep-board-tools-direct{padding:12px}
+ .pep-board-tools-direct label:nth-child(3){max-width:none}
+ .pep-edit-guide{padding:11px 13px}
+ .pep-table .pep-employee,.pep-table .pep-sticky-employee{width:126px;min-width:126px;max-width:126px}
+ .pep-table .pep-sticky-employee{position:sticky;left:0}
+ .pep-table :is(thead th:nth-child(2),tbody td:nth-child(2),tfoot td:nth-child(2)){
+   position:static}
+ .pep-table :is(thead th:nth-child(3),tbody td:nth-child(3),tfoot td:nth-child(3)){position:static}
+ .pep-table :is(thead th:nth-child(4),tbody td:nth-child(4),tfoot td:nth-child(4)){position:static}
+ .pep-table .pep-sticky-metric,.pep-table .pep-compare{min-width:75px;width:75px;max-width:75px}
+ .pep-table .pep-grid-slot{min-width:118px;width:118px;max-width:118px}
+ .pep-board-head{padding:15px}
+ .pep-board-head h2{font-size:22px}
+}
+@media print{
+ @page{size:landscape}
+ .pep-board-tools-direct,.pep-edit-guide,.pep-grid-message,.pep-mobile-scroll-note,
+ .pep-help,.pep-daycheck-section{display:none!important}
+ .pep-board{overflow:visible;box-shadow:none!important}
+ .pep-table-wrap{overflow:visible;max-width:none}
+ .pep-table{width:100%;min-width:0;font-size:9px}
+ .pep-table th,.pep-table td{position:static!important;box-shadow:none!important}
+ .pep-grid-slot .empty-shift{color:transparent}
+}
