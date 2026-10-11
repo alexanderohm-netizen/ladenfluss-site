@@ -34,7 +34,7 @@
 <h2>Dein Unternehmen</h2>
 <form class="account-form onboarding-form" id="companyOnboarding">
 <label>Wie heißt dein Unternehmen?
-<input id="company_name" autocomplete="organization" required placeholder="z. B. Musterladen GmbH">
+<input id="company_name" autocomplete="organization" minlength="2" maxlength="120" required placeholder="z. B. Musterladen GmbH">
 <span class="field-hint">Der Name, unter dem dein Geschäft geführt wird.</span></label>
 
 <label>Was verkaufst du hauptsächlich?
@@ -55,7 +55,7 @@
 <div class="onboarding-divider"><span>Erste Filiale</span></div>
 
 <label>Wie heißt dein Standort?
-<input id="branch_name" required placeholder="z. B. Innenstadt oder Bad Homburg">
+<input id="branch_name" minlength="2" maxlength="80" required placeholder="z. B. Innenstadt oder Bad Homburg">
 <span class="field-hint">Ein einfacher Name reicht. Adresse und weitere Daten können später ergänzt werden.</span></label>
 
 <div class="onboarding-two">
