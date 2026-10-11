@@ -316,18 +316,116 @@ document.addEventListener('DOMContentLoaded',()=> {
     absenceDlg.showModal();
   }
 
+  function saveGridEntry(eid,day,text){
+    const employee=employees.find(person=>person.id===eid);
+    if(!employee||!Number.isInteger(day)||day<0||day>=dayCount())
+      throw new Error('Das ausgewählte Mitarbeiterfeld ist nicht mehr verfügbar.');
+    const op=typed.parse(text);
+    if(op.type==='noop')return false;
+    const week=weekFor(day),slot=day%7;
+    const existingShift=rowShift(employee,day);
+    const manual=rowManualAbsence(employee,day);
+    const vacation=absenceAt(employee,day)==='Urlaub'&&!manual;
+    if(vacation&&!(op.type==='clear'&&existingShift))
+      throw new Error('Genehmigter Urlaub wird im Urlaubsplaner bearbeitet. Keine Schicht darüber speichern.');
+    if(op.type==='shift'&&manual)
+      throw new Error('Hier ist eine Abwesenheit eingetragen. Bitte zuerst mit - entfernen.');
+    if(op.type==='absence'&&existingShift)
+      throw new Error('Hier steht eine Schicht. Bitte zuerst mit - entfernen.');
+    const sourceShifts=store.ensureEmployeeShiftRows(team,store.getShifts(week));
+    const sourceAbsences=store.ensureEmployeeAbsenceRows(team,store.getAbsences(week));
+    let change='';
+    if(op.type==='shift'){
+      sourceShifts[eid][slot]=op.shift;
+      store.saveShifts(sourceShifts,week);
+      change='Schicht gespeichert';
+    }else if(op.type==='absence'){
+      sourceAbsences[eid][slot]=op.reason;
+      store.saveAbsences(sourceAbsences,week);
+      change='Abwesenheit gespeichert';
+    }else if(op.type==='clear'){
+      if(existingShift){
+        sourceShifts[eid][slot]=null;
+        store.saveShifts(sourceShifts,week);
+        change='Schicht entfernt';
+      }else if(manual){
+        sourceAbsences[eid][slot]=null;
+        store.saveAbsences(sourceAbsences,week);
+        change='Abwesenheit entfernt';
+      }else return false;
+    }
+    if(day<7){employee.shifts=sourceShifts[eid];employee.absences=sourceAbsences[eid];}
+    else{secondShifts=sourceShifts;secondAbsences=sourceAbsences;}
+    store.savePlanStatus('draft',week);
+    if(day<7)published=false;
+    render();
+    const weekday=['Mo','Di','Mi','Do','Fr','Sa','So'][day%7];
+    gridNotice(change+' · '+weekday+' · '+employee.name+(day>=7?' · Woche 2':'')+'.');
+    return true;
+  }
+  function activateCell(button,firstKey=null){
+    const eid=button.dataset.gridE,day=Number(button.dataset.gridD);
+    const employee=employees.find(p=>p.id===eid);
+    if(!employee||!Number.isInteger(day)||day<0||day>=dayCount())return;
+    const td=button.closest('td');
+    if(!td||td.querySelector('.pep-inline-input'))return;
+    const current=rowShift(employee,day);
+    const absence=rowManualAbsence(employee,day);
+    const input=document.createElement('input');
+    input.className='pep-inline-input';
+    input.type='text';
+    input.inputMode='text';
+    input.autocomplete='off';
+    input.spellcheck=false;
+    input.maxLength=32;
+    input.placeholder='9-17/30, Frei, Urlaub';
+    input.setAttribute('aria-label','Dienstplan direkt bearbeiten: '+employee.name+', Tag '+(day+1));
+    const status=document.createElement('small');
+    status.className='pep-inline-status';
+    status.textContent='Enter: speichern · Esc: abbrechen';
+    const previous=current?typed.format(current):absence||'';
+    input.value=firstKey===null?previous:firstKey;
+    const editor=document.createElement('div');editor.className='pep-inline-editor';
+    editor.append(input,status);
+    td.replaceChildren(editor);
+    let finished=false;
+    const cancel=()=>{if(finished)return;finished=true;render();};
+    const commit=()=>{
+      if(finished)return;
+      try{
+        const didSave=saveGridEntry(eid,day,input.value);
+        finished=true;
+        if(!didSave){render();gridNotice('Keine Änderung vorgenommen.');}
+      }catch(error){
+        status.textContent=error.message;
+        status.classList.add('error');
+        gridNotice(error.message,true);
+        input.setAttribute('aria-invalid','true');
+        input.focus();
+      }
+    };
+    input.addEventListener('keydown',event=>{
+      if(event.key==='Enter'){event.preventDefault();commit();}
+      else if(event.key==='Escape'){event.preventDefault();cancel();}
+    });
+    input.addEventListener('blur',()=>{if(!finished)commit();});
+    input.focus();
+    if(firstKey===null)input.select();
+  }
   function bindCells(){
-    document.querySelectorAll('.empty-shift,.shift-chip').forEach(b=>{b.onclick=()=>openDialog(b.dataset.e,Number(b.dataset.d));});
-    document.querySelectorAll('.absence-chip').forEach(b=>{
-      b.onclick=()=>{
-        const emp=employees.find(e=>e.id===b.dataset.ae);
-        const day=Number(b.dataset.ad);
-        if(emp && !emp.absences[day] && absenceAt(emp,day)==='Urlaub'){
-          window.location.href='/tools/urlaubsplaner';
-          return;
+    body.querySelectorAll('.pep-grid-trigger').forEach(button=>{
+      button.addEventListener('click',()=>activateCell(button));
+      button.addEventListener('keydown',event=>{
+        if(event.key.length===1&&!event.ctrlKey&&!event.metaKey&&!event.altKey){
+          event.preventDefault();activateCell(button,event.key);
         }
-        openAbsence(b.dataset.ae,day);
-      };
+      });
+    });
+    body.querySelectorAll('.pep-approved-vacation').forEach(button=>{
+      button.addEventListener('click',()=>{
+        gridNotice('Dieser Urlaub ist im Urlaubsplaner genehmigt. Zum Bearbeiten den Urlaubsplaner öffnen.');
+        window.location.href='/tools/urlaubsplaner';
+      });
     });
   }
 
