@@ -24,7 +24,7 @@ BEGIN
       USING ERRCODE = '42501';
   END IF;
 
-  IF p_company_name IS NULL OR length(btrim(p_company_name)) NOT BETWEEN 2 AND 140
+  IF p_company_name IS NULL OR length(btrim(p_company_name)) NOT BETWEEN 2 AND 120
      OR p_branch_name IS NULL OR length(btrim(p_branch_name)) NOT BETWEEN 2 AND 80
      OR p_retail_type IS NULL OR p_retail_type NOT IN (
        'Lebensmittel','Mode & Textil','Drogerie & Beauty',
