@@ -192,3 +192,24 @@
  .ref-module-card{transition:none}
  .ref-module-card:hover{transform:none}
 }
+
+/* 2.1 refinements: make the approved warm editorial visual more consistent */
+.lf-reference-home .ref-hero{background:#f8f0e6;min-height:540px}
+.lf-reference-home .ref-hero-layout{min-height:540px}
+.lf-reference-home .ref-hero-copy h1{font-size:clamp(58px,6vw,90px);line-height:1.01;color:#7c101c}
+.lf-reference-home .ref-hero-copy p{font-size:16px;max-width:520px;line-height:1.68}
+.lf-reference-home .ref-hero-note{border-color:#e8d2c4;background:#fffbf4f5;box-shadow:0 15px 38px #5a2f231b}
+.lf-reference-home .ref-modules-grid{border-color:#e6d3c8;box-shadow:0 19px 44px #5a2d2416}
+.lf-reference-home .ref-module-card{min-height:214px;border-color:#edddd4;box-shadow:0 4px 15px #6137210c}
+.lf-reference-home .ref-module-card:hover{border-color:#b77a81;box-shadow:0 12px 24px #61372119}
+.lf-reference-home .ref-benefits{background:#f6ede3}
+.lf-reference-home .ref-benefits h2{color:#741f2c}
+.lf-reference-home .ref-story{background:linear-gradient(110deg,#f5e8dc,#fff9f2)}
+.lf-reference-home .ref-story-content h2{font-size:clamp(31px,3vw,39px);line-height:1.1;max-width:460px}
+.lf-reference-home .ref-story-facts{background:#fffcf7e6}
+.lf-reference-home .ref-last{background:linear-gradient(115deg,#7b1523,#591923)}
+@media(max-width:760px){
+ .lf-reference-home .ref-hero-copy h1{font-size:clamp(46px,10vw,66px)}
+ .lf-reference-home .ref-hero,.lf-reference-home .ref-hero-layout{min-height:0}
+ .lf-reference-home .ref-hero-copy p{font-size:14px}
+}
