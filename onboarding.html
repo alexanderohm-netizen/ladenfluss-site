@@ -19,7 +19,7 @@
 
 <main id="main" class="account-shell onboarding-shell">
 <section class="account-intro">
-<span class="eyebrow">Ladenfluss v1.4</span>
+<span class="eyebrow">Ladenfluss · Cloud-Beta</span>
 <h1>Erzähl uns kurz von deinem Laden.</h1>
 <p>Nur das Nötigste. Keine Formulare voller Fachbegriffe. Diese Angaben bilden später die Grundlage für Dienstpläne, Zahlenfluss, Warenfluss und deine persönlichen Hinweise.</p>
 <div class="account-flow"><span>✓ Konto</span><span class="active-step">2 · Unternehmen</span><span>3 · Filiale</span><span>4 · Dashboard</span></div>
@@ -34,7 +34,7 @@
 <h2>Dein Unternehmen</h2>
 <form class="account-form onboarding-form" id="companyOnboarding">
 <label>Wie heißt dein Unternehmen?
-<input id="company_name" autocomplete="organization" required placeholder="z. B. Musterladen GmbH">
+<input id="company_name" autocomplete="organization" minlength="2" maxlength="120" required placeholder="z. B. Musterladen GmbH">
 <span class="field-hint">Der Name, unter dem dein Geschäft geführt wird.</span></label>
 
 <label>Was verkaufst du hauptsächlich?
@@ -50,19 +50,12 @@
 </select>
 </label>
 
-<label>Wie viele Standorte hast du aktuell?
-<select id="company_locations" required>
-<option value="1">1 Standort</option>
-<option value="2-5">2–5 Standorte</option>
-<option value="6-20">6–20 Standorte</option>
-<option value="20+">Mehr als 20 Standorte</option>
-</select>
-</label>
+<p class="field-hint">Wir richten zunächst deine erste Filiale ein. Weitere Standorte kannst du später hinzufügen.</p>
 
 <div class="onboarding-divider"><span>Erste Filiale</span></div>
 
 <label>Wie heißt dein Standort?
-<input id="branch_name" required placeholder="z. B. Innenstadt oder Bad Homburg">
+<input id="branch_name" minlength="2" maxlength="80" required placeholder="z. B. Innenstadt oder Bad Homburg">
 <span class="field-hint">Ein einfacher Name reicht. Adresse und weitere Daten können später ergänzt werden.</span></label>
 
 <div class="onboarding-two">
@@ -74,10 +67,13 @@
 
 <button class="btn btn-primary" type="submit">Unternehmen einrichten →</button>
 </form>
-<div class="auth-status" id="onboardingStatus"><strong>v1.4 Entwicklung</strong><span>Die Oberfläche ist vorbereitet. Dauerhaft gespeichert werden Unternehmensdaten erst, sobald die sichere Kontodatenbank angebunden ist.</span></div>
+<div class="auth-status" id="onboardingStatus" role="status" aria-live="polite"><strong>Cloud-Beta in Vorbereitung</strong><span>Die Speicherung wird erst nach den Sicherheitsprüfungen aktiviert.</span></div>
 </section>
 </main>
 
-<footer class="site-footer"><div class="container"><div class="footer-bottom"><span>© 2026 Ladenfluss · betrieben durch AO-Shop</span><span>v1.4 · Kundenbereich</span></div></div></footer>
-<script src="/assets/site.js" defer></script><script src="/assets/onboarding.js" defer></script>
+<footer class="site-footer"><div class="container"><div class="footer-bottom"><span>© 2026 Ladenfluss · betrieben durch AO-Shop</span><span>Cloud-Beta · Kundenbereich</span></div></div></footer>
+<script src="/assets/site.js" defer></script><script src="/assets/cloud-config.js" defer></script>
+<script src="/assets/supabase-browser.js" defer></script>
+<script src="/assets/auth-core.js" defer></script>
+<script src="/assets/onboarding.js" defer></script>
 </body></html>

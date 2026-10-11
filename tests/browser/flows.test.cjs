@@ -242,7 +242,7 @@ for (const width of [1440, 390, 320]) {
     assert.equal(await page.locator('.ref-kpi-card').count(),6);
     assert.equal(await page.locator('.ref-panel').count(),6);
     assert.equal(await page.locator('.ref-pep-preview tbody tr').count(),3);
-    assert.equal(await page.locator('#refKpiCloud').innerText(),'Lokal');
+    assert.equal(await page.locator('#refKpiCloud').innerText(),'Beta');
     assert.equal(await page.locator('#refKpiSales').innerText(),'–');
     assert.equal(await page.locator('#refKpiStock').innerText(),'–');
     assert.equal(await page.locator('#refKpiApplicants').innerText(),'–');
@@ -399,7 +399,7 @@ test('Referenz-Cockpit zeigt echte PEP-, Urlaubs- und Teamdaten statt fiktiver G
   assert.equal(await page.locator('#refKpiSales').innerText(),'–');
   assert.equal(await page.locator('#refKpiStock').innerText(),'–');
   assert.equal(await page.locator('#refKpiApplicants').innerText(),'–');
-  assert.equal(await page.locator('#refKpiCloud').innerText(),'Lokal');
+  assert.equal(await page.locator('#refKpiCloud').innerText(),'Beta');
   assert.match(await page.locator('#refPepBody').innerText(),/Anna Müller/);
   assert.equal(await page.locator('.ref-hour-col').count(),7);
   await page.locator('#refDashboardQuery').fill('Urlaub');

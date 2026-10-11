@@ -55,7 +55,10 @@ document.addEventListener('DOMContentLoaded',()=>{
     $('refKpiSales').textContent='–';
     $('refKpiStock').textContent='–';
     $('refKpiApplicants').textContent='–';
-    $('refKpiCloud').textContent='Lokal';
+    const betaActive=window.LadenflussSupabase?.isEnabled?.() === true;
+    $('refKpiCloud').textContent=betaActive?'Beta':'Lokal';
+    const cloudNote=$('refKpiCloud').nextElementSibling;
+    if (cloudNote) cloudNote.textContent=betaActive?'Ladenprofil: manueller Abgleich':'Noch nicht aktiviert';
     let attention=0;
     for(const key of ['countCritical','countImportant'])attention+=Number($(key)?.textContent||0);
     $('refAlertCount').textContent=attention>9?'9+':String(attention);
@@ -240,6 +243,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelector('.ref-all-insights')?.addEventListener('click',()=>{
     $('refDetailedSignals').open=true;
   });
+  window.addEventListener('ladenfluss:profile-updated',redraw);
   window.addEventListener('storage',e=>{
     if(e.key===null||e.key.startsWith('ladenfluss.'))redraw();
   });
