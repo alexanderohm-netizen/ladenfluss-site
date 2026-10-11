@@ -292,7 +292,13 @@ document.addEventListener('DOMContentLoaded',()=>{
       lockUI();
       importStatus(result.employeeCount+' Einträge importiert. Tresor gesperrt: bitte mit der Passphrase der Sicherungsdatei erneut entsperren.');
     }catch(err){importStatus(err.message,true);}
-    finally{busy=false;$('staffRestoreApply').disabled=false;}
+    finally{
+      busy=false;
+      $('staffRestoreApply').disabled=false;
+      // A successful import called lockUI() while busy=true, so the
+      // passphrase form must be enabled after the import finishes.
+      renderAccess();
+    }
   });
   window.addEventListener('storage',event=>{
     if(event.key!==api.key&&event.key!==null)return;
