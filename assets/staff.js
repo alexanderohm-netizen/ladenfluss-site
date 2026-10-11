@@ -149,6 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
     roleBlock.append(roleHead);
     roleBlock.append(node('p','',role?.summary||'Für diese Stelle ist noch keine Aufgabenbeschreibung hinterlegt.'));
     if(role){
+      roleBlock.append(node('p','staff-position-role-responsibility','Verantwortung: '+role.responsibility));
       const facts=node('div','staff-employee-position-facts');
       for(const [name,values] of [['Aufgaben',role.tasks.slice(0,3)],['Anforderungen',role.requirements.slice(0,3)]]){
         const item=node('div');
