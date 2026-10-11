@@ -141,6 +141,10 @@ test('browser bootstrap caches PASSWORD_RECOVERY and invalidates it on new login
   win.LadenflussSupabase.subscribeRecovery(id=>notifications.push(id));
   listeners[0]('PASSWORD_RECOVERY',{user:{id:USER_ID}});
   assert.equal(win.LadenflussSupabase.getRecoveryUserId(),USER_ID);
+  // Same-user SIGNED_IN may be emitted by Supabase after a PKCE recovery
+  // redirect; preserving this transient event is required for the reset form.
+  listeners[0]('SIGNED_IN',{user:{id:USER_ID}});
+  assert.equal(win.LadenflussSupabase.getRecoveryUserId(),USER_ID);
   listeners[0]('SIGNED_IN',{user:{id:OTHER_ID}});
   assert.equal(win.LadenflussSupabase.getRecoveryUserId(),null);
   listeners[0]('PASSWORD_RECOVERY',{user:{id:USER_ID}});
