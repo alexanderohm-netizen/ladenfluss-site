@@ -242,11 +242,16 @@ document.addEventListener('DOMContentLoaded',()=> {
 
   function renderWeekHeader(){
     const days=['Mo','Di','Mi','Do','Fr','Sa','So'];
-    const dates=Array.from({length:7},(_,i)=>{const d=new Date(weekStart);d.setDate(d.getDate()+i);return d});
+    const dates=Array.from({length:dayCount()},(_,i)=>{const d=new Date(weekStart);d.setDate(d.getDate()+i);return d});
     const fmt=d=>d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
     const state=shop.state||'HE';
-    document.getElementById('weekTitle').textContent=fmt(dates[0])+'–'+fmt(dates[6]);
-    document.getElementById('pepDays').innerHTML='<th>Mitarbeiter</th>'+dates.map((d,i)=>{const holiday=window.LadenflussHolidays?.getHoliday(d,state);return '<th class="'+(holiday?'holiday':'')+'">'+days[i]+' '+String(d.getDate()).padStart(2,'0')+'.'+(holiday?'<small>'+holiday+'</small>':'')+'</th>'}).join('')+'<th>Summe</th>';
+    document.getElementById('weekTitle').textContent=fmt(dates[0])+'–'+fmt(dates[dates.length-1])+(dayCount()===14?' · zwei Wochen':' · eine Woche');
+    document.getElementById('pepDays').innerHTML='<th scope="col" class="pep-sticky-employee">Mitarbeitende</th><th scope="col" class="pep-sticky-metric">Soll</th><th scope="col" class="pep-sticky-metric">Geplant</th><th scope="col" class="pep-sticky-metric">+ / −</th>'+
+      dates.map((d,i)=>{
+        const holiday=window.LadenflussHolidays?.getHoliday(d,state);
+        const today=window.LadenflussPlanning.iso(d)===window.LadenflussPlanning.iso(new Date());
+        return '<th scope="col" class="'+(holiday?'holiday ':'')+(today?'pep-today ':'')+(i===7?'pep-second-week':'')+'"><span class="pep-week-label">'+(i===0||i===7?'Woche '+(i===0?'1':'2'):'&nbsp;')+'</span><span class="pep-day-label">'+days[i%7]+' '+fmt(d)+'</span>'+(holiday?'<small>'+escape(holiday)+'</small>':'')+'</th>';
+      }).join('');
   }
 
   function renderDayCheck(){
