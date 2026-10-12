@@ -195,10 +195,10 @@ document.addEventListener('DOMContentLoaded',()=> {
           const startMinutes=mins(shift[0]),endMinutes=mins(shift[1]);
           const left=startMinutes===null?0:Math.max(0,Math.min(100,((startMinutes-360)/960)*100));
           const right=endMinutes===null?left:Math.max(left,Math.min(100,((endMinutes-360)/960)*100));
-          const timeline='<span class="pep-shift-timeline" aria-hidden="true"><i style="left:'+left.toFixed(2)+'%;width:'+Math.max(0,right-left).toFixed(2)+'%"></i></span>';
-          const confirm=pendingReplacement?.eid===e.id&&pendingReplacement.day===i
-            ?`<div class="pep-replace-confirm"><span>Vorhandene Schicht ersetzen?</span><button type="button" class="pep-confirm-replace" data-confirm-e="${escape(e.id)}" data-confirm-d="${i}">Ersetzen</button><button type="button" class="pep-cancel-replace">Abbrechen</button></div>`:'';
-          return `<td class="pep-grid-slot ${absence?'has-conflict':''}"><div class="pep-cell-actions"><button type="button" class="shift-chip pep-grid-trigger" data-grid-e="${escape(e.id)}" data-grid-d="${i}" aria-label="${title}Schicht ${escape(shift[0])} bis ${escape(shift[1])}, direkt bearbeiten" title="Klicken und Schichtzeit eintippen"><strong>${escape(shift[0])}–${escape(shift[1])}</strong><span>${fmt(hours(shift))} h · ${escape(String(shift[2]))} Min Pause</span>${timeline}</button><button type="button" class="pep-copy-btn" data-copy-e="${escape(e.id)}" data-copy-d="${i}" aria-label="Schicht von ${title}kopieren" title="Schicht kopieren">⧉</button>${copiedShift?`<button type="button" class="pep-paste-btn" data-paste-e="${escape(e.id)}" data-paste-d="${i}" aria-label="Kopierte Schicht bei ${title}einfügen" title="Hier einfügen">Einfügen</button>`:''}${confirm}</div></td>`;
+          const phase=startMinutes<720?'early':'late';
+          const phaseLabel=phase==='early'?'Früh':'Spät';
+          const timeline='<span class="pep-diagram-track" aria-hidden="true"><i class="pep-diagram-bar" style="left:'+left.toFixed(2)+'%;width:'+Math.max(0,right-left).toFixed(2)+'%"></i></span>';
+          return `<td class="pep-grid-slot ${absence?'has-conflict':''}"><button type="button" class="shift-chip pep-grid-trigger pep-shift-${phase}" data-grid-e="${escape(e.id)}" data-grid-d="${i}" aria-label="${title}${phaseLabel}schicht ${escape(shift[0])} bis ${escape(shift[1])}, ${fmt(hours(shift))} Stunden; klicken zum Bearbeiten"><span class="pep-shift-heading"><strong>${escape(shift[0])}–${escape(shift[1])}</strong><em class="pep-shift-phase">${phaseLabel}</em></span>${timeline}<span class="pep-diagram-scale" aria-hidden="true"><i>06</i><i>10</i><i>14</i><i>18</i><i>22</i></span><span class="pep-shift-meta">${fmt(hours(shift))} h · ${escape(String(shift[2]))} Min Pause</span></button></td>`;
         }
         if(absence){
           const before=i>0&&absenceAt(e,i-1)===absence;
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded',()=> {
           const group=absence==='Urlaub'?(' pep-vacation '+(before?'run-mid':'run-first')+(after?' run-cont':' run-last')):'';
           return `<td class="pep-grid-slot pep-absence-slot"><button type="button" class="absence-chip${group}${vacation?' pep-approved-vacation':' pep-grid-trigger'}" ${vacation?`data-ae="${escape(e.id)}" data-ad="${i}"`:`data-grid-e="${escape(e.id)}" data-grid-d="${i}"`} aria-label="${title}${escape(absence)}${vacation?', im Urlaubsplaner ändern':', direkt bearbeiten'}"><strong>${escape(absence)}</strong><span>${vacation?'Genehmigt':'Abwesend'}</span></button></td>`;
         }
-        return `<td class="pep-grid-slot"><div class="pep-cell-actions"><button type="button" class="empty-shift pep-grid-trigger" data-grid-e="${escape(e.id)}" data-grid-d="${i}" aria-label="${title}Schicht eingeben"><span aria-hidden="true">+</span><small>Eintragen</small></button>${copiedShift?`<button type="button" class="pep-paste-btn" data-paste-e="${escape(e.id)}" data-paste-d="${i}" aria-label="Kopierte Schicht bei ${title}einfügen" title="Hier einfügen">Einfügen</button>`:''}</div></td>`;
+        return `<td class="pep-grid-slot"><button type="button" class="empty-shift pep-grid-trigger" data-grid-e="${escape(e.id)}" data-grid-d="${i}" aria-label="${title}Schicht eingeben"><span aria-hidden="true">+</span><small>Eintragen</small></button></td>`;
       }).join('');
       const deltaClass=difference>5?'high':difference< -8?'low':'ok';
       const signed=(difference>0?'+':'')+fmt(difference)+' h';
