@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="/assets/staff.css">
 <link rel="stylesheet" href="/assets/staff-v2.css">
 <link rel="stylesheet" href="/assets/staff-simplified.css">
+<link rel="stylesheet" href="/assets/staff-profile-modern.css">
 </head>
 <body class="staff-v2-body">
 <a class="skip-link" href="#main">Zum Inhalt</a>
@@ -38,7 +39,7 @@
   <div class="staff-storage-note" role="note">
     <strong>Bitte beachten:</strong> Diese Version speichert Teamdaten nur in diesem Browser.
     Stundenlöhne werden hier ohne zusätzliches Passwort direkt im Browser gespeichert. Verwende dafür nur ein persönliches, geschütztes Gerät – nicht gemeinsam genutzte Kassen-PCs.
-    Die Cloud-Synchronisierung ist hier noch nicht aktiv.
+    Private Personalangaben (Adresse, IBAN, Staatsangehörigkeit, Aufenthalt) werden separat verschlüsselt und nur nach Eingabe einer Passphrase geöffnet. Diese Daten werden nicht in PEP, Urlaubsplaner oder die Cloud übertragen. Die Passphrase kann nicht zurückgesetzt werden.
   </div>
   <div id="staffError" class="staff-error" role="alert" hidden></div>
   <p id="staffStatus" class="staff-status" role="status" aria-live="polite"></p>
@@ -53,6 +54,11 @@
     <a href="/pep"><span class="staff-quick-symbol" aria-hidden="true">▦</span><span><strong>Dienstplan</strong><small>Schichten und Stunden planen</small></span><span aria-hidden="true">↗</span></a>
     <a href="/tools/urlaubsplaner"><span class="staff-quick-symbol" aria-hidden="true">◫</span><span><strong>Urlaubsplaner</strong><small>Urlaubszeiten und Resttage prüfen</small></span><span aria-hidden="true">↗</span></a>
   </nav>
+
+  <section class="staff-role-board" aria-labelledby="roleBoardTitle">
+    <div class="staff-role-head"><div><span class="eyebrow">DEINE STELLENPROFILE</span><h2 id="roleBoardTitle">Rollen. Klar definiert.</h2><p>Alle Tätigkeiten aus deinem Team – übersichtlich, ohne doppelte Stammdaten.</p></div><span class="staff-role-count" id="staffRoleCount"></span></div>
+    <div class="staff-role-grid" id="staffRoleGrid"></div>
+  </section>
 
   <section class="staff-list-wrap" aria-labelledby="staffListTitle">
     <div class="staff-toolbar">
@@ -74,6 +80,7 @@
       <div class="staff-profile-top-actions"><button type="button" class="btn btn-primary" id="editStaffProfile">Profil bearbeiten</button><button type="button" class="btn btn-secondary" id="closeStaffProfile">Schließen</button></div>
     </div>
     <div id="staffProfileContent"></div>
+    <section class="staff-private-panel" aria-labelledby="staffPrivateTitle"><div class="staff-private-top"><div><span class="eyebrow">VERTRAULICH · PERSONALAKTE</span><h3 id="staffPrivateTitle">Persönliche Angaben</h3><p>Adresse, Bankverbindung und aufenthaltsbezogene Angaben – separat geschützt.</p></div><span class="staff-private-chip" id="staffPrivateState">Nicht hinterlegt</span></div><div class="staff-private-bottom"><span>Nur mit deiner Passphrase lesbar · keine Cloud-Übertragung</span><button type="button" class="btn btn-secondary" id="openPrivateProfile">Angaben sicher öffnen →</button></div></section>
     <section class="staff-compensation" id="staffCompensation" aria-labelledby="staffCompensationTitle">
       <div class="staff-compensation-heading"><span class="eyebrow">VERGÜTUNG · BRUTTO</span><h3 id="staffCompensationTitle">Lohnübersicht</h3></div>
       <div class="staff-compensation-grid" aria-live="polite">
@@ -115,6 +122,27 @@
     <div class="dialog-actions"><button type="button" class="btn btn-secondary" id="cancelEmployeeDialog" value="cancel">Abbrechen</button><button class="btn btn-primary" id="saveEmployee" type="submit">Profil speichern</button></div>
   </form>
 </dialog>
+<dialog id="privateEmployeeDialog" class="employee-dialog staff-private-dialog" aria-labelledby="privateDialogTitle">
+  <form id="privateEmployeeForm" autocomplete="off">
+    <div class="dialog-head"><div><span class="eyebrow">PERSONALAKTE · VERSCHLÜSSELT</span><h2 id="privateDialogTitle">Vertrauliche Angaben</h2></div><button type="button" class="dialog-close" id="closePrivateDialog" aria-label="Schließen">×</button></div>
+    <p class="employee-dialog-note">Diese Angaben sind optional. Sie werden auf diesem Gerät verschlüsselt gespeichert, nicht mit PEP, Urlaub oder Cloud synchronisiert. Auf gemeinsam genutzten Geräten nicht verwenden.</p>
+    <p id="privateEmployeeName" class="staff-private-person-name"></p>
+    <label for="privatePassphrase">Private Passphrase (mindestens 12 Zeichen)<input id="privatePassphrase" type="password" minlength="12" required autocomplete="new-password" placeholder="Nur für vertrauliche Personalangaben"></label>
+    <button type="button" id="unlockPrivate" class="btn btn-secondary">Angaben entsperren / neu anlegen</button>
+    <p id="privateStatus" role="status" aria-live="polite"></p>
+    <div id="privateFields" hidden>
+      <div class="staff-private-section-label">Kontakt & Bankverbindung</div>
+      <label for="privateAddress">Anschrift · optional<textarea id="privateAddress" maxlength="320" rows="2" placeholder="Straße, Hausnummer, PLZ und Ort"></textarea></label>
+      <label for="privateIban">IBAN · optional<input id="privateIban" inputmode="text" maxlength="42" autocomplete="off" spellcheck="false" placeholder="DE00 0000 0000 0000 0000 00"></label>
+      <div class="staff-private-section-label">Weitere Personalangaben · optional</div>
+      <label for="privateNationality">Staatsangehörigkeit<input id="privateNationality" maxlength="100" autocomplete="off" placeholder="Nur wenn betrieblich erforderlich"></label>
+      <label for="privateResidence">Aufenthalts-/Arbeitserlaubnisstatus<input id="privateResidence" maxlength="100" autocomplete="off" placeholder="Nur falls für die Beschäftigung relevant"></label>
+      <label for="privateResidenceUntil">Gültig bis · falls relevant<input id="privateResidenceUntil" type="date" autocomplete="off"></label>
+      <p class="staff-modal-hint">Bitte nur erforderliche Angaben erfassen. Die Passphrase wird nicht gespeichert. Ohne sie lassen sich die verschlüsselten Daten nicht wiederherstellen.</p>
+      <div class="dialog-actions"><button type="button" class="btn btn-secondary" id="cancelPrivateDialog">Abbrechen</button><button class="btn btn-primary" id="savePrivateDetails" type="submit">Verschlüsselt speichern</button></div>
+    </div>
+  </form>
+</dialog>
 
 <script src="/assets/site.js" defer></script>
 <script src="/assets/team-store.js" defer></script>
@@ -124,6 +152,7 @@
 <script src="/assets/de-holidays.js" defer></script>
 <script src="/assets/urlaubsplaner-store.js" defer></script>
 <script src="/assets/planning-engine.js" defer></script>
+<script src="/assets/private-personnel.js" defer></script>
 <script src="/assets/staff.js" defer></script>
 
 
