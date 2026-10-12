@@ -1,0 +1,38 @@
+/* Personalfluss 2026 — modern, calm burgundy/cream workspace */
+.staff-role-board{margin:25px 0 30px;padding:30px;background:#fffdf9;border:1px solid #e7d8d0;box-shadow:7px 7px 0 #ede2da}
+.staff-role-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:24px}
+.staff-role-head h2{font:500 clamp(27px,3.2vw,40px)/1.15 Georgia,"Times New Roman",serif;color:#662538;letter-spacing:-.045em;margin:8px 0}
+.staff-role-head p{color:#806d65;font-size:13px;line-height:1.6}
+.staff-role-count{font-size:11px;font-weight:800;letter-spacing:.03em;background:#f3e7e3;color:#713549;padding:10px 13px;white-space:nowrap}
+.staff-role-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.staff-role-card{display:flex;flex-direction:column;align-items:stretch;text-align:left;gap:11px;min-height:205px;border:1px solid #e6d8d1;border-radius:0;background:#fbf7f3;padding:21px;cursor:pointer;color:#4e3733;transition:transform .16s,border-color .16s,background .16s}
+.staff-role-card:hover,.staff-role-card:focus-visible{border-color:#a5677a;background:#fff;transform:translateY(-2px);outline-offset:2px}
+.staff-role-card-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.staff-role-symbol{display:grid;place-items:center;background:#762c40;color:#fff;width:41px;height:41px;font-size:19px}
+.staff-role-pill{font-size:9px;font-weight:850;color:#875362;text-transform:uppercase;letter-spacing:.08em}
+.staff-role-card h3{font:500 25px/1.2 Georgia,"Times New Roman",serif;color:#642538;letter-spacing:-.03em}
+.staff-role-card p{font-size:12px;line-height:1.6;color:#806f67;flex:1}
+.staff-role-foot{border-top:1px solid #e6d8d1;padding-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.staff-role-foot strong{font-size:11px;color:#6e3b47}.staff-role-foot span{font-size:11px;color:#8c4b5c}
+.staff-private-panel{margin-top:22px;border:1px solid #ddc5c7;background:linear-gradient(135deg,#fff9f6,#f8edef);padding:23px 25px}
+.staff-private-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.staff-private-top h3{font:500 27px/1.2 Georgia,"Times New Roman",serif;letter-spacing:-.04em;color:#702b3f;margin:7px 0 9px}
+.staff-private-top p{font-size:12px;line-height:1.6;color:#806b68}
+.staff-private-chip{flex-shrink:0;padding:8px 12px;background:#fff;border:1px solid #e6cdd2;color:#783d4b;font-size:10px;font-weight:800}
+.staff-private-bottom{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-top:19px;padding-top:17px;border-top:1px solid #e9d6d7}
+.staff-private-bottom span{font-size:11px;line-height:1.6;color:#836c67}.staff-private-bottom .btn{white-space:normal}
+.staff-private-dialog{width:min(94vw,650px);max-height:90dvh;overflow:auto}
+.staff-private-dialog form{display:grid;gap:15px}
+.staff-private-dialog label{display:grid;gap:7px;font-size:12px;font-weight:800;color:#604347}
+.staff-private-dialog input,.staff-private-dialog textarea{display:block;box-sizing:border-box;width:100%;min-height:45px;padding:11px 13px;background:#fff;border:1px solid #d7c2bd;color:#3b292b;font:inherit}
+.staff-private-dialog textarea{resize:vertical;min-height:70px}
+.staff-private-dialog input:focus,.staff-private-dialog textarea:focus{outline:2px solid #bd8d9a;outline-offset:1px}
+.staff-private-dialog .staff-private-section-label{padding-top:12px;border-top:1px solid #e9d9d4;color:#7b3044;font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:850}
+.staff-private-person-name{font:500 22px Georgia,serif;color:#6f2e40}
+.staff-private-dialog #privateStatus{background:#f8efeb;padding:12px 14px;border-left:3px solid #8a4b5c;color:#674b4a;font-size:12px;line-height:1.6}
+.staff-private-dialog #privateFields{display:grid;gap:15px}.staff-private-dialog #privateFields[hidden]{display:none!important}
+.staff-private-dialog .dialog-actions{margin-top:8px}
+@media(max-width:950px){.staff-role-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.staff-role-board{padding:19px}.staff-role-head,.staff-private-top,.staff-private-bottom{flex-direction:column;align-items:stretch}.staff-role-grid{grid-template-columns:1fr}.staff-role-card{min-height:175px}.staff-private-panel{padding:19px}.staff-role-count{align-self:start}}
+@media(prefers-reduced-motion:reduce){.staff-role-card{transition:none}}
+@media print{.staff-private-panel,.staff-role-board,.staff-private-dialog{display:none!important}}
