@@ -705,50 +705,71 @@ test('PEP: Abwesenheit und Mitarbeitersuche direkt im Raster',async t=>{
 });
 
 
-test('PEP Raster: Schicht kopieren, wiederholt einfügen und belegte Felder schützen',async t=>{
-  const page=await session(t,{width:1280,height:900});
-  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+test('PEP 3.1: Aktion einschalten, Fadenkreuz, Quellschicht und leere Zielzellen wählen',async t=>{
+  const page=await session(t,{width:1280,height:930});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'/pep');
-  assert.equal(await page.locator('#pepClipboardBar').isVisible(),false);
-  await page.locator('[data-copy-e="e1"][data-copy-d="0"]').click();
-  assert.equal(await page.locator('#pepClipboardBar').isVisible(),true);
+  const action=page.locator('#pepCopyMode');
+  assert.equal(await action.getAttribute('aria-pressed'),'false');
+  assert.equal(await page.locator('.pep-copy-btn,.pep-paste-btn').count(),0);
+  assert.ok(await page.locator('[data-grid-e=e1][data-grid-d="0"]').evaluate(el=>el.classList.contains('pep-shift-early')));
+  assert.ok(await page.locator('[data-grid-e=e1][data-grid-d="3"]').evaluate(el=>el.classList.contains('pep-shift-late')));
+  const bar=await page.locator('[data-grid-e=e1][data-grid-d="0"] .pep-diagram-bar').evaluate(el=>({
+    width:getComputedStyle(el).width,color:getComputedStyle(el).backgroundImage
+  }));
+  assert.ok(parseFloat(bar.width)>20,'Real shift should have a visible bar');
+  await action.click();
+  assert.equal(await action.getAttribute('aria-pressed'),'true');
+  assert.equal(await page.locator('.pep-table-wrap').getAttribute('data-mode'),'pick');
+  assert.equal(await page.locator('[data-grid-e=e1][data-grid-d="0"]').evaluate(el=>getComputedStyle(el).cursor),'crosshair');
+  await page.locator('[data-grid-e=e1][data-grid-d="0"]').click();
+  assert.equal(await page.locator('.pep-table-wrap').getAttribute('data-mode'),'paste');
   assert.match(await page.locator('#pepClipboardLabel').innerText(),/08:00/);
-  await page.locator('[data-paste-e="e2"][data-paste-d="1"]').click();
-  assert.match(await page.locator('tr[data-employee-id="e2"] .pep-grid-slot').nth(1).innerText(),/08:00/);
-  await page.locator('[data-paste-e="e3"][data-paste-d="0"]').click();
-  assert.match(await page.locator('tr[data-employee-id="e3"] .pep-grid-slot').nth(0).innerText(),/08:00/);
-  const before=await page.evaluate(()=>JSON.parse(localStorage.getItem('ladenfluss.pep.weeks.v2'))[window.LadenflussTeamStore.mondayKey()].e2[0]);
-  await page.locator('[data-paste-e="e2"][data-paste-d="0"]').click();
-  assert.equal(await page.locator('.pep-replace-confirm').isVisible(),true);
-  await page.locator('.pep-cancel-replace').click();
-  const after=await page.evaluate(()=>JSON.parse(localStorage.getItem('ladenfluss.pep.weeks.v2'))[window.LadenflussTeamStore.mondayKey()].e2[0]);
-  assert.deepEqual(after,before,'Cancel must not overwrite an existing shift');
-  await page.locator('[data-paste-e="e2"][data-paste-d="0"]').click();
-  await page.locator('.pep-confirm-replace').click();
-  const replaced=await page.evaluate(()=>JSON.parse(localStorage.getItem('ladenfluss.pep.weeks.v2'))[window.LadenflussTeamStore.mondayKey()].e2[0]);
-  assert.deepEqual(replaced,['08:00','14:00',30],'Explicit replacement must write the copied shift');
-  await page.locator('#pepClipboardClear').click();
-  assert.equal(await page.locator('#pepClipboardBar').isVisible(),false);
-  assert.equal(await page.locator('.pep-paste-btn').count(),0);
+  await page.locator('[data-grid-e=e2][data-grid-d="1"]').click();
+  assert.match(await page.locator('[data-grid-e=e2][data-grid-d="1"]').innerText(),/08:00/);
+  await page.locator('[data-grid-e=e3][data-grid-d="0"]').click();
+  assert.match(await page.locator('[data-grid-e=e3][data-grid-d="0"]').innerText(),/08:00/);
+  assert.equal(await page.locator('.pep-table-wrap').getAttribute('data-mode'),'paste',
+    'Crosshair stays on for repeated pastes');
+  const before=await page.evaluate(()=>{
+    const s=window.LadenflussTeamStore;return s.getShifts(s.mondayKey()).e2[0];
+  });
+  await page.locator('[data-grid-e=e2][data-grid-d="0"]').click();
+  const after=await page.evaluate(()=>{
+    const s=window.LadenflussTeamStore;return s.getShifts(s.mondayKey()).e2[0];
+  });
+  assert.deepEqual(after,before,'Clicking an occupied target must not overwrite existing shifts');
+  assert.match(await page.locator('#pepGridMessage').innerText(),/belegt/i);
+  await action.click();
+  assert.equal(await action.getAttribute('aria-pressed'),'false');
+  assert.equal(await page.locator('.pep-table-wrap').getAttribute('data-mode'),'normal');
+  assert.equal(await page.locator('#pepClipboardLabel').isVisible(),false);
+  await page.locator('[data-grid-e=e1][data-grid-d="6"]').click();
+  assert.equal(await page.locator('.pep-inline-input').count(),1,'Clicking in normal mode edits directly');
+  await page.locator('.pep-inline-input').press('Escape');
   assert.deepEqual(errors,[]);
 });
-test('PEP Raster: Tastatur-Kopieren und Einfügen funktioniert über beide Wochen',async t=>{
-  const page=await session(t,{width:1440,height:880});
-  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+test('PEP 3.1: Fadenkreuz kopiert zwischen Wochen und Esc deaktiviert Aktion',async t=>{
+  const page=await session(t,{width:390,height:920});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'/pep');
   await page.locator('#pepPeriod').selectOption('14');
-  assert.equal(await page.locator('#pepDays th').count(),18,'name + 3 KPI + 14 days');
-  await page.locator('[data-grid-e="e1"][data-grid-d="3"]').focus();
-  await page.keyboard.press('Control+c');
-  assert.match(await page.locator('#pepClipboardLabel').innerText(),/12:00/);
-  await page.locator('[data-grid-e="e3"][data-grid-d="7"]').focus();
-  await page.keyboard.press('Control+v');
-  const saved=await page.evaluate(()=>{
-    const monday=window.LadenflussTeamStore.mondayKey();
-    const next=new Date(monday+'T12:00:00');next.setDate(next.getDate()+7);
-    return JSON.parse(localStorage.getItem('ladenfluss.pep.weeks.v2'))[window.LadenflussTeamStore.mondayKey(next)].e3[0];
+  const before=await page.evaluate(()=>{
+    const s=window.LadenflussTeamStore;return JSON.stringify(s.getShifts(s.mondayKey()));
   });
-  assert.equal(saved[0],'12:00');assert.equal(saved[1],'18:00');assert.equal(saved[2],30);
-  assert.match(await page.locator('tr[data-employee-id="e3"] .pep-grid-slot').nth(7).innerText(),/12:00/);
+  await page.locator('#pepCopyMode').click();
+  await page.locator('[data-grid-e=e1][data-grid-d="3"]').click();
+  await page.locator('[data-grid-e=e3][data-grid-d="7"]').click();
+  const saved=await page.evaluate(()=>{
+    const s=window.LadenflussTeamStore;
+    const monday=s.mondayKey();
+    const d=new Date(monday+'T12:00:00');d.setDate(d.getDate()+7);
+    return {first:JSON.stringify(s.getShifts(monday)),next:s.getShifts(s.mondayKey(d)).e3[0]};
+  });
+  assert.equal(saved.first,before);
+  assert.deepEqual(saved.next,['12:00','18:00',30]);
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#pepCopyMode').getAttribute('aria-pressed'),'false');
+  assert.equal(await page.locator('.pep-table-wrap').getAttribute('data-mode'),'normal');
   assert.deepEqual(errors,[]);
 });
