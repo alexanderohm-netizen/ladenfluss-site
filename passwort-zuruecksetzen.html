@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#6d2434"><meta name="robots" content="noindex,nofollow">
+<title>Neues Passwort | Ladenfluss</title>
+<meta name="description" content="Vergib ein neues Passwort für dein Ladenfluss-Konto.">
+<link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/account.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Zum Inhalt</a>
+<header class="site-header"><div class="container header-row"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span>Ladenfluss</span></a><nav class="desktop-nav"><a href="/tools">Tools</a><a href="/konto">Kundenkonto</a></nav></div></header>
+<main id="main" class="account-shell">
+<section class="account-intro"><span class="eyebrow">Sicherer Zugang</span><h1>Ein neues Passwort für deinen Laden.</h1><p>Öffne den Wiederherstellungslink aus deiner E-Mail. Danach kannst du hier ein neues Passwort vergeben.</p></section>
+<section class="account-card"><span class="eyebrow">Kontosicherheit</span><h2>Passwort ändern</h2>
+<form id="passwordResetForm" class="account-form" hidden>
+<label>Neues Passwort<input id="newPassword" type="password" autocomplete="new-password" minlength="12" required placeholder="Mindestens 12 Zeichen"></label>
+<label>Passwort wiederholen<input id="confirmPassword" type="password" autocomplete="new-password" minlength="12" required placeholder="Passwort bestätigen"></label>
+<button class="btn btn-primary" type="submit">Passwort sicher ändern →</button>
+</form>
+<div class="auth-status" id="passwordResetStatus" role="status" aria-live="polite"><strong>Zugang prüfen</strong><span>Der Wiederherstellungslink wird geprüft.</span></div>
+<p><a href="/konto">Zurück zur Anmeldung →</a></p>
+</section></main>
+<footer class="site-footer"><div class="container"><div class="footer-bottom"><span>© 2026 Ladenfluss · betrieben durch AO-Shop</span><span>Cloud-Beta in Vorbereitung</span></div></div></footer>
+<script src="/assets/site.js" defer></script>
+<script src="/assets/cloud-config.js" defer></script>
+<script src="/assets/supabase-browser.js" defer></script>
+<script src="/assets/auth-core.js" defer></script>
+<script src="/assets/password-reset.js" defer></script>
+</body></html>
