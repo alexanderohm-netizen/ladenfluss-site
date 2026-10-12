@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(!board||!store)return;
     let team;try{team=store.getTeam();}catch(_){return;}
     const counts=new Map();
-    for(const p of team){const role=String(p.role||'Unbekannt').trim();counts.set(role,(counts.get(role)||0)+1);}
+    for(const p of team){if(!p||typeof p!=='object')return;const role=String(p.role||'Unbekannt').trim();counts.set(role,(counts.get(role)||0)+1);}
     board.replaceChildren();
     for(const [role,count] of [...counts].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'de'))){
       const meta=roles[role]||{icon:'◇',tag:'Individuelle Rolle',desc:'Individuell hinterlegtes Stellenprofil'};
