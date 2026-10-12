@@ -13,10 +13,13 @@ document.addEventListener('DOMContentLoaded',()=> {
   const periodSelect=document.getElementById('pepPeriod');
   const searchInput=document.getElementById('pepSearch');
   const gridMessage=document.getElementById('pepGridMessage');
-  const clipboardBar=document.getElementById('pepClipboardBar');
-  const clipboardLabel=document.getElementById('pepClipboardLabel');
+  const copyAction=document.getElementById('pepCopyMode');
+  const copyStep=document.getElementById('pepCopyModeStep');
+  const copyHint=document.getElementById('pepCopyModeHint');
+  const copyLabel=document.getElementById('pepClipboardLabel');
+  const gridRegion=document.querySelector('.pep-table-wrap');
+  let copyMode=false;
   let copiedShift=null;
-  let pendingReplacement=null;
   let secondWeekKey='',secondShifts={},secondAbsences={};
   function refreshSecond(){
     const following=new Date(weekStart);following.setDate(following.getDate()+7);
@@ -37,11 +40,31 @@ document.addEventListener('DOMContentLoaded',()=> {
     gridMessage.classList.toggle('error',Boolean(text&&problem));
   }
   function updateClipboardBar(){
-    clipboardBar.hidden=!copiedShift;
-    clipboardLabel.textContent=copiedShift
-      ? typed.format(copiedShift).replace('-', '–').replace('/', ' · ')+' Min Pause' : '';
+    copyAction.setAttribute('aria-pressed',String(copyMode));
+    copyAction.classList.toggle('is-active',copyMode);
+    gridRegion.classList.toggle('pep-crosshair-mode',copyMode);
+    gridRegion.dataset.mode=copyMode?(copiedShift?'paste':'pick'):'normal';
+    copyLabel.hidden=!copyMode||!copiedShift;
+    copyLabel.textContent=copiedShift
+      ? 'Kopiert: '+typed.format(copiedShift).replace('-', '–').replace('/',' · ')+' Min Pause':'';
+    copyStep.textContent=!copyMode?'Direktbearbeitung aktiv':copiedShift?'Schritt 2 · Zielfeld wählen':'Schritt 1 · Quellschicht wählen';
+    copyHint.textContent=!copyMode
+      ? 'Aktion einschalten → Quellschicht anklicken → freies Feld anklicken. Erneut klicken zum Beenden.'
+      :copiedShift
+        ? 'Jetzt mit dem Fadenkreuz freie Tagesfelder anklicken. Mehrfaches Einfügen möglich. Aktion zum Beenden erneut anklicken.'
+        :'Fadenkreuz aktiv: Klicke auf eine vorhandene Schicht, die du kopieren möchtest.';
   }
-
+  copyAction.addEventListener('click',()=>{
+    copyMode=!copyMode;
+    copiedShift=null;
+    gridNotice(copyMode?'Kopiermodus aktiv: Bitte eine Schicht auswählen.':'Kopiermodus beendet.');
+    render();
+  });
+  document.addEventListener('keydown',event=>{
+    if(event.key==='Escape'&&copyMode&&!event.target.closest('.pep-inline-editor')){
+      copyMode=false;copiedShift=null;gridNotice('Kopiermodus beendet.');render();
+    }
+  });
 
 
   let approvedVacations = [];
