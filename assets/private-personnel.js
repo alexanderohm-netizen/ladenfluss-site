@@ -10,7 +10,8 @@
   'use strict';
   const PREFIX='ladenfluss.personalfluss.private.v1.';
   const ITERATIONS=310000;
-  const enc=new TextEncoder(),dec=new TextDecoder();
+  // Instantiate encoders lazily: browser test sandboxes may omit TextEncoder until WebCrypto is used.
+  const enc=()=>new TextEncoder(),dec=()=>new TextDecoder();
   function available(){return !!root.crypto?.subtle&&!!root.crypto?.getRandomValues&&!!root.localStorage;}
   function keyFor(id){
     if(typeof id!=='string'||!/^[a-zA-Z0-9_-]{1,120}$/.test(id))throw Error('Ungültige Mitarbeiter-ID.');
@@ -20,7 +21,7 @@
   function unb64(str){return Uint8Array.from(atob(str),c=>c.charCodeAt(0));}
   async function derive(password,salt){
     if(typeof password!=='string'||password.length<12)throw Error('Passphrase muss mindestens 12 Zeichen enthalten.');
-    const material=await root.crypto.subtle.importKey('raw',enc.encode(password),'PBKDF2',false,['deriveKey']);
+    const material=await root.crypto.subtle.importKey('raw',enc().encode(password),'PBKDF2',false,['deriveKey']);
     return root.crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:ITERATIONS,hash:'SHA-256'},material,
       {name:'AES-GCM',length:256},false,['encrypt','decrypt']);
   }
@@ -49,7 +50,7 @@
     const key=await derive(password,salt);
     // Never overwrite an existing record with an unverified passphrase.
     if(exists(id))await read(id,password);
-    const ciphertext=await root.crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:enc.encode(id)},key,enc.encode(JSON.stringify(record)));
+    const ciphertext=await root.crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:enc().encode(id)},key,enc().encode(JSON.stringify(record)));
     root.localStorage.setItem(keyFor(id),JSON.stringify({v:1,kdf:'PBKDF2-SHA256',iterations:ITERATIONS,salt:b64(salt),iv:b64(iv),data:b64(new Uint8Array(ciphertext))}));
     return true;
   }
@@ -61,8 +62,8 @@
       const record=JSON.parse(raw);
       if(record.v!==1||record.iterations!==ITERATIONS)throw Error('Unknown version');
       const key=await derive(password,unb64(record.salt));
-      const clear=await root.crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(record.iv),additionalData:enc.encode(id)},key,unb64(record.data));
-      return validate(JSON.parse(dec.decode(clear)));
+      const clear=await root.crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(record.iv),additionalData:enc().encode(id)},key,unb64(record.data));
+      return validate(JSON.parse(dec().decode(clear)));
     }catch(_){throw Error('Passphrase falsch oder verschlüsselte Angaben nicht lesbar. Daten wurden nicht verändert.');}
   }
   return {available,exists,read,save,validate,PREFIX};
