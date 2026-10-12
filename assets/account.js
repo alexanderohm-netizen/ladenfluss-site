@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const forms = [...document.querySelectorAll('[data-auth-form]')];
   const status = document.getElementById('authStatus');
   const signedIn = document.getElementById('signedInPanel');
+  const confirmation = document.getElementById('confirmationPanel');
+  const confirmationEmail = document.getElementById('confirmationEmail');
   const accountEmail = document.getElementById('accountEmail');
   const accountNext = document.getElementById('accountNext');
   const logout = document.getElementById('accountLogout');
@@ -26,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tabs.forEach(b => b.classList.toggle('active', b.dataset.accountTab === name));
     panels.forEach(p => { p.hidden = p.dataset.accountPanel !== name; });
     if (signedIn) signedIn.hidden = true;
+    if (confirmation) confirmation.hidden = true;
   }
   function setBusy(value) {
     busy = value;
@@ -38,7 +41,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (logout) logout.disabled = value;
     if (logoutAndClear) logoutAndClear.disabled = value;
   }
+  function showConfirmation(email) {
+    tabs.forEach(b => { b.hidden = true; });
+    panels.forEach(p => { p.hidden = true; });
+    if (signedIn) signedIn.hidden = true;
+    if (confirmation) {
+      confirmation.hidden = false;
+      if (confirmationEmail) confirmationEmail.textContent = String(email || '').trim();
+      confirmation.setAttribute('tabindex', '-1');
+      confirmation.focus();
+    }
+    message('Bestätigungs-E-Mail angefordert', 'Bitte prüfe dein Postfach und bestätige deine E-Mail-Adresse. Danach kannst du dich anmelden.');
+  }
   function showUser(user, company) {
+    if (confirmation) confirmation.hidden = true;
     tabs.forEach(b => { b.hidden = true; });
     panels.forEach(p => { p.hidden = true; });
     if (!signedIn) return;
@@ -64,6 +80,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   tabs.forEach(b => b.addEventListener('click', () => open(b.dataset.accountTab)));
+  document.getElementById('confirmationToLogin')?.addEventListener('click', () => {
+    tabs.forEach(b => { b.hidden = false; });
+    open('login');
+    message('E-Mail bestätigen', 'Nach Bestätigung des Links in deiner E-Mail kannst du dich hier anmelden.');
+  });
   forms.forEach(form => form.addEventListener('submit', async event => {
     event.preventDefault();
     if (busy) return;
@@ -83,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       if (kind === 'register') {
         await core.signUp(email, password);
-        message('E-Mail prüfen', 'Falls die Registrierung angenommen wurde, erhältst du eine Bestätigungs-E-Mail. Bitte öffne den Link.');
+        showConfirmation(email);
       } else {
         const user = await core.signIn(email, password);
         let company;
