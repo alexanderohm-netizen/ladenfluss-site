@@ -1,0 +1,31 @@
+/* Ladenfluss release highlights – homepage preview for the actual PEP workflow. */
+.lf-workflow-section{padding:84px 0;background:#f9f2ed;color:#56333c}
+.lf-workflow-heading{display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:28px}
+.lf-workflow-heading>div{max-width:720px}
+.lf-workflow-heading h2{font-size:clamp(26px,3.5vw,43px);letter-spacing:-.035em;line-height:1.12;margin:12px 0 14px;color:#5b2634}
+.lf-workflow-heading p{font-size:15px;line-height:1.7;color:#735b5f;margin:0}
+.lf-workflow-heading>a{white-space:nowrap;flex-shrink:0}
+.lf-workflow-demo{background:#fffdfa;border:1px solid #e7d6d0;box-shadow:0 15px 45px #6a32401b;border-radius:12px;overflow:hidden}
+.lf-workflow-top,.lf-workflow-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 22px;background:#f5e8e4}
+.lf-workflow-top strong{font-size:14px;color:#662c3c}
+.lf-workflow-top>span,.lf-workflow-bottom{font-size:11px;color:#7b6568}
+.lf-workflow-grid{display:grid;grid-template-columns:minmax(120px,1fr) repeat(3,minmax(158px,2fr));gap:1px;background:#eadfda;overflow:auto}
+.lf-workflow-grid>div{background:#fffdfa;padding:12px 14px}
+.lf-workflow-grid .lf-workflow-corner,.lf-workflow-grid .lf-workflow-day{background:#f7eeeb;font-weight:800;color:#6d3945;font-size:12px}
+.lf-workflow-role{font-size:13px;font-weight:800;display:flex;align-items:center;color:#4d3940}
+.lf-workflow-slot{display:flex;flex-direction:column;justify-content:center;gap:7px;min-height:91px}
+.lf-workflow-slot>span{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;color:#4b4250}
+.lf-workflow-slot small{font-size:11px;color:#7b7075}
+.lf-workflow-track{height:25px;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(25% - 1px),#d9c9c6 calc(25% - 1px),#d9c9c6 25%),#fcf9f7;border:1px solid #e7d7d2;position:relative;border-radius:5px}
+.lf-workflow-track i{position:absolute;top:3px;bottom:3px;border-radius:4px}
+.lf-workflow-track i.early{background:#5589c4}
+.lf-workflow-track i.late{background:#b26a90}
+.lf-workflow-slot.is-blank{background:#fbf7f5}
+.lf-workflow-slot.is-blank span{color:#b49c9c}
+.lf-workflow-bottom{justify-content:flex-start;gap:25px;flex-wrap:wrap;background:#fff8f5;border-top:1px solid #ebdfd9}
+.lf-workflow-bottom span{display:inline-flex;align-items:center;gap:7px}
+.lf-workflow-bottom span:last-child{margin-left:auto}
+.lf-workflow-key{width:11px;height:11px;border-radius:3px;display:inline-block}
+.lf-workflow-key.early{background:#5589c4}.lf-workflow-key.late{background:#b26a90}
+@media(max-width:800px){.lf-workflow-section{padding:56px 0}.lf-workflow-heading{align-items:start;flex-direction:column}.lf-workflow-grid{min-width:650px}.lf-workflow-demo{overflow-x:auto}.lf-workflow-bottom span:last-child{margin-left:0}}
+@media(prefers-reduced-motion:reduce){.lf-workflow-section *{scroll-behavior:auto}}
