@@ -1,9 +1,6 @@
-/* Cloud-Beta-Schalter. Dieser öffentliche Wert enthält bewusst keine Schlüssel.
- * Erst nach Auth-Konfiguration, Redirect-Freigaben und E-Mail-Zustellung aktivieren.
- * Ausschließlich Supabase Publishable Keys (sb_publishable_...), niemals Secret-/Service-Role-Keys.
- */
+/* Cloud-Beta TESTBRANCH: Only for controlled Vercel preview, never merge into main without release gates. */
 window.LadenflussCloudConfig = Object.freeze({
-  enabled: false,
-  url: '',
-  publishableKey: '',
+  enabled: true,
+  url: "https://nzxtdrmdvqyvcbohplzt.supabase.co",
+  publishableKey: "sb_publishable_EgjgQU2RBS5juYYa-qpxRw_156tK6dI",
 });
