@@ -101,6 +101,7 @@
       catch(error){$('backupStatus').textContent='Sicherung nicht möglich: '+error.message;}
     });
     window.addEventListener('storage',event=>{if(event.key===null||event.key.startsWith('ladenfluss.'))render();});
+    window.addEventListener('ladenfluss:profile-updated',()=>{fillForms();render();});
     fillForms();render();switchPanel(location.hash.slice(1),false);
   });
 })();
