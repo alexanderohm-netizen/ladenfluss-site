@@ -483,19 +483,19 @@ document.addEventListener('DOMContentLoaded',()=> {
     if(firstKey===null)input.select();
   }
   function bindCells(){
-    body.querySelectorAll('.pep-confirm-replace').forEach(button=>
-      button.addEventListener('click',confirmReplacement));
-    body.querySelectorAll('.pep-cancel-replace').forEach(button=>
-      button.addEventListener('click',cancelReplacement));
-    body.querySelectorAll('.pep-copy-btn').forEach(button=>{
-      button.addEventListener('click',()=>copyGridShift(button.dataset.copyE,Number(button.dataset.copyD)));
-    });
-    body.querySelectorAll('.pep-paste-btn').forEach(button=>{
-      button.addEventListener('click',()=>pasteGridShift(button.dataset.pasteE,Number(button.dataset.pasteD)));
-    });
     body.querySelectorAll('.pep-grid-trigger').forEach(button=>{
-      button.addEventListener('click',()=>activateCell(button));
+      const select=()=>{
+        if(copyMode){
+          const eid=button.dataset.gridE,day=Number(button.dataset.gridD);
+          if(!copiedShift)copyGridShift(eid,day);
+          else pasteGridShift(eid,day);
+          return;
+        }
+        activateCell(button);
+      };
+      button.addEventListener('click',select);
       button.addEventListener('keydown',event=>{
+        if(copyMode)return;
         if(event.key.length===1&&!event.ctrlKey&&!event.metaKey&&!event.altKey){
           event.preventDefault();activateCell(button,event.key);
         }
@@ -503,7 +503,10 @@ document.addEventListener('DOMContentLoaded',()=> {
     });
     body.querySelectorAll('.pep-approved-vacation').forEach(button=>{
       button.addEventListener('click',()=>{
-        gridNotice('Dieser Urlaub ist im Urlaubsplaner genehmigt. Zum Bearbeiten den Urlaubsplaner öffnen.');
+        if(copyMode){
+          gridNotice('Genehmigten Urlaub bitte nicht als Ziel wählen. Nutze ein freies Feld.',true);
+          return;
+        }
         window.location.href='/tools/urlaubsplaner';
       });
     });
