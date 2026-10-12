@@ -405,86 +405,33 @@ document.addEventListener('DOMContentLoaded',()=> {
   }
   function copyGridShift(eid,day){
     const employee=employees.find(p=>p.id===eid);
-    if(!employee||!Number.isInteger(day)||day<0||day>=dayCount()){
-      gridNotice('Diese Schicht ist nicht mehr verfügbar.',true);return;
+    const shift=employee&&rowShift(employee,day);
+    if(!shift){
+      gridNotice('Zuerst eine vorhandene Schicht anklicken, nicht ein leeres Feld.',true);
+      return;
     }
-    const shift=rowShift(employee,day);
-    if(!shift){gridNotice('Bitte zuerst eine eingetragene Schicht auswählen.',true);return;}
     try{
-      pendingReplacement=null;
       copiedShift=typed.parse(typed.format(shift)).shift;
       render();
-      gridNotice('Schicht kopiert: '+typed.format(copiedShift)+'. Jetzt bei beliebigen Mitarbeitenden und Tagen auf Einfügen klicken.');
-    }catch(error){gridNotice('Diese Schicht lässt sich nicht kopieren: '+error.message,true);}
+      gridNotice('Schicht übernommen: '+typed.format(copiedShift)+'. Jetzt ein freies Tagesfeld anklicken.');
+    }catch(error){gridNotice('Schicht konnte nicht kopiert werden: '+error.message,true);}
   }
   function pasteGridShift(eid,day){
-    if(!copiedShift){gridNotice('Bitte zuerst eine Schicht kopieren.',true);return;}
     const employee=employees.find(p=>p.id===eid);
-    if(!employee||!Number.isInteger(day)||day<0||day>=dayCount()){
-      gridNotice('Das Zielfeld ist nicht mehr verfügbar.',true);return;
+    if(!copyMode||!copiedShift||!employee||!Number.isInteger(day)||day<0||day>=dayCount())return;
+    if(rowShift(employee,day)){
+      gridNotice('Dieses Tagesfeld ist bereits belegt. Zum Bearbeiten Kopiermodus ausschalten.',true);
+      return;
     }
-    const current=rowShift(employee,day);
-    const manual=rowManualAbsence(employee,day);
-    if(absenceAt(employee,day)==='Urlaub'&&!manual){
-      gridNotice('Genehmigter Urlaub kann nicht mit einer Schicht überschrieben werden.',true);return;
-    }
-    if(manual){
-      gridNotice('Hier ist eine Abwesenheit eingetragen. Diese bitte zuerst entfernen.',true);return;
-    }
-    if(current && typed.format(current)===typed.format(copiedShift)){
-      gridNotice('Diese Schicht ist hier bereits eingetragen.');return;
-    }
-    if(current){
-      pendingReplacement={eid,day,previous:typed.format(current),paste:typed.format(copiedShift)};
-      render();
-      gridNotice('Hier steht bereits eine Schicht. Bitte Ersetzen oder Abbrechen direkt im Feld wählen.');
+    if(absenceAt(employee,day)){
+      gridNotice('Hier ist bereits eine Abwesenheit eingetragen. Einfügen ist nur in freie Felder möglich.',true);
       return;
     }
     try{
-      pendingReplacement=null;
       saveGridEntry(eid,day,typed.format(copiedShift));
-      gridNotice('Schicht eingefügt bei '+employee.name+' · Tag '+(day+1)+'. Weitere Felder können mit derselben Kopie gefüllt werden.');
+      gridNotice('Schicht eingefügt · '+employee.name+' · Tag '+(day+1)+'. Für weitere freie Felder bleibt das Fadenkreuz aktiv.');
     }catch(error){gridNotice(error.message,true);}
   }
-  function confirmReplacement(){
-    const request=pendingReplacement;
-    if(!request||!copiedShift)return;
-    const person=employees.find(p=>p.id===request.eid);
-    const active=person&&rowShift(person,request.day);
-    const stored=store.getShifts(weekFor(request.day))?.[request.eid]?.[request.day%7];
-    if(!active||typed.format(active)!==request.previous||
-      !stored||typed.format(stored)!==request.previous||
-      typed.format(copiedShift)!==request.paste){
-      pendingReplacement=null;render();
-      gridNotice('Diese Schicht wurde inzwischen geändert. Bitte erneut prüfen.',true);
-      return;
-    }
-    try{
-      pendingReplacement=null;
-      saveGridEntry(request.eid,request.day,request.paste);
-      gridNotice('Schicht bei '+person.name+' ersetzt. Die Kopie bleibt verfügbar.');
-    }catch(error){render();gridNotice(error.message,true);}
-  }
-  function cancelReplacement(){
-    pendingReplacement=null;render();
-    gridNotice('Einfügen abgebrochen. Die ursprüngliche Schicht bleibt erhalten.');
-  }
-  document.getElementById('pepClipboardClear').addEventListener('click',()=>{
-    copiedShift=null;
-    pendingReplacement=null;
-    render();
-    gridNotice('Kopiermodus beendet.');
-  });
-  body.addEventListener('keydown',event=>{
-    if(!(event.ctrlKey||event.metaKey)||event.altKey||event.target.closest('.pep-inline-editor'))return;
-    const key=event.key.toLocaleLowerCase('de');
-    const target=event.target.closest('[data-grid-e],[data-copy-e],[data-paste-e]');
-    if(!target)return;
-    const eid=target.dataset.gridE||target.dataset.copyE||target.dataset.pasteE;
-    const day=Number(target.dataset.gridD??target.dataset.copyD??target.dataset.pasteD);
-    if(key==='c'){event.preventDefault();copyGridShift(eid,day);}
-    else if(key==='v'){event.preventDefault();pasteGridShift(eid,day);}
-  });
   function activateCell(button,firstKey=null){
     const eid=button.dataset.gridE,day=Number(button.dataset.gridD);
     const employee=employees.find(p=>p.id===eid);
