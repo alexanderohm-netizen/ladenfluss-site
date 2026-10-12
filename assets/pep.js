@@ -9,6 +9,63 @@ document.addEventListener('DOMContentLoaded',()=> {
   let weekKey=store.mondayKey(weekStart);
   let shifts=store.ensureEmployeeShiftRows(team,store.getShifts(weekKey));
   let absences=store.ensureEmployeeAbsenceRows(team,store.getAbsences(weekKey));
+  const typed=window.LadenflussPepInput;
+  const periodSelect=document.getElementById('pepPeriod');
+  const searchInput=document.getElementById('pepSearch');
+  const gridMessage=document.getElementById('pepGridMessage');
+  const copyAction=document.getElementById('pepCopyMode');
+  const copyStep=document.getElementById('pepCopyModeStep');
+  const copyHint=document.getElementById('pepCopyModeHint');
+  const copyLabel=document.getElementById('pepClipboardLabel');
+  const gridRegion=document.querySelector('.pep-table-wrap');
+  let copyMode=false;
+  let copiedShift=null;
+  let secondWeekKey='',secondShifts={},secondAbsences={};
+  function refreshSecond(){
+    const following=new Date(weekStart);following.setDate(following.getDate()+7);
+    secondWeekKey=store.mondayKey(following);
+    secondShifts=store.ensureEmployeeShiftRows(team,store.getShifts(secondWeekKey));
+    secondAbsences=store.ensureEmployeeAbsenceRows(team,store.getAbsences(secondWeekKey));
+  }
+  function dayCount(){return periodSelect.value==='14'?14:7;}
+  function rowShift(employee,index){
+    return index<7?employee.shifts[index]:secondShifts[employee.id]?.[index-7]??null;
+  }
+  function rowManualAbsence(employee,index){
+    return index<7?employee.absences[index]:secondAbsences[employee.id]?.[index-7]??null;
+  }
+  function weekFor(index){return index<7?weekKey:secondWeekKey;}
+  function gridNotice(text='',problem=false){
+    gridMessage.textContent=text;
+    gridMessage.classList.toggle('error',Boolean(text&&problem));
+  }
+  function updateClipboardBar(){
+    copyAction.setAttribute('aria-pressed',String(copyMode));
+    copyAction.classList.toggle('is-active',copyMode);
+    gridRegion.classList.toggle('pep-crosshair-mode',copyMode);
+    gridRegion.dataset.mode=copyMode?(copiedShift?'paste':'pick'):'normal';
+    copyLabel.hidden=!copyMode||!copiedShift;
+    copyLabel.textContent=copiedShift
+      ? 'Kopiert: '+typed.format(copiedShift).replace('-', '–').replace('/',' · ')+' Min Pause':'';
+    copyStep.textContent=!copyMode?'Direktbearbeitung aktiv':copiedShift?'Schritt 2 · Zielfeld wählen':'Schritt 1 · Quellschicht wählen';
+    copyHint.textContent=!copyMode
+      ? 'Aktion einschalten → Quellschicht anklicken → freies Feld anklicken. Erneut klicken zum Beenden.'
+      :copiedShift
+        ? 'Jetzt mit dem Fadenkreuz freie Tagesfelder anklicken. Mehrfaches Einfügen möglich. Aktion zum Beenden erneut anklicken.'
+        :'Fadenkreuz aktiv: Klicke auf eine vorhandene Schicht, die du kopieren möchtest.';
+  }
+  copyAction.addEventListener('click',()=>{
+    copyMode=!copyMode;
+    copiedShift=null;
+    gridNotice(copyMode?'Kopiermodus aktiv: Bitte eine Schicht auswählen.':'Kopiermodus beendet.');
+    render();
+  });
+  document.addEventListener('keydown',event=>{
+    if(event.key==='Escape'&&copyMode&&!event.target.closest('.pep-inline-editor')){
+      copyMode=false;copiedShift=null;gridNotice('Kopiermodus beendet.');render();
+    }
+  });
+
 
   let approvedVacations = [];
   let vacationError = false;
@@ -24,7 +81,8 @@ document.addEventListener('DOMContentLoaded',()=> {
     }
   }
   function absenceAt(employee, index) {
-    if (employee.absences[index]) return employee.absences[index];
+    const manual=rowManualAbsence(employee,index);
+    if (manual) return manual;
     if (!window.LadenflussVacation?.iso) return null;
     const date = new Date(weekStart);
     date.setDate(date.getDate() + index);
@@ -56,10 +114,16 @@ document.addEventListener('DOMContentLoaded',()=> {
   function applyEmployeeFilter(){
     if (!employeeFilter) return;
     const selected=employeeFilter.value;
+    const query=(searchInput?.value||'').trim().toLocaleLowerCase('de');
     body.querySelectorAll('tr[data-employee-id]').forEach(row=>{
-      row.hidden=selected!=='all'&&row.dataset.employeeId!==selected;
+      const person=team.find(e=>e.id===row.dataset.employeeId);
+      const matches=!query||[person?.name,person?.role,person?.branch].some(value=>
+        String(value||'').toLocaleLowerCase('de').includes(query));
+      row.hidden=(selected!=='all'&&row.dataset.employeeId!==selected)||!matches;
     });
   }
+  searchInput?.addEventListener('input',applyEmployeeFilter);
+  periodSelect?.addEventListener('change',()=>{gridNotice();render()});
   const dlg=document.getElementById('shiftDialog');
   const absenceDlg=document.getElementById('absenceDialog');
   const delBtn=document.getElementById('deleteShift');
@@ -112,17 +176,50 @@ document.addEventListener('DOMContentLoaded',()=> {
 
   function render(){
     reloadVacations();
+    if(dayCount()===14)refreshSecond();
+    updateClipboardBar();
     renderWeekHeader();
     renderDayCheck();
     renderPlanState();
     body.innerHTML=employees.map(e=>{
-      const total=e.shifts.reduce((a,s)=>a+hours(s),0);
-      const cells=e.shifts.map((s,i)=>{const a=absenceAt(e,i);return s
-        ? `<td class="${a?'has-conflict':''}"><button class="shift-chip" data-e="${escape(e.id)}" data-d="${i}" title="Schicht bearbeiten"><strong>${escape(s[0])}–${escape(s[1])}</strong><span>${hours(s).toLocaleString('de-DE',{maximumFractionDigits:1})} h · ${escape(s[2])} Min Pause</span></button></td>`
-        : a ? `<td><button class="absence-chip" data-ae="${escape(e.id)}" data-ad="${i}"><strong>${escape(a)}</strong><span>Abwesend</span></button></td>` : `<td><button class="empty-shift" data-e="${escape(e.id)}" data-d="${i}" aria-label="Schicht hinzufügen">+</button></td>`}).join('');
-      const state=total>e.target+5?'high':total<Math.max(0,e.target-8)?'low':'ok';
-      return `<tr data-employee-id="${escape(e.id)}"><th scope="row"><strong>${escape(e.name)}</strong><span>${escape(e.role)} · Ziel ${e.target} h</span></th>${cells}<td class="week-total ${state}"><strong>${total.toLocaleString('de-DE',{maximumFractionDigits:1})} h</strong><span>${state==='ok'?'passt':state==='high'?'zu hoch':'zu niedrig'}</span></td></tr>`;
+      const count=dayCount();
+      const total=Array.from({length:count},(_,i)=>hours(rowShift(e,i))).reduce((a,b)=>a+b,0);
+      const target=e.target*(count/7);
+      const difference=total-target;
+      const fmt=n=>n.toLocaleString('de-DE',{maximumFractionDigits:1});
+      const cells=Array.from({length:count},(_,i)=>{
+        const shift=rowShift(e,i),absence=absenceAt(e,i);
+        const vacation=absence==='Urlaub'&&!rowManualAbsence(e,i);
+        const title=escape(e.name+', '+String(i+1)+'. Tag: ');
+        if(shift){
+          const startMinutes=mins(shift[0]),endMinutes=mins(shift[1]);
+          const left=startMinutes===null?0:Math.max(0,Math.min(100,((startMinutes-360)/960)*100));
+          const right=endMinutes===null?left:Math.max(left,Math.min(100,((endMinutes-360)/960)*100));
+          const phase=startMinutes<720?'early':'late';
+          const phaseLabel=phase==='early'?'Früh':'Spät';
+          const timeline='<span class="pep-diagram-track" aria-hidden="true"><i class="pep-diagram-bar" style="left:'+left.toFixed(2)+'%;width:'+Math.max(0,right-left).toFixed(2)+'%"></i></span>';
+          return `<td class="pep-grid-slot ${absence?'has-conflict':''}"><button type="button" class="shift-chip pep-grid-trigger pep-shift-${phase}" data-grid-e="${escape(e.id)}" data-grid-d="${i}" aria-label="${title}${phaseLabel}schicht ${escape(shift[0])} bis ${escape(shift[1])}, ${fmt(hours(shift))} Stunden; klicken zum Bearbeiten"><span class="pep-shift-heading"><strong>${escape(shift[0])}–${escape(shift[1])}</strong><em class="pep-shift-phase">${phaseLabel}</em></span>${timeline}<span class="pep-diagram-scale" aria-hidden="true"><i>06</i><i>10</i><i>14</i><i>18</i><i>22</i></span><span class="pep-shift-meta">${fmt(hours(shift))} h · ${escape(String(shift[2]))} Min Pause</span></button></td>`;
+        }
+        if(absence){
+          const before=i>0&&absenceAt(e,i-1)===absence;
+          const after=i<count-1&&absenceAt(e,i+1)===absence;
+          const group=absence==='Urlaub'?(' pep-vacation '+(before?'run-mid':'run-first')+(after?' run-cont':' run-last')):'';
+          return `<td class="pep-grid-slot pep-absence-slot"><button type="button" class="absence-chip${group}${vacation?' pep-approved-vacation':' pep-grid-trigger'}" ${vacation?`data-ae="${escape(e.id)}" data-ad="${i}"`:`data-grid-e="${escape(e.id)}" data-grid-d="${i}"`} aria-label="${title}${escape(absence)}${vacation?', im Urlaubsplaner ändern':', direkt bearbeiten'}"><strong>${escape(absence)}</strong><span>${vacation?'Genehmigt':'Abwesend'}</span></button></td>`;
+        }
+        return `<td class="pep-grid-slot"><button type="button" class="empty-shift pep-grid-trigger" data-grid-e="${escape(e.id)}" data-grid-d="${i}" aria-label="${title}Schicht eingeben"><span aria-hidden="true">+</span><small>Eintragen</small></button></td>`;
+      }).join('');
+      const deltaClass=difference>5?'high':difference< -8?'low':'ok';
+      const signed=(difference>0?'+':'')+fmt(difference)+' h';
+      return `<tr data-employee-id="${escape(e.id)}"><th scope="row" class="pep-employee"><strong>${escape(e.name)}</strong><span>${escape(e.role)}</span></th><td class="pep-compare pep-target">${fmt(target)} h</td><td class="pep-compare pep-planned">${fmt(total)} h</td><td class="pep-compare pep-delta ${deltaClass}">${signed}</td>${cells}</tr>`;
     }).join('');
+    const totals=document.getElementById('pepTotals');
+    if(totals){
+      const count=dayCount();
+      const sums=Array.from({length:count},(_,i)=>employees.reduce((sum,e)=>
+        sum+(absenceAt(e,i)?0:hours(rowShift(e,i))),0));
+      const fmt=n=>n.toLocaleString('de-DE',{maximumFractionDigits:1});
+      totals.innerHTML=`<tr class="pep-totals-row"><th scope="row">Besetzte Stunden</th><td class="pep-compare">–</td><td class="pep-compare">${fmt(sums.reduce((a,b)=>a+b,0))} h</td><td class="pep-compare">–</td>${sums.map((v,i)=>`<td aria-label="Tag ${i+1}: ${fmt(v)} Stunden besetzt">${fmt(v)} h</td>`).join('')}</tr>`;
+    }
 
     const total=employees.reduce((a,e)=>a+e.shifts.reduce((x,s)=>x+hours(s),0),0);
     const issues=getIssues();
@@ -185,11 +282,16 @@ document.addEventListener('DOMContentLoaded',()=> {
 
   function renderWeekHeader(){
     const days=['Mo','Di','Mi','Do','Fr','Sa','So'];
-    const dates=Array.from({length:7},(_,i)=>{const d=new Date(weekStart);d.setDate(d.getDate()+i);return d});
+    const dates=Array.from({length:dayCount()},(_,i)=>{const d=new Date(weekStart);d.setDate(d.getDate()+i);return d});
     const fmt=d=>d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
     const state=shop.state||'HE';
-    document.getElementById('weekTitle').textContent=fmt(dates[0])+'–'+fmt(dates[6]);
-    document.getElementById('pepDays').innerHTML='<th>Mitarbeiter</th>'+dates.map((d,i)=>{const holiday=window.LadenflussHolidays?.getHoliday(d,state);return '<th class="'+(holiday?'holiday':'')+'">'+days[i]+' '+String(d.getDate()).padStart(2,'0')+'.'+(holiday?'<small>'+holiday+'</small>':'')+'</th>'}).join('')+'<th>Summe</th>';
+    document.getElementById('weekTitle').textContent=fmt(dates[0])+'–'+fmt(dates[dates.length-1])+(dayCount()===14?' · zwei Wochen':' · eine Woche');
+    document.getElementById('pepDays').innerHTML='<th scope="col" class="pep-sticky-employee">Mitarbeitende</th><th scope="col" class="pep-sticky-metric">Soll</th><th scope="col" class="pep-sticky-metric">Geplant</th><th scope="col" class="pep-sticky-metric">+ / −</th>'+
+      dates.map((d,i)=>{
+        const holiday=window.LadenflussHolidays?.getHoliday(d,state);
+        const today=window.LadenflussPlanning.iso(d)===window.LadenflussPlanning.iso(new Date());
+        return '<th scope="col" class="'+(holiday?'holiday ':'')+(today?'pep-today ':'')+(i===7?'pep-second-week':'')+'"><span class="pep-week-label">'+(i===0||i===7?'Woche '+(i===0?'1':'2'):'&nbsp;')+'</span><span class="pep-day-label">'+days[i%7]+' '+fmt(d)+'</span>'+(holiday?'<small>'+escape(holiday)+'</small>':'')+'</th>';
+      }).join('');
   }
 
   function renderDayCheck(){
@@ -254,18 +356,159 @@ document.addEventListener('DOMContentLoaded',()=> {
     absenceDlg.showModal();
   }
 
+  function saveGridEntry(eid,day,text){
+    const employee=employees.find(person=>person.id===eid);
+    if(!employee||!Number.isInteger(day)||day<0||day>=dayCount())
+      throw new Error('Das ausgewählte Mitarbeiterfeld ist nicht mehr verfügbar.');
+    const op=typed.parse(text);
+    if(op.type==='noop')return false;
+    const week=weekFor(day),slot=day%7;
+    const existingShift=rowShift(employee,day);
+    const manual=rowManualAbsence(employee,day);
+    const vacation=absenceAt(employee,day)==='Urlaub'&&!manual;
+    if(vacation&&!(op.type==='clear'&&existingShift))
+      throw new Error('Genehmigter Urlaub wird im Urlaubsplaner bearbeitet. Keine Schicht darüber speichern.');
+    if(op.type==='shift'&&manual)
+      throw new Error('Hier ist eine Abwesenheit eingetragen. Bitte zuerst mit - entfernen.');
+    if(op.type==='absence'&&existingShift)
+      throw new Error('Hier steht eine Schicht. Bitte zuerst mit - entfernen.');
+    const sourceShifts=store.ensureEmployeeShiftRows(team,store.getShifts(week));
+    const sourceAbsences=store.ensureEmployeeAbsenceRows(team,store.getAbsences(week));
+    let change='';
+    if(op.type==='shift'){
+      sourceShifts[eid][slot]=op.shift;
+      store.saveShifts(sourceShifts,week);
+      change='Schicht gespeichert';
+    }else if(op.type==='absence'){
+      sourceAbsences[eid][slot]=op.reason;
+      store.saveAbsences(sourceAbsences,week);
+      change='Abwesenheit gespeichert';
+    }else if(op.type==='clear'){
+      if(existingShift){
+        sourceShifts[eid][slot]=null;
+        store.saveShifts(sourceShifts,week);
+        change='Schicht entfernt';
+      }else if(manual){
+        sourceAbsences[eid][slot]=null;
+        store.saveAbsences(sourceAbsences,week);
+        change='Abwesenheit entfernt';
+      }else return false;
+    }
+    if(day<7){employee.shifts=sourceShifts[eid];employee.absences=sourceAbsences[eid];}
+    else{secondShifts=sourceShifts;secondAbsences=sourceAbsences;}
+    store.savePlanStatus('draft',week);
+    if(day<7)published=false;
+    render();
+    const weekday=['Mo','Di','Mi','Do','Fr','Sa','So'][day%7];
+    gridNotice(change+' · '+weekday+' · '+employee.name+(day>=7?' · Woche 2':'')+'.');
+    return true;
+  }
+  function copyGridShift(eid,day){
+    const employee=employees.find(p=>p.id===eid);
+    const shift=employee&&rowShift(employee,day);
+    if(!shift){
+      gridNotice('Zuerst eine vorhandene Schicht anklicken, nicht ein leeres Feld.',true);
+      return;
+    }
+    try{
+      copiedShift=typed.parse(typed.format(shift)).shift;
+      render();
+      gridNotice('Schicht übernommen: '+typed.format(copiedShift)+'. Jetzt ein freies Tagesfeld anklicken.');
+    }catch(error){gridNotice('Schicht konnte nicht kopiert werden: '+error.message,true);}
+  }
+  function pasteGridShift(eid,day){
+    const employee=employees.find(p=>p.id===eid);
+    if(!copyMode||!copiedShift||!employee||!Number.isInteger(day)||day<0||day>=dayCount())return;
+    if(rowShift(employee,day)){
+      gridNotice('Dieses Tagesfeld ist bereits belegt. Zum Bearbeiten Kopiermodus ausschalten.',true);
+      return;
+    }
+    if(absenceAt(employee,day)){
+      gridNotice('Hier ist bereits eine Abwesenheit eingetragen. Einfügen ist nur in freie Felder möglich.',true);
+      return;
+    }
+    try{
+      saveGridEntry(eid,day,typed.format(copiedShift));
+      gridNotice('Schicht eingefügt · '+employee.name+' · Tag '+(day+1)+'. Für weitere freie Felder bleibt das Fadenkreuz aktiv.');
+    }catch(error){gridNotice(error.message,true);}
+  }
+  function activateCell(button,firstKey=null){
+    const eid=button.dataset.gridE,day=Number(button.dataset.gridD);
+    const employee=employees.find(p=>p.id===eid);
+    if(!employee||!Number.isInteger(day)||day<0||day>=dayCount())return;
+    const td=button.closest('td');
+    if(!td||td.querySelector('.pep-inline-input'))return;
+    const current=rowShift(employee,day);
+    const absence=rowManualAbsence(employee,day);
+    const input=document.createElement('input');
+    input.className='pep-inline-input';
+    input.type='text';
+    input.inputMode='text';
+    input.autocomplete='off';
+    input.spellcheck=false;
+    input.maxLength=32;
+    input.placeholder='9-17/30, Frei, Urlaub';
+    input.setAttribute('aria-label','Dienstplan direkt bearbeiten: '+employee.name+', Tag '+(day+1));
+    const status=document.createElement('small');
+    status.className='pep-inline-status';
+    status.textContent='Enter: speichern · Esc: abbrechen';
+    const previous=current?typed.format(current):absence||'';
+    input.value=firstKey===null?previous:firstKey;
+    const editor=document.createElement('div');editor.className='pep-inline-editor';
+    editor.append(input,status);
+    td.replaceChildren(editor);
+    let finished=false,saving=false;
+    const cancel=()=>{if(finished)return;finished=true;render();};
+    const commit=()=>{
+      if(finished||saving)return;
+      saving=true;
+      try{
+        const didSave=saveGridEntry(eid,day,input.value);
+        finished=true;
+        if(!didSave){render();gridNotice('Keine Änderung vorgenommen.');}
+      }catch(error){
+        status.textContent=error.message;
+        status.classList.add('error');
+        gridNotice(error.message,true);
+        input.setAttribute('aria-invalid','true');
+        input.focus();
+      }finally{saving=false;}
+    };
+    input.addEventListener('keydown',event=>{
+      if(event.key==='Enter'){event.preventDefault();commit();}
+      else if(event.key==='Escape'){event.preventDefault();cancel();}
+    });
+    input.addEventListener('blur',()=>{if(!finished)commit();});
+    input.focus();
+    if(firstKey===null)input.select();
+  }
   function bindCells(){
-    document.querySelectorAll('.empty-shift,.shift-chip').forEach(b=>{b.onclick=()=>openDialog(b.dataset.e,Number(b.dataset.d));});
-    document.querySelectorAll('.absence-chip').forEach(b=>{
-      b.onclick=()=>{
-        const emp=employees.find(e=>e.id===b.dataset.ae);
-        const day=Number(b.dataset.ad);
-        if(emp && !emp.absences[day] && absenceAt(emp,day)==='Urlaub'){
-          window.location.href='/tools/urlaubsplaner';
+    body.querySelectorAll('.pep-grid-trigger').forEach(button=>{
+      const select=()=>{
+        if(copyMode){
+          const eid=button.dataset.gridE,day=Number(button.dataset.gridD);
+          if(!copiedShift)copyGridShift(eid,day);
+          else pasteGridShift(eid,day);
           return;
         }
-        openAbsence(b.dataset.ae,day);
+        activateCell(button);
       };
+      button.addEventListener('click',select);
+      button.addEventListener('keydown',event=>{
+        if(copyMode)return;
+        if(event.key.length===1&&!event.ctrlKey&&!event.metaKey&&!event.altKey){
+          event.preventDefault();activateCell(button,event.key);
+        }
+      });
+    });
+    body.querySelectorAll('.pep-approved-vacation').forEach(button=>{
+      button.addEventListener('click',()=>{
+        if(copyMode){
+          gridNotice('Genehmigten Urlaub bitte nicht als Ziel wählen. Nutze ein freies Feld.',true);
+          return;
+        }
+        window.location.href='/tools/urlaubsplaner';
+      });
     });
   }
 
