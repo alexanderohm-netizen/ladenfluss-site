@@ -1,6 +1,7 @@
 (function () {
   'use strict';
   const KEY = 'ladenfluss.urlaubsplaner.v1';
+  const TEAM_KEY = 'ladenfluss.team.v1';
   const pad = n => String(n).padStart(2, '0');
   const iso = date => date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
   function dateOf(value) {
@@ -19,10 +20,33 @@
   function empty() {
     return {version: 1, employees: [], entries: [], settings: {state: 'HE', workdays: [1, 2, 3, 4, 5], maxAbsent: 1}};
   }
+  // Team master data belongs to Personalfluss; leave balances and entries remain in the vacation store.
+  // Never remove legacy vacation employees: existing leave entries reference their stable IDs.
+  function withSharedTeam(vacation) {
+    const raw = localStorage.getItem(TEAM_KEY);
+    if (raw === null) return vacation; // Standalone free tool: no seeded demo team.
+    let team;
+    try { team = JSON.parse(raw); } catch { return vacation; }
+    if (!Array.isArray(team)) return vacation;
+    const byId = new Map(vacation.employees.map(person => [person.id, person]));
+    for (const person of team) {
+      if (!person || typeof person.id !== 'string' || !person.id.trim() ||
+          typeof person.name !== 'string' || !person.name.trim()) continue;
+      const prior = byId.get(person.id);
+      if (prior) {
+        prior.name = person.name.trim(); // current name always comes from the central employee record
+      } else {
+        const entry = {id: person.id, name: person.name.trim(), allowance: 30};
+        vacation.employees.push(entry);
+        byId.set(entry.id, entry);
+      }
+    }
+    return vacation;
+  }
   function read() {
     const raw = localStorage.getItem(KEY);
-    if (raw === null) return empty();
-    return validate(JSON.parse(raw));
+    const vacation = raw === null ? empty() : validate(JSON.parse(raw));
+    return withSharedTeam(vacation);
   }
   function save(data) {
     validate(data);
@@ -97,7 +121,7 @@
       .reduce((total, entry) => total + countDays(entry, settings, year), 0);
   }
   window.LadenflussVacation = {
-    KEY, read, save, empty, dateOf, iso, eachDate, countDays, isWorkday,
+    KEY, TEAM_KEY, withSharedTeam, read, save, empty, dateOf, iso, eachDate, countDays, isWorkday,
     conflictForEmployee, overCapacity, tally, absencesOn,
   };
 })();
