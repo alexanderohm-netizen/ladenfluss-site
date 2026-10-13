@@ -357,3 +357,140 @@ test('Personalfluss schützt beschädigtes Team und rendert gefährliche Namen n
   assert.match(p.$('staffProfileContent').textContent,/<img src=x onerror=alert\(1\)>/);
   assert.deepEqual(p.errors,[]);p.close();
 });
+
+test('PEP Fadenkreuz-Löschmodus entfernt nur Schichten und macht letzte Löschung rückgängig',async()=>{
+  const p=await load('pep.html');
+  const week='2026-10-05',key='ladenfluss.pep.weeks.v2';
+  const initial=JSON.parse(p.w.localStorage.getItem(key))[week].e1[0];
+  assert.ok(initial);
+  p.$('pepDeleteMode').click();
+  assert.equal(p.$('pepDeleteMode').getAttribute('aria-pressed'),'true');
+  assert.equal(p.$('pepCopyMode').getAttribute('aria-pressed'),'false');
+  p.w.document.querySelector('[data-grid-e="e1"][data-grid-d="0"]').click();
+  assert.equal(JSON.parse(p.w.localStorage.getItem(key))[week].e1[0],null);
+  assert.equal(p.$('pepUndoDelete').hidden,false);
+  assert.match(p.$('pepGridMessage').textContent,/Schicht gelöscht/);
+  p.$('pepUndoDelete').click();
+  assert.deepEqual(JSON.parse(p.w.localStorage.getItem(key))[week].e1[0],initial);
+  assert.equal(p.$('pepUndoDelete').hidden,true);
+  assert.match(p.$('pepGridMessage').textContent,/wiederhergestellt/);
+  p.$('pepCopyMode').click();
+  assert.equal(p.$('pepDeleteMode').getAttribute('aria-pressed'),'false');
+  assert.equal(p.$('pepCopyMode').getAttribute('aria-pressed'),'true');
+  p.w.document.dispatchEvent(new p.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+  assert.equal(p.$('pepCopyMode').getAttribute('aria-pressed'),'false');
+  assert.deepEqual(p.errors,[]);p.close();
+});
+
+test('PEP Fadenkreuz-Löschen in Woche 2 lässt Woche 1 und freie Felder unangetastet',async()=>{
+  const week1='2026-10-05',week2='2026-10-12',key='ladenfluss.pep.weeks.v2';
+  const source={e1:[['08:00','14:00',30],null,null,null,null,null,null]};
+  const second={e1:[['09:00','17:00',30],null,null,null,null,null,null]};
+  const p=await load('pep.html',{[key]:JSON.stringify({[week1]:source,[week2]:second})});
+  p.change('pepPeriod','14');
+  p.$('pepDeleteMode').click();
+  p.w.document.querySelector('[data-grid-e="e1"][data-grid-d="8"]').click();
+  assert.deepEqual(JSON.parse(p.w.localStorage.getItem(key))[week2].e1[0],second.e1[0]);
+  p.w.document.querySelector('[data-grid-e="e1"][data-grid-d="7"]').click();
+  const saved=JSON.parse(p.w.localStorage.getItem(key));
+  assert.equal(saved[week2].e1[0],null);
+  assert.deepEqual(saved[week1].e1[0],source.e1[0]);
+  p.$('pepUndoDelete').click();
+  assert.deepEqual(JSON.parse(p.w.localStorage.getItem(key))[week2].e1[0],second.e1[0]);
+  assert.deepEqual(p.errors,[]);p.close();
+});
+
+test('Gemeinsamer Mitarbeiterstamm: Personalfluss-Änderungen erscheinen in PEP und Urlaubsplaner',async()=>{
+  let p=await load('mitarbeiter.html');
+  p.w.document.querySelector('[data-profile-id="e2"]').click();
+  p.$('editStaffProfile').click();
+  p.$('employeeName').value='Ben Neu';
+  p.$('employeeRole').value='Filialleitung';
+  p.$('employeeHours').value='38';
+  p.$('employeeBranch').value='Nordfiliale';
+  p.submit('employeeForm');
+  const saved=p.storage();p.close();
+  p=await load('pep.html',saved);
+  assert.match(p.$('pepBody').textContent,/Ben Neu/);
+  assert.equal(p.w.LadenflussTeamStore.getTeam().find(e=>e.id==='e2').hours,38);
+  assert.deepEqual(p.errors,[]);p.close();
+  p=await load('tools/urlaubsplaner.html',saved);
+  const people=p.w.LadenflussVacation.read().employees;
+  assert.equal(people.find(e=>e.id==='e2').name,'Ben Neu');
+  assert.equal(people.filter(e=>e.id==='e2').length,1);
+  assert.match(p.$('vacEmployees').textContent,/Filialleitung/);
+  assert.deepEqual(p.errors,[]);p.close();
+});
+
+test('Urlaubsplaner legt neue Mitarbeiter genau einmal im zentralen Personalstamm an',async()=>{
+  let p=await load('tools/urlaubsplaner.html');
+  p.$('vacEmployeeName').value='Chris Muster';
+  p.$('vacAllowance').value='28';
+  p.submit('vacEmployeeForm');
+  assert.equal(p.$('vacTeamCount').textContent,'1');
+  const saved=p.storage();
+  const team=JSON.parse(saved['ladenfluss.team.v1']);
+  assert.equal(team.length,1);
+  assert.equal(team[0].name,'Chris Muster');
+  assert.equal(team[0].role,'Mitarbeiter');
+  assert.equal(team[0].hours,0);
+  assert.equal(p.saved().employees[0].allowance,28);
+  p.close();
+  p=await load('pep.html',saved);
+  assert.equal(p.$('employeeCount').textContent,'1');
+  assert.match(p.$('pepBody').textContent,/Chris Muster/);
+  assert.deepEqual(p.errors,[]);p.close();
+  p=await load('mitarbeiter.html',saved);
+  assert.equal(p.$('activeEmployees').textContent,'1');
+  assert.match(p.$('staffList').textContent,/Chris Muster/);
+  assert.deepEqual(p.errors,[]);p.close();
+});
+
+test('Urlaubsbudgets und historische Einträge bleiben bei Team-Umbenennung erhalten',async()=>{
+  const data={version:1,employees:[{id:'e9',name:'Alter Name',allowance:26}],
+    entries:[{id:'vac1',employeeId:'e9',start:'2026-10-05',end:'2026-10-06',status:'approved',note:''}],
+    settings:{state:'HE',workdays:[1,2,3,4,5],maxAbsent:1}};
+  const team=[{id:'e9',name:'Neuer Name',role:'Verkauf',branch:'Nord',hours:25}];
+  const p=await load('tools/urlaubsplaner.html',{[KEY]:JSON.stringify(data),'ladenfluss.team.v1':JSON.stringify(team)});
+  assert.equal(p.$('vacTeamCount').textContent,'1');
+  assert.equal(p.w.LadenflussVacation.read().employees[0].name,'Neuer Name');
+  assert.equal(p.w.LadenflussVacation.read().employees[0].allowance,26);
+  assert.equal(p.w.LadenflussVacation.read().entries[0].employeeId,'e9');
+  assert.equal(JSON.parse(p.w.localStorage.getItem(KEY)).employees[0].name,'Alter Name'); // no silent write
+  assert.deepEqual(p.errors,[]);p.close();
+});
+
+test('Fehlgeschlagene Urlaubs-Mitarbeiteranlage rollt den gemeinsamen Personalstamm zurück',async()=>{
+  const p=await load('tools/urlaubsplaner.html');
+  const proto=p.w.Storage.prototype,original=proto.setItem;
+  proto.setItem=function(k,v){if(k===KEY)throw Error('Speicher voll');return original.call(this,k,v);};
+  p.$('vacEmployeeName').value='Nicht angelegt';p.submit('vacEmployeeForm');
+  assert.equal(p.w.localStorage.getItem('ladenfluss.team.v1'),null);
+  assert.equal(p.$('vacTeamCount').textContent,'0');
+  assert.match(p.$('vacError').textContent,/nicht gespeichert/);
+  proto.setItem=original;
+  assert.deepEqual(p.errors,[]);p.close();
+});
+
+test('PEP und Urlaubsplaner aktualisieren den Personalstamm nach Änderungen in anderem Tab',async()=>{
+  const before=[{id:'one',name:'Kim Beispiel',role:'Verkauf',branch:'Nord',hours:20}];
+  const after=[{id:'one',name:'Kim Leitung',role:'Filialleitung',branch:'Süd',hours:35},
+    {id:'two',name:'Luca Muster',role:'Verkauf',branch:'Süd',hours:18}];
+  let p=await load('pep.html',{'ladenfluss.team.v1':JSON.stringify(before)});
+  assert.equal(p.$('employeeCount').textContent,'1');
+  p.w.localStorage.setItem('ladenfluss.team.v1',JSON.stringify(after));
+  p.w.dispatchEvent(new p.w.StorageEvent('storage',{key:'ladenfluss.team.v1'}));
+  assert.equal(p.$('employeeCount').textContent,'2');
+  assert.match(p.$('pepBody').textContent,/Kim Leitung/);
+  assert.match(p.$('pepBody').textContent,/Luca Muster/);
+  assert.deepEqual(p.errors,[]);p.close();
+  p=await load('tools/urlaubsplaner.html',{'ladenfluss.team.v1':JSON.stringify(before)});
+  assert.equal(p.$('vacTeamCount').textContent,'1');
+  p.w.localStorage.setItem('ladenfluss.team.v1',JSON.stringify(after));
+  p.w.dispatchEvent(new p.w.StorageEvent('storage',{key:'ladenfluss.team.v1'}));
+  assert.equal(p.$('vacTeamCount').textContent,'2');
+  assert.match(p.$('vacEmployees').textContent,/Kim Leitung/);
+  assert.match(p.$('vacEmployees').textContent,/Luca Muster/);
+  assert.deepEqual(p.errors,[]);p.close();
+});
+

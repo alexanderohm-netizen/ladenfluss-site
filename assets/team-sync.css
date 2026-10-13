@@ -1,0 +1,6 @@
+.vac-team-sync-note{margin:13px 0 0;padding:15px 17px;background:#fbf4ed;border-left:3px solid #7b1926;color:#755b54;font-size:12px;line-height:1.65}
+.vac-team-sync-note strong{color:#74273b}
+.vac-team-profile-link{display:inline-block;margin:13px 0 0;color:#7b1926;font-weight:750;font-size:12px;text-decoration:underline;text-underline-offset:3px}
+.pep-team-sync-note{display:flex;align-items:center;justify-content:space-between;gap:15px;margin:18px 0;padding:14px 19px;background:#fffaf6;border:1px solid #e9ddd3;border-left:3px solid #7b1926;color:#755d55;font-size:12px;line-height:1.5}
+.pep-team-sync-note strong{color:#642537}.pep-team-sync-note a{color:#7b1926;font-weight:800;white-space:nowrap}
+@media(max-width:600px){.pep-team-sync-note{flex-direction:column;align-items:flex-start}.pep-team-sync-note a{white-space:normal}}
