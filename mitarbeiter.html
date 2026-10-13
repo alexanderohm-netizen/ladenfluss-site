@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="/assets/staff-simplified.css">
 <link rel="stylesheet" href="/assets/staff-profile-modern.css">
 </head>
-<body class="staff-v2-body">
+<body class="staff-v2-body staff-v3-body">
 <a class="skip-link" href="#main">Zum Inhalt</a>
 <header class="site-header"><div class="container header-row">
  <a class="brand" href="/" aria-label="Ladenfluss Startseite"><span class="brand-mark" aria-hidden="true"></span><span>Ladenfluss</span></a>
@@ -20,14 +20,27 @@
  <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav">Menü</button>
  </div><nav id="mobile-nav" class="mobile-nav" aria-label="Mobile Navigation"><a href="/produkte">Produkte</a><a href="/#loesungen">Lösungen</a><a href="/tools">Kostenlose Tools</a><a href="/ueber-uns">Über uns</a><a href="/kontakt">Kontakt</a><a href="/mein-laden">Mein Laden öffnen</a></nav></header>
 
+<aside class="lf-staff-sidebar" aria-label="Ladenfluss Navigation">
+  <a class="lf-staff-brand" href="/mein-laden"><span class="lf-staff-brand-icon">❦</span> Ladenfluss</a>
+  <span class="lf-staff-nav-label">DEIN SYSTEM</span>
+  <a href="/mein-laden"><span>⌂</span> Übersicht</a>
+  <a class="active" href="/mitarbeiter" aria-current="page"><span>♙</span> Personalfluss</a>
+  <a href="/pep"><span>▦</span> Dienstplanung</a>
+  <a href="/tools/urlaubsplaner"><span>▤</span> Urlaubsplaner</a>
+  <span class="lf-staff-nav-label">WEITERE MODULE</span>
+  <a href="/mein-laden"><span>◇</span> Zahlenfluss</a>
+  <a href="/mein-laden"><span>▣</span> Warenfluss</a>
+  <div class="lf-staff-sidebar-foot"><span class="lf-staff-foot-avatar">L</span><div><strong>Dein Arbeitsbereich</strong><small>Personalfluss · Vorschau</small></div></div>
+</aside>
 <main id="main" class="staff-shell">
+  <div class="lf-staff-topbar"><span>Arbeitsbereich <span aria-hidden="true">/</span> Personalfluss</span><div><span class="lf-staff-topbar-dot"></span> Lokale Vorschau <span class="lf-staff-topbar-avatar">LF</span></div></div>
   <nav class="staff-breadcrumb" aria-label="Brotkrumennavigation"><a href="/mein-laden">Mein Laden</a><span aria-hidden="true">/</span><span>Personalfluss</span></nav>
 
   <section class="staff-head" aria-labelledby="staffTitle">
     <div>
       <span class="eyebrow">Ladenfluss · Personalfluss</span>
-      <h1 id="staffTitle">Dein Team.<br><em>Einfach verwaltet.</em></h1>
-      <p>Alle Mitarbeiter an einem Ort. Profile anlegen, Angaben ändern und die Bruttolöhne auf einen Blick sehen.</p>
+      <h1 id="staffTitle">Menschen, die deinen<br><em>Laden bewegen.</em></h1>
+      <p>Ein Team. Ein zentraler Personalstamm. Alle Informationen klar strukturiert – vom ersten Arbeitstag bis zur Dienstplanung.</p>
       <div class="staff-hero-meta"><span>✓ Im PEP verwendbar</span><span>✓ Mit dem Urlaubsplaner verknüpfbar</span><span>✓ Lokal auf diesem Gerät</span></div>
     </div>
     <div class="staff-head-actions">
@@ -76,11 +89,12 @@
 
   <section class="staff-profile" id="staffProfile" aria-labelledby="staffProfileTitle" hidden>
     <div class="staff-profile-top">
-      <div><span class="eyebrow">MITARBEITERPROFIL</span><h2 id="staffProfileTitle">Mitarbeiterprofil</h2></div>
+      <div><span class="eyebrow">PERSONALFLUSS / PERSONALAKTE</span><h2 id="staffProfileTitle">Mitarbeiterprofil</h2><p class="lf-profile-subtitle">Stammdaten, Beschäftigung und vertrauliche Personalangaben an einem Ort.</p></div>
       <div class="staff-profile-top-actions"><button type="button" class="btn btn-primary" id="editStaffProfile">Profil bearbeiten</button><button type="button" class="btn btn-secondary" id="closeStaffProfile">Schließen</button></div>
     </div>
     <div id="staffProfileContent"></div>
-    <section class="staff-private-panel" aria-labelledby="staffPrivateTitle"><div class="staff-private-top"><div><span class="eyebrow">VERTRAULICH · PERSONALAKTE</span><h3 id="staffPrivateTitle">Persönliche Angaben</h3><p>Adresse, Bankverbindung und aufenthaltsbezogene Angaben – separat geschützt.</p></div><span class="staff-private-chip" id="staffPrivateState">Nicht hinterlegt</span></div><div class="staff-private-bottom"><span>Nur mit deiner Passphrase lesbar · keine Cloud-Übertragung</span><button type="button" class="btn btn-secondary" id="openPrivateProfile">Angaben sicher öffnen →</button></div></section>
+    <div id="staffDetailSections" class="lf-profile-detail-grid" aria-label="Mitarbeiterstammdaten"></div>
+    <section class="staff-private-panel" aria-labelledby="staffPrivateTitle"><div class="staff-private-top"><div><span class="eyebrow">VERTRAULICH · PERSONALAKTE</span><h3 id="staffPrivateTitle">Vertrauliche Angaben freigeben</h3><p>Die Bereiche Kontakt, Anschrift, Bankverbindung und Aufenthaltsangaben sind im Profil sichtbar. Zum Anzeigen der Werte bitte entsperren.</p></div><span class="staff-private-chip" id="staffPrivateState">Nicht hinterlegt</span></div><div class="staff-private-bottom"><span>Nur mit deiner Passphrase lesbar · keine Cloud-Übertragung</span><button type="button" class="btn btn-secondary" id="openPrivateProfile">Angaben sicher öffnen →</button></div></section>
     <section class="staff-compensation" id="staffCompensation" aria-labelledby="staffCompensationTitle">
       <div class="staff-compensation-heading"><span class="eyebrow">VERGÜTUNG · BRUTTO</span><h3 id="staffCompensationTitle">Lohnübersicht</h3></div>
       <div class="staff-compensation-grid" aria-live="polite">
@@ -115,6 +129,7 @@
       <label for="employeeRole">Tätigkeit<input id="employeeRole" list="employeeRoleSuggestions" maxlength="70" required autocomplete="off" value="Verkauf" placeholder="z. B. Verkauf"><datalist id="employeeRoleSuggestions"><option value="Verkauf"><option value="Filialleitung"><option value="Aushilfe"><option value="Lager"><option value="Service"><option value="Küche"></datalist></label>
       <label for="employeeHours">Wochenstunden<input id="employeeHours" name="hours" type="number" min="0" max="60" step=".5" value="20" required></label>
     </div>
+    <label for="employeeStartDate">Eintrittsdatum · optional<input id="employeeStartDate" name="startDate" type="date" autocomplete="off"></label>
     <label for="employeeBranch">Einsatzort<input id="employeeBranch" maxlength="80" required autocomplete="off" value="Hauptfiliale" placeholder="z. B. Hauptfiliale"></label>
     <label for="employeeHourlyGross">Brutto-Stundenlohn (€) · optional
       <input id="employeeHourlyGross" name="hourlyGross" type="number" inputmode="decimal" min="0" max="250" step="0.01" autocomplete="off" placeholder="z. B. 19,66"></label>
@@ -131,8 +146,9 @@
     <button type="button" id="unlockPrivate" class="btn btn-secondary">Angaben entsperren / neu anlegen</button>
     <p id="privateStatus" role="status" aria-live="polite"></p>
     <div id="privateFields" hidden>
-      <div class="staff-private-section-label">Kontakt & Bankverbindung</div>
+      <div class="staff-private-section-label">Kontakt, Anschrift & Bankverbindung</div>
       <label for="privateAddress">Anschrift · optional<textarea id="privateAddress" maxlength="320" rows="2" placeholder="Straße, Hausnummer, PLZ und Ort"></textarea></label>
+      <div class="dialog-two"><label for="privateEmail">E-Mail-Adresse · optional<input id="privateEmail" type="email" maxlength="160" autocomplete="off" placeholder="name@beispiel.de"></label><label for="privatePhone">Telefon · optional<input id="privatePhone" type="tel" maxlength="50" autocomplete="off" placeholder="+49 …"></label></div>
       <label for="privateIban">IBAN · optional<input id="privateIban" inputmode="text" maxlength="42" autocomplete="off" spellcheck="false" placeholder="DE00 0000 0000 0000 0000 00"></label>
       <div class="staff-private-section-label">Weitere Personalangaben · optional</div>
       <label for="privateNationality">Staatsangehörigkeit<input id="privateNationality" maxlength="100" autocomplete="off" placeholder="Nur wenn betrieblich erforderlich"></label>
