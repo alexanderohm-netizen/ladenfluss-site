@@ -129,11 +129,14 @@ document.addEventListener('DOMContentLoaded',()=>{
     revealed=null;readError='';renderDetails();showPrivateState();
     if(!id||!privateStore?.available())return;
     try{
+      // Avoid starting IndexedDB work for employees with no private record.
+      // This also prevents async callbacks from rendering into a closed page.
+      if(!privateStore.exists(id))return;
       const data=await privateStore.read(id);
-      if(selectedId!==id)return;
+      if(!document.defaultView||selectedId!==id)return;
       revealed=data;renderDetails();showPrivateState();
     }catch(e){
-      if(selectedId!==id)return;
+      if(!document.defaultView||selectedId!==id)return;
       readError=e.message;renderDetails();showPrivateState();
       const mainStatus=$('staffStatus');if(mainStatus)mainStatus.textContent=readError;
     }
