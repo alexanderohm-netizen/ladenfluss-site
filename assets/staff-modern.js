@@ -4,11 +4,11 @@
 document.addEventListener('DOMContentLoaded',()=>{
   'use strict';
   const $=id=>document.getElementById(id);
-  const store=window.LadenflussTeamStore,privateStore=window.LadenflussPrivatePersonnel;
+  const store=window.LadenflussTeamStore,privateStore=window.LadenflussPersonnelLocal;
   const board=$('staffRoleGrid'),roleCount=$('staffRoleCount'),search=$('staffSearch');
   const dialog=$('privateEmployeeDialog'),form=$('privateEmployeeForm'),fields=$('privateFields');
-  const status=$('privateStatus'),pass=$('privatePassphrase');
-  let selectedId=null,unlocked=false,busy=false,revealed=null;
+  const status=$('privateStatus');
+  let selectedId=null,busy=false,revealed=null,readError='';
   const roles={
     'Filialleitung':{icon:'◆',tag:'Führung',desc:'Filialorganisation, Teamsteuerung und wirtschaftliche Kennzahlen'},
     'Verkauf':{icon:'▦',tag:'Verkaufsfläche',desc:'Kundenservice, Warenpräsentation und operative Abläufe'},
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     const card=element('section','lf-detail-card'+(protectedCard?' lf-detail-protected':''));
     const head=element('div','lf-detail-card-head');
     head.append(element('span','lf-detail-card-icon',icon),element('h3','',title));
-    if(protectedCard)head.append(element('span','lf-detail-lock',revealed?'ENTSPERRT':'GESCHÜTZT'));
+    if(protectedCard)head.append(element('span','lf-detail-lock','LOKAL'));
     card.append(head);
     const list=element('dl','lf-detail-facts');
     for(const [label,value] of rows){
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     let p;
     try{p=store.getTeam().find(person=>person?.id===selectedId);}catch(_){return;}
     if(!p)return;
-    const locked='Zum Anzeigen entsperren';
+    const locked=readError?'Nicht verfügbar':'Noch nicht hinterlegt';
     const v=revealed;
     target.append(
       detailCard('◈','Beschäftigung',[
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       ],true),
       detailCard('▣','Bankverbindung',[
         ['IBAN',v?(v.iban?('•••• •••• •••• '+v.iban.slice(-4)):'Nicht hinterlegt'):locked],
-        ['Speicherung','Lokal · verschlüsselt']
+        ['Speicherung','Lokal im Browser']
       ],true),
       detailCard('◇','Persönliche Angaben',[
         ['Staatsangehörigkeit',v?(v.nationality||'Nicht hinterlegt'):locked],
@@ -115,65 +115,64 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(!badge||!button)return;
     if(!selectedId){badge.textContent='Nicht ausgewählt';button.disabled=true;return;}
     button.disabled=!privateStore?.available();
-    button.textContent=revealed?'Angaben ausblenden':'Vertrauliche Angaben öffnen →';
-    try{badge.textContent=privateStore?.exists(selectedId)?'Verschlüsselt hinterlegt':'Noch keine Angaben';}
+    try{badge.textContent=readError?'Nicht verfügbar':privateStore?.exists(selectedId)?'Im Profil hinterlegt':'Noch keine Angaben';}
     catch(_){badge.textContent='Nicht verfügbar';}
+    button.textContent='Angaben bearbeiten ↗';
   }
-  function clearPrivate(){
-    unlocked=false;busy=false;
-    if(form)form.reset();
-    if(fields)fields.hidden=true;
-    if(status)status.textContent='';
-    if($('unlockPrivate'))$('unlockPrivate').disabled=false;
-    if($('savePrivateDetails'))$('savePrivateDetails').disabled=false;
+  function fill(data){
+    for(const [id,key] of [['privateEmail','email'],['privatePhone','phone'],['privateAddress','address'],['privateIban','iban'],['privateNationality','nationality'],['privateResidence','residenceStatus'],['privateResidenceUntil','residenceUntil']]){
+      const field=$(id);if(field)field.value=data?.[key]||'';
+    }
   }
-  function closePrivate(){if(dialog?.open)dialog.close();clearPrivate();}
+  function closePrivate(){if(dialog?.open)dialog.close();if(form)form.reset();if(status)status.textContent='';}
+  async function loadSelected(id){
+    revealed=null;readError='';renderDetails();showPrivateState();
+    if(!id||!privateStore?.available())return;
+    try{
+      const data=await privateStore.read(id);
+      if(selectedId!==id)return;
+      revealed=data;renderDetails();showPrivateState();
+    }catch(e){
+      if(selectedId!==id)return;
+      readError=e.message;renderDetails();showPrivateState();
+      const mainStatus=$('staffStatus');if(mainStatus)mainStatus.textContent=readError;
+    }
+  }
   window.addEventListener('ladenfluss:employee-selected',event=>{
     const id=event.detail?.id||null;
-    if(id!==selectedId){closePrivate();revealed=null;selectedId=id;}
-    showPrivateState();renderRoles();renderDetails();
+    if(id!==selectedId){closePrivate();selectedId=id;loadSelected(id);}
+    else{renderDetails();showPrivateState();}
+    renderRoles();
   });
   window.addEventListener('storage',event=>{
-    if(event.key==='ladenfluss.team.v1'){renderRoles();showPrivateState();renderDetails();}
-    if(event.key?.startsWith(privateStore?.PREFIX||'__never__')){revealed=null;showPrivateState();renderDetails();}
+    if(event.key==='ladenfluss.team.v1'){renderRoles();renderDetails();}
+    if(event.key?.startsWith(privateStore?.PREFIX||'__never__'))loadSelected(selectedId);
   });
-  $('openPrivateProfile')?.addEventListener('click',()=>{
-    if(!selectedId||!privateStore?.available())return;
-    if(revealed){revealed=null;showPrivateState();renderDetails();return;}
-    clearPrivate();
-    const person=store.getTeam().find(p=>p.id===selectedId);
-    $('privateEmployeeName').textContent=person?.name||'Mitarbeiter';
-    status.textContent=privateStore.exists(selectedId)
-      ? 'Passphrase eingeben, um die verschlüsselten Angaben zu öffnen.'
-      : 'Noch keine private Akte. Lege eine Passphrase fest, um Angaben verschlüsselt zu speichern.';
-    dialog.showModal();pass.focus();
+  $('openPrivateProfile')?.addEventListener('click',async()=>{
+    if(!selectedId||!privateStore?.available()||busy)return;
+    const id=selectedId;
+    busy=true;
+    try{
+      const data=await privateStore.read(id);
+      if(id!==selectedId)return;
+      revealed=data;readError='';renderDetails();showPrivateState();
+      const person=store.getTeam().find(p=>p.id===selectedId);
+      $('privateEmployeeName').textContent=person?.name||'Mitarbeiter';
+      fill(data);
+      status.textContent='Angaben bearbeiten und anschließend speichern.';
+      $('privateLegacyNote').hidden=!(privateStore.legacyExists(id)&&!privateStore.exists(id));
+      dialog.showModal();
+      $('privateEmail').focus();
+    }catch(e){readError=e.message;showPrivateState();renderDetails();$('staffStatus').textContent=e.message;}
+    finally{busy=false;}
   });
   $('closePrivateDialog')?.addEventListener('click',closePrivate);
   $('cancelPrivateDialog')?.addEventListener('click',closePrivate);
-  dialog?.addEventListener('close',clearPrivate);
-  async function unlock(){
-    if(busy||!selectedId||!privateStore)return;
-    if(pass.value.length<12){status.textContent='Bitte eine Passphrase mit mindestens 12 Zeichen eingeben.';return;}
-    busy=true;$('unlockPrivate').disabled=true;
-    try{
-      const data=await privateStore.read(selectedId,pass.value);
-      $('privateEmail').value=data?.email||'';
-      $('privatePhone').value=data?.phone||'';
-      $('privateAddress').value=data?.address||'';
-      $('privateIban').value=data?.iban||'';
-      $('privateNationality').value=data?.nationality||'';
-      $('privateResidence').value=data?.residenceStatus||'';
-      $('privateResidenceUntil').value=data?.residenceUntil||'';
-      fields.hidden=false;unlocked=true;
-      revealed=data||null;renderDetails();showPrivateState();
-      status.textContent=data?'Verschlüsselte Angaben geöffnet. Änderungen werden erst mit „Verschlüsselt speichern“ übernommen.':'Neue private Akte. Angaben eingeben und verschlüsselt speichern.';
-    }catch(e){status.textContent=e.message;fields.hidden=true;unlocked=false;}
-    finally{busy=false;$('unlockPrivate').disabled=false;}
-  }
-  $('unlockPrivate')?.addEventListener('click',unlock);
+  dialog?.addEventListener('close',()=>{if(form)form.reset();});
   form?.addEventListener('submit',async event=>{
     event.preventDefault();
-    if(busy||!unlocked||!selectedId)return;
+    if(busy||!selectedId)return;
+    const id=selectedId;
     busy=true;$('savePrivateDetails').disabled=true;
     try{
       const details={
@@ -182,10 +181,12 @@ document.addEventListener('DOMContentLoaded',()=>{
         nationality:$('privateNationality').value,residenceStatus:$('privateResidence').value,
         residenceUntil:$('privateResidenceUntil').value
       };
-      await privateStore.save(selectedId,pass.value,details);
-      closePrivate();revealed=null;showPrivateState();renderDetails();
-      const mainStatus=$('staffStatus');
-      if(mainStatus)mainStatus.textContent='Vertrauliche Angaben verschlüsselt gespeichert – nur auf diesem Gerät.';
+      await privateStore.save(id,details);
+      if(selectedId===id){
+        revealed=await privateStore.read(id);readError='';
+        closePrivate();showPrivateState();renderDetails();
+        $('staffStatus').textContent='Personalangaben gespeichert – ohne zusätzliches Passwort, nur auf diesem Gerät.';
+      }
     }catch(e){status.textContent=e.message;}
     finally{busy=false;$('savePrivateDetails').disabled=false;}
   });
