@@ -221,7 +221,7 @@
       if (!window.LadenflussTeamStore?.getTeam) {
         return fail('Die Personalplanung konnte nicht geladen werden.');
       }
-      if (!confirm('Mitarbeiter aus der Personalplanung auf diesem Browser übernehmen? Wenn noch kein Team gespeichert ist, werden die Demo-Mitarbeiter übernommen.')) return;
+      if (!confirm('Team auf diesem Browser abgleichen? Bereits angelegte Personen werden nicht doppelt übernommen. Ohne eigenen Personalstamm werden die Demo-Profile geladen.')) return;
       let source;
       try { source = window.LadenflussTeamStore.getTeam(); }
       catch (e) { return fail('Team konnte nicht übernommen werden: ' + e.message); }
@@ -235,7 +235,7 @@
       }
       if (persist()) {
         render();
-        if (!added) fail('Keine neuen Mitarbeiter übernommen. Bestehende Namen wurden nicht doppelt angelegt.');
+        if (!added) clearError(); // Bereits synchronisiert; kein Fehler.
       }
     });
     $('vacEmployeeForm').addEventListener('submit', event => {
