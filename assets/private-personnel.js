@@ -26,10 +26,11 @@
       {name:'AES-GCM',length:256},false,['encrypt','decrypt']);
   }
   function validate(details){
-    const values={address:String(details.address||'').trim(),iban:String(details.iban||'').replace(/\s/g,'').toUpperCase(),
+    const values={email:String(details.email||'').trim(),phone:String(details.phone||'').trim(),address:String(details.address||'').trim(),iban:String(details.iban||'').replace(/\s/g,'').toUpperCase(),
       nationality:String(details.nationality||'').trim(),residenceStatus:String(details.residenceStatus||'').trim(),
       residenceUntil:String(details.residenceUntil||'').trim()};
-    if(values.address.length>320||values.nationality.length>100||values.residenceStatus.length>100)throw Error('Eine Angabe ist zu lang.');
+    if(values.email.length>160||values.phone.length>50||values.address.length>320||values.nationality.length>100||values.residenceStatus.length>100)throw Error('Eine Angabe ist zu lang.');
+    if(values.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email))throw Error('Bitte eine gültige E-Mail-Adresse eingeben.');
     if(values.iban&&!/^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/.test(values.iban))throw Error('Bitte eine gültig formatierte IBAN eingeben.');
     if(values.iban){
       const rearranged=values.iban.slice(4)+values.iban.slice(0,4);
