@@ -14,12 +14,16 @@ document.addEventListener('DOMContentLoaded',()=> {
   const searchInput=document.getElementById('pepSearch');
   const gridMessage=document.getElementById('pepGridMessage');
   const copyAction=document.getElementById('pepCopyMode');
+  const deleteAction=document.getElementById('pepDeleteMode');
+  const undoDelete=document.getElementById('pepUndoDelete');
   const copyStep=document.getElementById('pepCopyModeStep');
   const copyHint=document.getElementById('pepCopyModeHint');
   const copyLabel=document.getElementById('pepClipboardLabel');
   const gridRegion=document.querySelector('.pep-table-wrap');
   let copyMode=false;
+  let deleteMode=false;
   let copiedShift=null;
+  let lastDeleted=null;
   let secondWeekKey='',secondShifts={},secondAbsences={};
   function refreshSecond(){
     const following=new Date(weekStart);following.setDate(following.getDate()+7);
@@ -42,30 +46,46 @@ document.addEventListener('DOMContentLoaded',()=> {
   function updateClipboardBar(){
     copyAction.setAttribute('aria-pressed',String(copyMode));
     copyAction.classList.toggle('is-active',copyMode);
-    gridRegion.classList.toggle('pep-crosshair-mode',copyMode);
-    gridRegion.dataset.mode=copyMode?(copiedShift?'paste':'pick'):'normal';
+    deleteAction.setAttribute('aria-pressed',String(deleteMode));
+    deleteAction.classList.toggle('is-active',deleteMode);
+    gridRegion.classList.toggle('pep-crosshair-mode',copyMode||deleteMode);
+    gridRegion.classList.toggle('pep-delete-mode',deleteMode);
+    gridRegion.dataset.mode=deleteMode?'delete':copyMode?(copiedShift?'paste':'pick'):'normal';
     copyLabel.hidden=!copyMode||!copiedShift;
     copyLabel.textContent=copiedShift
       ? 'Kopiert: '+typed.format(copiedShift).replace('-', '–').replace('/',' · ')+' Min Pause':'';
-    copyStep.textContent=!copyMode?'Direktbearbeitung aktiv':copiedShift?'Schritt 2 · Zielfeld wählen':'Schritt 1 · Quellschicht wählen';
-    copyHint.textContent=!copyMode
-      ? 'Aktion einschalten → Quellschicht anklicken → freies Feld anklicken. Erneut klicken zum Beenden.'
-      :copiedShift
-        ? 'Jetzt mit dem Fadenkreuz freie Tagesfelder anklicken. Mehrfaches Einfügen möglich. Aktion zum Beenden erneut anklicken.'
-        :'Fadenkreuz aktiv: Klicke auf eine vorhandene Schicht, die du kopieren möchtest.';
+    undoDelete.hidden=!lastDeleted;
+    if(lastDeleted)undoDelete.textContent='↶ Letzte Löschung rückgängig';
+    copyStep.textContent=deleteMode?'Schichten gezielt entfernen'
+      :!copyMode?'Direktbearbeitung aktiv':copiedShift?'Schritt 2 · Zielfeld wählen':'Schritt 1 · Quellschicht wählen';
+    copyHint.textContent=deleteMode
+      ? 'Fadenkreuz aktiv: Klicke auf eine Schicht, um sie zu löschen. Leere Felder und Abwesenheiten bleiben unverändert. Esc beendet den Modus.'
+      :!copyMode
+        ? 'Schichten normal bearbeiten oder eine Aktion wählen: kopieren / einfügen oder löschen.'
+        :copiedShift
+          ? 'Jetzt mit dem Fadenkreuz freie Tagesfelder anklicken. Mehrfaches Einfügen möglich. Aktion zum Beenden erneut anklicken.'
+          :'Fadenkreuz aktiv: Klicke auf eine vorhandene Schicht, die du kopieren möchtest.';
   }
   copyAction.addEventListener('click',()=>{
     copyMode=!copyMode;
+    deleteMode=false;
     copiedShift=null;
     gridNotice(copyMode?'Kopiermodus aktiv: Bitte eine Schicht auswählen.':'Kopiermodus beendet.');
     render();
   });
+  deleteAction.addEventListener('click',()=>{
+    deleteMode=!deleteMode;
+    copyMode=false;
+    copiedShift=null;
+    gridNotice(deleteMode?'Löschmodus aktiv: Klicke mit dem Fadenkreuz auf eine Schicht.':'Löschmodus beendet.');
+    render();
+  });
   document.addEventListener('keydown',event=>{
-    if(event.key==='Escape'&&copyMode&&!event.target.closest('.pep-inline-editor')){
-      copyMode=false;copiedShift=null;gridNotice('Kopiermodus beendet.');render();
+    if(event.key==='Escape'&&(copyMode||deleteMode)&&!event.target.closest('.pep-inline-editor')){
+      copyMode=false;deleteMode=false;copiedShift=null;
+      gridNotice('Fadenkreuzmodus beendet.');render();
     }
   });
-
 
   let approvedVacations = [];
   let vacationError = false;
@@ -403,6 +423,38 @@ document.addEventListener('DOMContentLoaded',()=> {
     gridNotice(change+' · '+weekday+' · '+employee.name+(day>=7?' · Woche 2':'')+'.');
     return true;
   }
+  function deleteGridShift(eid,day){
+    const employee=employees.find(p=>p.id===eid);
+    const shift=employee&&rowShift(employee,day);
+    if(!shift){
+      gridNotice('Hier ist keine Schicht zum Löschen. Abwesenheiten und freie Felder bleiben unverändert.',true);
+      return;
+    }
+    const backup=JSON.parse(JSON.stringify(shift));
+    try{
+      if(!saveGridEntry(eid,day,'-'))return;
+      lastDeleted={eid,day,week:weekFor(day),shift:backup,name:employee.name};
+      updateClipboardBar();
+      gridNotice('Schicht gelöscht · '+employee.name+' · Tag '+(day+1)+'. Mit „Rückgängig“ kannst du die letzte Löschung wiederherstellen.');
+    }catch(error){gridNotice('Schicht konnte nicht gelöscht werden: '+error.message,true);}
+  }
+  undoDelete.addEventListener('click',()=>{
+    const previous=lastDeleted;
+    if(!previous)return;
+    const employee=employees.find(p=>p.id===previous.eid);
+    if(!employee||weekFor(previous.day)!==previous.week||previous.day>=dayCount()){
+      gridNotice('Rückgängig ist nur im ursprünglichen Planungszeitraum möglich.',true);return;
+    }
+    if(rowShift(employee,previous.day)||absenceAt(employee,previous.day)){
+      gridNotice('Das Feld ist inzwischen belegt. Die letzte Löschung wurde nicht überschrieben.',true);return;
+    }
+    try{
+      if(saveGridEntry(previous.eid,previous.day,typed.format(previous.shift))){
+        lastDeleted=null;updateClipboardBar();
+        gridNotice('Schicht wiederhergestellt · '+previous.name+' · Tag '+(previous.day+1)+'.');
+      }
+    }catch(error){gridNotice('Wiederherstellen fehlgeschlagen: '+error.message,true);}
+  });
   function copyGridShift(eid,day){
     const employee=employees.find(p=>p.id===eid);
     const shift=employee&&rowShift(employee,day);
@@ -485,6 +537,10 @@ document.addEventListener('DOMContentLoaded',()=> {
   function bindCells(){
     body.querySelectorAll('.pep-grid-trigger').forEach(button=>{
       const select=()=>{
+        if(deleteMode){
+          deleteGridShift(button.dataset.gridE,Number(button.dataset.gridD));
+          return;
+        }
         if(copyMode){
           const eid=button.dataset.gridE,day=Number(button.dataset.gridD);
           if(!copiedShift)copyGridShift(eid,day);
@@ -495,7 +551,7 @@ document.addEventListener('DOMContentLoaded',()=> {
       };
       button.addEventListener('click',select);
       button.addEventListener('keydown',event=>{
-        if(copyMode)return;
+        if(copyMode||deleteMode)return;
         if(event.key.length===1&&!event.ctrlKey&&!event.metaKey&&!event.altKey){
           event.preventDefault();activateCell(button,event.key);
         }
@@ -503,6 +559,10 @@ document.addEventListener('DOMContentLoaded',()=> {
     });
     body.querySelectorAll('.pep-approved-vacation').forEach(button=>{
       button.addEventListener('click',()=>{
+        if(deleteMode){
+          gridNotice('Genehmigter Urlaub wird nur im Urlaubsplaner bearbeitet.',true);
+          return;
+        }
         if(copyMode){
           gridNotice('Genehmigten Urlaub bitte nicht als Ziel wählen. Nutze ein freies Feld.',true);
           return;
