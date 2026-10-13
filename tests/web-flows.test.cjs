@@ -429,3 +429,25 @@ test('Fehlgeschlagene Urlaubs-Mitarbeiteranlage rollt den gemeinsamen Personalst
   proto.setItem=original;
   assert.deepEqual(p.errors,[]);p.close();
 });
+
+test('PEP und Urlaubsplaner aktualisieren den Personalstamm nach Änderungen in anderem Tab',async()=>{
+  const before=[{id:'one',name:'Kim Beispiel',role:'Verkauf',branch:'Nord',hours:20}];
+  const after=[{id:'one',name:'Kim Leitung',role:'Filialleitung',branch:'Süd',hours:35},
+    {id:'two',name:'Luca Muster',role:'Verkauf',branch:'Süd',hours:18}];
+  let p=await load('pep.html',{'ladenfluss.team.v1':JSON.stringify(before)});
+  assert.equal(p.$('employeeCount').textContent,'1');
+  p.w.localStorage.setItem('ladenfluss.team.v1',JSON.stringify(after));
+  p.w.dispatchEvent(new p.w.StorageEvent('storage',{key:'ladenfluss.team.v1'}));
+  assert.equal(p.$('employeeCount').textContent,'2');
+  assert.match(p.$('pepBody').textContent,/Kim Leitung/);
+  assert.match(p.$('pepBody').textContent,/Luca Muster/);
+  assert.deepEqual(p.errors,[]);p.close();
+  p=await load('tools/urlaubsplaner.html',{'ladenfluss.team.v1':JSON.stringify(before)});
+  assert.equal(p.$('vacTeamCount').textContent,'1');
+  p.w.localStorage.setItem('ladenfluss.team.v1',JSON.stringify(after));
+  p.w.dispatchEvent(new p.w.StorageEvent('storage',{key:'ladenfluss.team.v1'}));
+  assert.equal(p.$('vacTeamCount').textContent,'2');
+  assert.match(p.$('vacEmployees').textContent,/Kim Leitung/);
+  assert.match(p.$('vacEmployees').textContent,/Luca Muster/);
+  assert.deepEqual(p.errors,[]);p.close();
+});
