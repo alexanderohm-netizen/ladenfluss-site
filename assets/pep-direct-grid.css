@@ -287,3 +287,22 @@ body:has(.pep-shell){background:#f7f0e9}
  .pep-diagram-track{height:11px;min-height:11px}
  .pep-grid-slot .shift-chip,.pep-grid-slot .absence-chip{min-height:56px!important}
 }
+
+
+/* PEP 3.2: deliberate delete crosshair alongside clipboard, with reversible last action. */
+.pep-delete-mode-button{border-color:#c7a8a6;color:#853d45;background:#fffaf8}
+.pep-delete-mode-button:hover{background:#fceeea;border-color:#ad6874}
+.pep-delete-mode-button.is-active{background:#9b3f4c;border-color:#9b3f4c;
+ color:#fff;box-shadow:0 0 0 3px #f0d5d8}
+.pep-undo-delete-button{border:1px solid #cfb9b1;background:#fffdfb;color:#74364a;
+ padding:10px 13px;border-radius:7px;font-size:11px;font-weight:800;min-height:40px}
+.pep-undo-delete-button:hover{background:#f5e9e6;border-color:#b58b94}
+.pep-undo-delete-button[hidden]{display:none!important}
+.pep-delete-mode .pep-grid-trigger{cursor:crosshair!important}
+.pep-delete-mode .pep-grid-slot .shift-chip{background:#fff0ef!important;
+ border:1.5px dashed #c77782!important}
+.pep-delete-mode .pep-grid-slot .shift-chip:hover{outline:3px solid #b24959!important;
+ outline-offset:-3px;filter:none}
+.pep-delete-mode .pep-grid-slot .empty-shift,.pep-delete-mode .pep-grid-slot .absence-chip{
+ opacity:.55;cursor:not-allowed!important}
+@media print{.pep-undo-delete-button{display:none!important}}
