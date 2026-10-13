@@ -44,6 +44,20 @@
     $('vacState').value = data.settings.state || 'HE';
     $('vacWorkweek').value = data.settings.workdays.includes(6) ? '6' : '5';
     $('vacMaxAbsent').value = data.settings.maxAbsent;
+    // The shared team owns name, position, branch and contractual hours.
+    // Vacation-only data owns annual leave allowance and leave entries.
+    function masterTeam() {
+      const raw=localStorage.getItem('ladenfluss.team.v1');
+      if(raw===null)return [];
+      const team=JSON.parse(raw);
+      if(!Array.isArray(team))throw new Error('Der zentrale Personalstamm ist beschädigt.');
+      return team;
+    }
+    function reloadTeam(){
+      try{
+        data=api.read();savedSnapshot=JSON.stringify(data);clearError();render();
+      }catch(e){fail('Mitarbeiterdaten konnten nicht abgeglichen werden: '+e.message);}
+    }
     function employeeName(id) { return data.employees.find(e => e.id === id)?.name || 'Entfernter Mitarbeiter'; }
     function rangeTouchesYear(entry, year) { return entry.start <= year + '-12-31' && entry.end >= year + '-01-01'; }
     function renderTeam() {
@@ -51,10 +65,17 @@
       select.replaceChildren(node('option', '', 'Bitte wählen'));
       select.firstChild.value = '';
       const list = $('vacEmployees'); list.replaceChildren();
+      let masterIds=new Set(),masterById=new Map();
+      try { const team=masterTeam();masterIds=new Set(team.map(p=>p.id));masterById=new Map(team.map(p=>[p.id,p])); }
+      catch(e){fail(e.message);}
       data.employees.forEach(employee => {
         const option = node('option', '', employee.name); option.value = employee.id; select.append(option);
         const row = node('div', 'vac-person');
-        const label = node('div'); label.append(node('strong', '', employee.name), node('small', '', employee.allowance + ' Urlaubstage / Jahr'));
+        const label = node('div');
+        const linked=masterById.get(employee.id);
+        label.append(node('strong', '', employee.name),
+          node('small', '', employee.allowance + ' Urlaubstage / Jahr' +
+            (linked?' · '+(linked.role||'Mitarbeiter')+' · '+Number(linked.hours||0).toLocaleString('de-DE')+' Std./Woche':'')));
         const actions = node('div', 'vac-entry-actions');
         const change = node('button', 'vac-icon-btn', 'Budget');
         change.type = 'button';
@@ -66,8 +87,13 @@
           if (!Number.isInteger(amount) || amount < 0 || amount > 366) return fail('Bitte eine ganze Zahl zwischen 0 und 366 eingeben.');
           employee.allowance = amount; if (persist()) render();
         });
-        const remove = node('button', 'vac-icon-btn', 'Löschen'); remove.type = 'button';
+        const remove = node('button', 'vac-icon-btn', masterIds.has(employee.id)?'Personalfluss ↗':'Löschen');
+        remove.type = 'button';
         remove.addEventListener('click', () => {
+          if(masterIds.has(employee.id)){
+            window.location.href='/mitarbeiter';
+            return;
+          }
           if (data.entries.some(e => e.employeeId === employee.id)) {
             return fail('Bitte zuerst die Urlaubseinträge dieser Person entfernen.');
           }
@@ -218,8 +244,25 @@
       const allowance = Number($('vacAllowance').value);
       if (!name || !Number.isInteger(allowance) || allowance < 0 || allowance > 366) return fail('Bitte Namen und gültiges Jahresbudget eingeben.');
       const id = window.crypto?.randomUUID?.() || String(Date.now()) + Math.random().toString(36).slice(2);
+      // Create one master employee, then its vacation allowance.
+      // Roll back the master if vacation persistence fails; do not create duplicate identities.
+      let oldTeamRaw,team;
+      try {
+        oldTeamRaw=localStorage.getItem('ladenfluss.team.v1');
+        team=masterTeam();
+        if(team.some(person=>person.name.trim().toLocaleLowerCase('de')===name.toLocaleLowerCase('de')))
+          return fail('Dieser Name ist bereits im Personalfluss angelegt. Bitte vorhandenes Profil verwenden.');
+        window.LadenflussTeamStore.saveTeam([...team,{id,name,role:'Mitarbeiter',hours:0,branch:'Nicht zugeordnet',docs:false}]);
+      } catch(e) { return fail('Mitarbeiter konnte nicht im Personalfluss gespeichert werden: '+e.message); }
       data.employees.push({id, name, allowance});
-      if (persist()) { $('vacEmployeeForm').reset(); $('vacAllowance').value = '30'; render(); $('vacPerson').value = id; }
+      if (persist()) {
+        $('vacEmployeeForm').reset(); $('vacAllowance').value = '30'; render(); $('vacPerson').value = id;
+      } else {
+        try {
+          if(oldTeamRaw===null)localStorage.removeItem('ladenfluss.team.v1');
+          else localStorage.setItem('ladenfluss.team.v1',oldTeamRaw);
+        }catch(_){fail('Speicherfehler: Bitte Mitarbeiterstamm und Urlaubsplan prüfen, bevor du erneut speicherst.');}
+      }
     });
     $('vacEntryForm').addEventListener('submit', event => {
       event.preventDefault();
@@ -259,6 +302,11 @@
     $('vacNextMonth').addEventListener('click', () => { month.setMonth(month.getMonth() + 1); render(); });
     $('vacToday').addEventListener('click', () => { const now = new Date(); month = new Date(now.getFullYear(), now.getMonth(), 1, 12); render(); });
     $('vacPrint').addEventListener('click', () => window.print());
+    // Cross-tab changes to Personalfluss are reflected without re-importing people.
+    window.addEventListener('storage',event=>{
+      if(event.key==='ladenfluss.team.v1')reloadTeam();
+    });
+    window.addEventListener('ladenfluss:team-changed',reloadTeam);
     render();
   });
 })();
