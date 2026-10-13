@@ -36,7 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
        branch.length<1||branch.length>80||!Number.isFinite(hours)||
        hours<0||hours>60||Math.round(hours*2)!==hours*2)
       throw new Error('Bitte Name, Rolle, Einsatzort und Sollstunden zwischen 0 und 60 (in halben Stunden) prüfen.');
-    return {...person,name,role,branch,hours,docs:Boolean(person.docs)};
+    const startDate=String(person.startDate||'').trim();
+    if(startDate&&!/^\d{4}-\d{2}-\d{2}$/.test(startDate))throw new Error('Bitte ein gültiges Eintrittsdatum angeben.');
+    return {...person,name,role,branch,hours,startDate,docs:Boolean(person.docs)};
   }
   function save(next){
     try{
@@ -180,6 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
     $('employeeName').value=p?.name||'';
     $('employeeRole').value=p?.role||'Verkauf';
     $('employeeHours').value=p?String(p.hours):'20';
+    $('employeeStartDate').value=p?.startDate||'';
     $('employeeBranch').value=p?.branch||'Hauptfiliale';
     $('employeeHourlyGross').value=p&&hourly(p.id)!==null?String(hourly(p.id)):'';
     dialog.showModal();$('employeeName').focus();
@@ -234,8 +237,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const id=editingId||window.crypto?.randomUUID?.()||
         ('p'+Date.now().toString(36)+Math.random().toString(36).slice(2));
       candidate=validate({
+        ...(editingId?personById(editingId):{}),
         id,name:$('employeeName').value,role:$('employeeRole').value,
         hours:$('employeeHours').value,branch:$('employeeBranch').value,
+        startDate:$('employeeStartDate').value,
         docs:editingId?Boolean(personById(editingId)?.docs):false
       });
     }catch(e){warn(e.message);return;}
