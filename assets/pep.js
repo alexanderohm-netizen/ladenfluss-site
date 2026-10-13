@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded',()=> {
     render();
   });
   document.addEventListener('keydown',event=>{
-    if(event.key==='Escape'&&(copyMode||deleteMode)&&!event.target.closest('.pep-inline-editor')){
+    if(event.key==='Escape'&&(copyMode||deleteMode)&&!event.target?.closest?.('.pep-inline-editor')){
       copyMode=false;deleteMode=false;copiedShift=null;
       gridNotice('Fadenkreuzmodus beendet.');render();
     }
