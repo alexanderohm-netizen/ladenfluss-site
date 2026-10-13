@@ -357,3 +357,45 @@ test('Personalfluss schützt beschädigtes Team und rendert gefährliche Namen n
   assert.match(p.$('staffProfileContent').textContent,/<img src=x onerror=alert\(1\)>/);
   assert.deepEqual(p.errors,[]);p.close();
 });
+
+test('PEP Fadenkreuz-Löschmodus entfernt nur Schichten und macht letzte Löschung rückgängig',async()=>{
+  const p=await load('pep.html');
+  const week='2026-10-05',key='ladenfluss.pep.weeks.v2';
+  const initial=JSON.parse(p.w.localStorage.getItem(key))[week].e1[0];
+  assert.ok(initial);
+  p.$('pepDeleteMode').click();
+  assert.equal(p.$('pepDeleteMode').getAttribute('aria-pressed'),'true');
+  assert.equal(p.$('pepCopyMode').getAttribute('aria-pressed'),'false');
+  p.w.document.querySelector('[data-grid-e="e1"][data-grid-d="0"]').click();
+  assert.equal(JSON.parse(p.w.localStorage.getItem(key))[week].e1[0],null);
+  assert.equal(p.$('pepUndoDelete').hidden,false);
+  assert.match(p.$('pepGridMessage').textContent,/Schicht gelöscht/);
+  p.$('pepUndoDelete').click();
+  assert.deepEqual(JSON.parse(p.w.localStorage.getItem(key))[week].e1[0],initial);
+  assert.equal(p.$('pepUndoDelete').hidden,true);
+  assert.match(p.$('pepGridMessage').textContent,/wiederhergestellt/);
+  p.$('pepCopyMode').click();
+  assert.equal(p.$('pepDeleteMode').getAttribute('aria-pressed'),'false');
+  assert.equal(p.$('pepCopyMode').getAttribute('aria-pressed'),'true');
+  p.w.document.dispatchEvent(new p.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+  assert.equal(p.$('pepCopyMode').getAttribute('aria-pressed'),'false');
+  assert.deepEqual(p.errors,[]);p.close();
+});
+
+test('PEP Fadenkreuz-Löschen in Woche 2 lässt Woche 1 und freie Felder unangetastet',async()=>{
+  const week1='2026-10-05',week2='2026-10-12',key='ladenfluss.pep.weeks.v2';
+  const source={e1:[['08:00','14:00',30],null,null,null,null,null,null]};
+  const second={e1:[['09:00','17:00',30],null,null,null,null,null,null]};
+  const p=await load('pep.html',{[key]:JSON.stringify({[week1]:source,[week2]:second})});
+  p.change('pepPeriod','14');
+  p.$('pepDeleteMode').click();
+  p.w.document.querySelector('[data-grid-e="e1"][data-grid-d="8"]').click();
+  assert.deepEqual(JSON.parse(p.w.localStorage.getItem(key))[week2].e1[0],second.e1[0]);
+  p.w.document.querySelector('[data-grid-e="e1"][data-grid-d="7"]').click();
+  const saved=JSON.parse(p.w.localStorage.getItem(key));
+  assert.equal(saved[week2].e1[0],null);
+  assert.deepEqual(saved[week1].e1[0],source.e1[0]);
+  p.$('pepUndoDelete').click();
+  assert.deepEqual(JSON.parse(p.w.localStorage.getItem(key))[week2].e1[0],second.e1[0]);
+  assert.deepEqual(p.errors,[]);p.close();
+});
