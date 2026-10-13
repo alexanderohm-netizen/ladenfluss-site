@@ -52,7 +52,7 @@
   <div class="staff-storage-note" role="note">
     <strong>Bitte beachten:</strong> Diese Version speichert Teamdaten nur in diesem Browser.
     Stundenlöhne werden hier ohne zusätzliches Passwort direkt im Browser gespeichert. Verwende dafür nur ein persönliches, geschütztes Gerät – nicht gemeinsam genutzte Kassen-PCs.
-    Private Personalangaben (Adresse, IBAN, Staatsangehörigkeit, Aufenthalt) werden separat verschlüsselt und nur nach Eingabe einer Passphrase geöffnet. Diese Daten werden nicht in PEP, Urlaubsplaner oder die Cloud übertragen. Die Passphrase kann nicht zurückgesetzt werden.
+    Persönliche Kontaktdaten und Bankverbindungen werden lokal verschlüsselt und ohne zusätzliches Passwort angezeigt. Auf diesem Gerät können andere Personen mit Browserzugriff die Angaben ebenfalls öffnen. Keine Cloud-Übertragung – bitte nur auf einem geschützten Gerät verwenden.
   </div>
   <div id="staffError" class="staff-error" role="alert" hidden></div>
   <p id="staffStatus" class="staff-status" role="status" aria-live="polite"></p>
@@ -94,7 +94,7 @@
     </div>
     <div id="staffProfileContent"></div>
     <div id="staffDetailSections" class="lf-profile-detail-grid" aria-label="Mitarbeiterstammdaten"></div>
-    <section class="staff-private-panel" aria-labelledby="staffPrivateTitle"><div class="staff-private-top"><div><span class="eyebrow">VERTRAULICH · PERSONALAKTE</span><h3 id="staffPrivateTitle">Vertrauliche Angaben freigeben</h3><p>Die Bereiche Kontakt, Anschrift, Bankverbindung und Aufenthaltsangaben sind im Profil sichtbar. Zum Anzeigen der Werte bitte entsperren.</p></div><span class="staff-private-chip" id="staffPrivateState">Nicht hinterlegt</span></div><div class="staff-private-bottom"><span>Nur mit deiner Passphrase lesbar · keine Cloud-Übertragung</span><button type="button" class="btn btn-secondary" id="openPrivateProfile">Angaben sicher öffnen →</button></div></section>
+    <section class="staff-private-panel" aria-labelledby="staffPrivateTitle"><div class="staff-private-top"><div><span class="eyebrow">PERSONALAKTE · KONTAKT & BANK</span><h3 id="staffPrivateTitle">Kontaktdaten & Bankverbindung</h3><p>Kontaktdaten, Bankverbindung und weitere persönliche Angaben direkt im Profil bearbeiten – ohne zusätzliche Passphrase.</p></div><span class="staff-private-chip" id="staffPrivateState">Nicht hinterlegt</span></div><div class="staff-private-bottom"><span>Lokal gespeichert · nur auf diesem Gerät</span><button type="button" class="btn btn-secondary" id="openPrivateProfile">Angaben sicher öffnen →</button></div></section>
     <section class="staff-compensation" id="staffCompensation" aria-labelledby="staffCompensationTitle">
       <div class="staff-compensation-heading"><span class="eyebrow">VERGÜTUNG · BRUTTO</span><h3 id="staffCompensationTitle">Lohnübersicht</h3></div>
       <div class="staff-compensation-grid" aria-live="polite">
@@ -139,13 +139,12 @@
 </dialog>
 <dialog id="privateEmployeeDialog" class="employee-dialog staff-private-dialog" aria-labelledby="privateDialogTitle">
   <form id="privateEmployeeForm" autocomplete="off">
-    <div class="dialog-head"><div><span class="eyebrow">PERSONALAKTE · VERSCHLÜSSELT</span><h2 id="privateDialogTitle">Vertrauliche Angaben</h2></div><button type="button" class="dialog-close" id="closePrivateDialog" aria-label="Schließen">×</button></div>
-    <p class="employee-dialog-note">Diese Angaben sind optional. Sie werden auf diesem Gerät verschlüsselt gespeichert, nicht mit PEP, Urlaub oder Cloud synchronisiert. Auf gemeinsam genutzten Geräten nicht verwenden.</p>
+    <div class="dialog-head"><div><span class="eyebrow">PERSONALFLUSS · PERSONALAKTE</span><h2 id="privateDialogTitle">Kontaktdaten bearbeiten</h2></div><button type="button" class="dialog-close" id="closePrivateDialog" aria-label="Schließen">×</button></div>
+    <p class="employee-dialog-note">Alle Angaben sind optional. Kein zusätzliches Passwort erforderlich. Sie werden lokal im Browser verschlüsselt gespeichert und nicht mit PEP, Urlaub oder Cloud synchronisiert. Nutze hierfür ein geschütztes Gerät.</p>
     <p id="privateEmployeeName" class="staff-private-person-name"></p>
-    <label for="privatePassphrase">Private Passphrase (mindestens 12 Zeichen)<input id="privatePassphrase" type="password" minlength="12" required autocomplete="new-password" placeholder="Nur für vertrauliche Personalangaben"></label>
-    <button type="button" id="unlockPrivate" class="btn btn-secondary">Angaben entsperren / neu anlegen</button>
     <p id="privateStatus" role="status" aria-live="polite"></p>
-    <div id="privateFields" hidden>
+    <p id="privateLegacyNote" class="lf-legacy-note" hidden>Auf diesem Gerät gibt es noch eine ältere passwortgeschützte Personalakte. Sie bleibt unverändert erhalten und wird nicht automatisch übernommen. Neue Angaben werden separat gespeichert.</p>
+    <div id="privateFields">
       <div class="staff-private-section-label">Kontakt, Anschrift & Bankverbindung</div>
       <label for="privateAddress">Anschrift · optional<textarea id="privateAddress" maxlength="320" rows="2" placeholder="Straße, Hausnummer, PLZ und Ort"></textarea></label>
       <div class="dialog-two"><label for="privateEmail">E-Mail-Adresse · optional<input id="privateEmail" type="email" maxlength="160" autocomplete="off" placeholder="name@beispiel.de"></label><label for="privatePhone">Telefon · optional<input id="privatePhone" type="tel" maxlength="50" autocomplete="off" placeholder="+49 …"></label></div>
@@ -154,8 +153,8 @@
       <label for="privateNationality">Staatsangehörigkeit<input id="privateNationality" maxlength="100" autocomplete="off" placeholder="Nur wenn betrieblich erforderlich"></label>
       <label for="privateResidence">Aufenthalts-/Arbeitserlaubnisstatus<input id="privateResidence" maxlength="100" autocomplete="off" placeholder="Nur falls für die Beschäftigung relevant"></label>
       <label for="privateResidenceUntil">Gültig bis · falls relevant<input id="privateResidenceUntil" type="date" autocomplete="off"></label>
-      <p class="staff-modal-hint">Bitte nur erforderliche Angaben erfassen. Die Passphrase wird nicht gespeichert. Ohne sie lassen sich die verschlüsselten Daten nicht wiederherstellen.</p>
-      <div class="dialog-actions"><button type="button" class="btn btn-secondary" id="cancelPrivateDialog">Abbrechen</button><button class="btn btn-primary" id="savePrivateDetails" type="submit">Verschlüsselt speichern</button></div>
+      <p class="staff-modal-hint">Bitte nur betriebsnotwendige Angaben erfassen. Auf diesem Gerät kann jede Person mit Browserzugriff die Personalakte öffnen. Beim Löschen von Browserdaten können Angaben verloren gehen.</p>
+      <div class="dialog-actions"><button type="button" class="btn btn-secondary" id="cancelPrivateDialog">Abbrechen</button><button class="btn btn-primary" id="savePrivateDetails" type="submit">Änderungen speichern</button></div>
     </div>
   </form>
 </dialog>
@@ -170,6 +169,7 @@
 <script src="/assets/planning-engine.js" defer></script>
 <script src="/assets/private-personnel.js" defer></script>
 <script src="/assets/staff.js" defer></script>
+<script src="/assets/personnel-local.js" defer></script>
 <script src="/assets/staff-modern.js" defer></script>
 
 
