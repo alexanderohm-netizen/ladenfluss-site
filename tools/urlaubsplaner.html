@@ -8,7 +8,7 @@
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/urlaubsplaner.css">
 <link rel="stylesheet" href="/assets/vacation-app.css">
-<link rel="stylesheet" href="/assets/vacation-v2.css"></head>
+<link rel="stylesheet" href="/assets/vacation-v2.css"><link rel="stylesheet" href="/assets/team-sync.css"></head>
 <body class="vac-app-body">
 <a class="skip-link" href="#main">Zum Inhalt</a>
 <header class="site-header"><div class="container header-row">
@@ -33,8 +33,8 @@
 </div>
 </div></section>
 <section class="vac-app container" aria-label="Urlaubsplaner">
-<div class="vac-v2-workspace-title"><div><span class="vac-v2-label">DEIN PLANUNGSBEREICH</span><h2>Urlaub im Blick.</h2><p>Vom Antrag bis zur Jahresübersicht – alles an einem Ort.</p></div><span class="vac-v2-device-status"><span aria-hidden="true">●</span> Lokaler Planungsstand</span></div>
-<details class="vac-storage-note"><summary>Nur in diesem Browser gespeichert · Hinweise zur Speicherung</summary><div class="vac-notice" role="note"><strong>Deine Daten bleiben auf diesem Gerät.</strong> Der Plan wird nur in deinem Browser gespeichert – nicht online übertragen und nicht mit dem WWS synchronisiert. Auf gemeinsam genutzten Geräten keine vertraulichen Personaldaten eintragen. Browserdaten löschen entfernt auch den Plan.</div></details>
+<div class="vac-v2-workspace-title"><div><span class="vac-v2-label">DEIN PLANUNGSBEREICH</span><h2>Urlaub im Blick.</h2><p>Vom Antrag bis zur Jahresübersicht – mit gemeinsamem Mitarbeiterstamm.</p></div><span class="vac-v2-device-status"><span aria-hidden="true">●</span> Lokaler Planungsstand</span></div>
+<details class="vac-storage-note"><summary>Nur in diesem Browser gespeichert · Hinweise zur Speicherung</summary><div class="vac-notice" role="note"><strong>Deine Daten bleiben auf diesem Gerät.</strong> Der Plan wird nur in deinem Browser gespeichert – nicht online übertragen. Der Mitarbeiterstamm wird automatisch mit Personalfluss und PEP auf diesem Browser abgeglichen; Urlaubseinträge und Urlaubsbudgets bleiben im Urlaubsplaner. Auf gemeinsam genutzten Geräten keine vertraulichen Personaldaten eintragen. Browserdaten löschen entfernt auch den Plan.</div></details>
 <div id="vacError" class="vac-error" role="alert" hidden=""></div>
 <nav class="vac-app-nav" aria-label="Urlaubsplanung"><button type="button" data-vac-view="calendar" aria-pressed="true">Kalender</button><button type="button" data-vac-view="team" aria-pressed="false">Team &amp; Resturlaub</button><button type="button" data-vac-view="settings" aria-pressed="false">Einstellungen</button><button type="button" data-vac-view="entry" aria-pressed="false" class="vac-new">+ Urlaub eintragen</button></nav><div class="vac-overview" aria-live="polite">
 <div class="vac-metric"><small>Team</small><strong id="vacTeamCount">0</strong><span>Mitarbeiter</span></div>
@@ -63,7 +63,9 @@
 <label for="vacAllowance">Urlaubstage pro Jahr</label><input id="vacAllowance" name="allowance" type="number" min="0" max="366" value="30" required="">
 <button class="btn btn-primary" type="submit">+ Mitarbeiter hinzufügen</button>
 </form>
-<button type="button" class="btn btn-secondary" id="vacImportPep" style="margin-top:12px;width:100%">Team aus Personalfluss / PEP übernehmen</button>
+<p class="vac-team-sync-note"><strong>Mit Personalfluss verbunden.</strong> Mitarbeiter aus Personalfluss erscheinen hier automatisch. Neue Personen werden auch im PEP verfügbar. Jahresurlaub und Anträge bleiben separat gespeichert.</p>
+<button type="button" class="btn btn-secondary" id="vacImportPep" style="margin-top:12px;width:100%">Bestehendes Team abgleichen</button>
+<a class="vac-team-profile-link" href="/mitarbeiter">Mitarbeiterprofile in Personalfluss verwalten ↗</a>
 <div id="vacEmployees" class="vac-employees" aria-live="polite"></div>
 </section><section class="vac-panel" data-vac-panel="entry" hidden="">
 <span class="eyebrow">Schritt 2 · Urlaub</span><h2 id="vacEntryTitle">Urlaub eintragen</h2><p class="vac-v2-panel-intro">Wähle Mitarbeiter und Zeitraum. Die anrechenbaren Arbeitstage werden automatisch berechnet.</p>

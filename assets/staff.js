@@ -278,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     hourlyRates=wages.load();
     selectedId=candidate.id;render();
-    announce('Profil von '+candidate.name+' gespeichert. Name, Wochenstunden und Einsatzort bleiben mit dem Dienstplan verbunden.');
+    announce('Profil von '+candidate.name+' gespeichert. Name, Position, Wochenstunden und Einsatzort werden automatisch im PEP und Urlaubsplaner übernommen.');
     dialog.close();form.reset();
   });
   $('legacyWageForm')?.addEventListener('submit',async event=>{
@@ -306,6 +306,17 @@ document.addEventListener('DOMContentLoaded', () => {
     $('legacyWageTransfer').hidden=true;
   }
   window.addEventListener('storage',event=>{
+    if(event.key==='ladenfluss.team.v1'){
+      try{
+        const latest=store.getTeam();
+        if(!Array.isArray(latest))throw Error('Ungültige Teamdaten');
+        people=latest;
+        if(selectedId&&!people.some(p=>p.id===selectedId))selectedId=null;
+        if(!loadError)render();
+        announce('Personalstamm aktualisiert – Änderungen aus Urlaubsplaner oder anderem Tab übernommen.');
+      }catch(_){warn('Der Personalstamm konnte nicht aktualisiert werden. Bitte Daten prüfen.');}
+      return;
+    }
     if(event.key!==wages?.KEY)return;
     try{hourlyRates=wages.load();if(!loadError)render();}
     catch(_){warn('Stundenlohndaten wurden in einem anderen Tab beschädigt. Bitte die Daten zuerst sichern.');}
