@@ -49,12 +49,12 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
 
   function formatDate(value){
-    if(!value||!/^\\d{4}-\\d{2}-\\d{2}$/.test(value))return 'Nicht hinterlegt';
+    if(!value||!/^\d{4}-\d{2}-\d{2}$/.test(value))return 'Nicht hinterlegt';
     const d=new Date(value+'T12:00:00');
     return Number.isNaN(d.getTime())?'Nicht hinterlegt':new Intl.DateTimeFormat('de-DE').format(d);
   }
   function tenure(value){
-    if(!value||!/^\\d{4}-\\d{2}-\\d{2}$/.test(value))return 'Noch nicht hinterlegt';
+    if(!value||!/^\d{4}-\d{2}-\d{2}$/.test(value))return 'Noch nicht hinterlegt';
     const start=new Date(value+'T12:00:00'),now=new Date();
     if(Number.isNaN(start.getTime())||start>now)return 'Noch nicht begonnen';
     let years=now.getFullYear()-start.getFullYear(),months=now.getMonth()-start.getMonth();
