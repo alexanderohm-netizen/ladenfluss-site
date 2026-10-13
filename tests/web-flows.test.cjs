@@ -357,3 +357,75 @@ test('Personalfluss schützt beschädigtes Team und rendert gefährliche Namen n
   assert.match(p.$('staffProfileContent').textContent,/<img src=x onerror=alert\(1\)>/);
   assert.deepEqual(p.errors,[]);p.close();
 });
+
+test('Gemeinsamer Mitarbeiterstamm: Personalfluss-Änderungen erscheinen in PEP und Urlaubsplaner',async()=>{
+  let p=await load('mitarbeiter.html');
+  p.w.document.querySelector('[data-profile-id="e2"]').click();
+  p.$('editStaffProfile').click();
+  p.$('employeeName').value='Ben Neu';
+  p.$('employeeRole').value='Filialleitung';
+  p.$('employeeHours').value='38';
+  p.$('employeeBranch').value='Nordfiliale';
+  p.submit('employeeForm');
+  const saved=p.storage();p.close();
+  p=await load('pep.html',saved);
+  assert.match(p.$('pepBody').textContent,/Ben Neu/);
+  assert.equal(p.w.LadenflussTeamStore.getTeam().find(e=>e.id==='e2').hours,38);
+  assert.deepEqual(p.errors,[]);p.close();
+  p=await load('tools/urlaubsplaner.html',saved);
+  const people=p.w.LadenflussVacation.read().employees;
+  assert.equal(people.find(e=>e.id==='e2').name,'Ben Neu');
+  assert.equal(people.filter(e=>e.id==='e2').length,1);
+  assert.match(p.$('vacEmployees').textContent,/Filialleitung/);
+  assert.deepEqual(p.errors,[]);p.close();
+});
+
+test('Urlaubsplaner legt neue Mitarbeiter genau einmal im zentralen Personalstamm an',async()=>{
+  let p=await load('tools/urlaubsplaner.html');
+  p.$('vacEmployeeName').value='Chris Muster';
+  p.$('vacAllowance').value='28';
+  p.submit('vacEmployeeForm');
+  assert.equal(p.$('vacTeamCount').textContent,'1');
+  const saved=p.storage();
+  const team=JSON.parse(saved['ladenfluss.team.v1']);
+  assert.equal(team.length,1);
+  assert.equal(team[0].name,'Chris Muster');
+  assert.equal(team[0].role,'Mitarbeiter');
+  assert.equal(team[0].hours,0);
+  assert.equal(p.saved().employees[0].allowance,28);
+  p.close();
+  p=await load('pep.html',saved);
+  assert.equal(p.$('employeeCount').textContent,'1');
+  assert.match(p.$('pepBody').textContent,/Chris Muster/);
+  assert.deepEqual(p.errors,[]);p.close();
+  p=await load('mitarbeiter.html',saved);
+  assert.equal(p.$('activeEmployees').textContent,'1');
+  assert.match(p.$('staffList').textContent,/Chris Muster/);
+  assert.deepEqual(p.errors,[]);p.close();
+});
+
+test('Urlaubsbudgets und historische Einträge bleiben bei Team-Umbenennung erhalten',async()=>{
+  const data={version:1,employees:[{id:'e9',name:'Alter Name',allowance:26}],
+    entries:[{id:'vac1',employeeId:'e9',start:'2026-10-05',end:'2026-10-06',status:'approved',note:''}],
+    settings:{state:'HE',workdays:[1,2,3,4,5],maxAbsent:1}};
+  const team=[{id:'e9',name:'Neuer Name',role:'Verkauf',branch:'Nord',hours:25}];
+  const p=await load('tools/urlaubsplaner.html',{[KEY]:JSON.stringify(data),'ladenfluss.team.v1':JSON.stringify(team)});
+  assert.equal(p.$('vacTeamCount').textContent,'1');
+  assert.equal(p.w.LadenflussVacation.read().employees[0].name,'Neuer Name');
+  assert.equal(p.w.LadenflussVacation.read().employees[0].allowance,26);
+  assert.equal(p.w.LadenflussVacation.read().entries[0].employeeId,'e9');
+  assert.equal(JSON.parse(p.w.localStorage.getItem(KEY)).employees[0].name,'Alter Name'); // no silent write
+  assert.deepEqual(p.errors,[]);p.close();
+});
+
+test('Fehlgeschlagene Urlaubs-Mitarbeiteranlage rollt den gemeinsamen Personalstamm zurück',async()=>{
+  const p=await load('tools/urlaubsplaner.html');
+  const proto=p.w.Storage.prototype,original=proto.setItem;
+  proto.setItem=function(k,v){if(k===KEY)throw Error('Speicher voll');return original.call(this,k,v);};
+  p.$('vacEmployeeName').value='Nicht angelegt';p.submit('vacEmployeeForm');
+  assert.equal(p.w.localStorage.getItem('ladenfluss.team.v1'),null);
+  assert.equal(p.$('vacTeamCount').textContent,'0');
+  assert.match(p.$('vacError').textContent,/nicht gespeichert/);
+  proto.setItem=original;
+  assert.deepEqual(p.errors,[]);p.close();
+});
