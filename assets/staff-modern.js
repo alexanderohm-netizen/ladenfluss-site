@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const board=$('staffRoleGrid'),roleCount=$('staffRoleCount'),search=$('staffSearch');
   const dialog=$('privateEmployeeDialog'),form=$('privateEmployeeForm'),fields=$('privateFields');
   const status=$('privateStatus'),pass=$('privatePassphrase');
-  let selectedId=null,unlocked=false,busy=false;
+  let selectedId=null,unlocked=false,busy=false,revealed=null;
   const roles={
     'Filialleitung':{icon:'◆',tag:'Führung',desc:'Filialorganisation, Teamsteuerung und wirtschaftliche Kennzahlen'},
     'Verkauf':{icon:'▦',tag:'Verkaufsfläche',desc:'Kundenservice, Warenpräsentation und operative Abläufe'},
@@ -47,11 +47,75 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(!counts.size)board.append(element('p','staff-empty','Lege deinen ersten Mitarbeiter an, um Stellenprofile zu sehen.'));
     if(roleCount)roleCount.textContent=counts.size+' '+(counts.size===1?'Stellenprofil':'Stellenprofile');
   }
+
+  function formatDate(value){
+    if(!value||!/^\\d{4}-\\d{2}-\\d{2}$/.test(value))return 'Nicht hinterlegt';
+    const d=new Date(value+'T12:00:00');
+    return Number.isNaN(d.getTime())?'Nicht hinterlegt':new Intl.DateTimeFormat('de-DE').format(d);
+  }
+  function tenure(value){
+    if(!value||!/^\\d{4}-\\d{2}-\\d{2}$/.test(value))return 'Noch nicht hinterlegt';
+    const start=new Date(value+'T12:00:00'),now=new Date();
+    if(Number.isNaN(start.getTime())||start>now)return 'Noch nicht begonnen';
+    let years=now.getFullYear()-start.getFullYear(),months=now.getMonth()-start.getMonth();
+    if(now.getDate()<start.getDate())months--;
+    if(months<0){years--;months+=12;}
+    return years>0?years+' '+(years===1?'Jahr':'Jahre')+(months?', '+months+' Mon.':''):months>0?months+' Monate':'Unter 1 Monat';
+  }
+  function detailCard(icon,title,rows,protectedCard){
+    const card=element('section','lf-detail-card'+(protectedCard?' lf-detail-protected':''));
+    const head=element('div','lf-detail-card-head');
+    head.append(element('span','lf-detail-card-icon',icon),element('h3','',title));
+    if(protectedCard)head.append(element('span','lf-detail-lock',revealed?'ENTSPERRT':'GESCHÜTZT'));
+    card.append(head);
+    const list=element('dl','lf-detail-facts');
+    for(const [label,value] of rows){
+      const wrap=element('div','lf-detail-fact');
+      wrap.append(element('dt','',label),element('dd','',value||'Nicht hinterlegt'));
+      list.append(wrap);
+    }
+    card.append(list);return card;
+  }
+  function renderDetails(){
+    const target=$('staffDetailSections');
+    if(!target||!store)return;
+    target.replaceChildren();
+    if(!selectedId)return;
+    let p;
+    try{p=store.getTeam().find(person=>person?.id===selectedId);}catch(_){return;}
+    if(!p)return;
+    const locked='Zum Anzeigen entsperren';
+    const v=revealed;
+    target.append(
+      detailCard('◈','Beschäftigung',[
+        ['Position / Tätigkeit',p.role||'Nicht hinterlegt'],
+        ['Eintrittsdatum',formatDate(p.startDate)],
+        ['Im Unternehmen seit',tenure(p.startDate)],
+        ['Filiale / Einsatzort',p.branch||'Nicht hinterlegt'],
+        ['Vertragsstunden',String(p.hours||0).replace('.',',')+' h / Woche']
+      ],false),
+      detailCard('✉','Kontakt & Anschrift',[
+        ['E-Mail',v?(v.email||'Nicht hinterlegt'):locked],
+        ['Telefon',v?(v.phone||'Nicht hinterlegt'):locked],
+        ['Anschrift',v?(v.address||'Nicht hinterlegt'):locked]
+      ],true),
+      detailCard('▣','Bankverbindung',[
+        ['IBAN',v?(v.iban?('•••• •••• •••• '+v.iban.slice(-4)):'Nicht hinterlegt'):locked],
+        ['Speicherung','Lokal · verschlüsselt']
+      ],true),
+      detailCard('◇','Persönliche Angaben',[
+        ['Staatsangehörigkeit',v?(v.nationality||'Nicht hinterlegt'):locked],
+        ['Aufenthalts-/Arbeitserlaubnis',v?(v.residenceStatus||'Nicht hinterlegt'):locked],
+        ['Gültig bis',v?formatDate(v.residenceUntil):locked]
+      ],true)
+    );
+  }
   function showPrivateState(){
     const badge=$('staffPrivateState'),button=$('openPrivateProfile');
     if(!badge||!button)return;
     if(!selectedId){badge.textContent='Nicht ausgewählt';button.disabled=true;return;}
     button.disabled=!privateStore?.available();
+    button.textContent=revealed?'Angaben ausblenden':'Vertrauliche Angaben öffnen →';
     try{badge.textContent=privateStore?.exists(selectedId)?'Verschlüsselt hinterlegt':'Noch keine Angaben';}
     catch(_){badge.textContent='Nicht verfügbar';}
   }
@@ -66,15 +130,16 @@ document.addEventListener('DOMContentLoaded',()=>{
   function closePrivate(){if(dialog?.open)dialog.close();clearPrivate();}
   window.addEventListener('ladenfluss:employee-selected',event=>{
     const id=event.detail?.id||null;
-    if(id!==selectedId){closePrivate();selectedId=id;}
-    showPrivateState();renderRoles();
+    if(id!==selectedId){closePrivate();revealed=null;selectedId=id;}
+    showPrivateState();renderRoles();renderDetails();
   });
   window.addEventListener('storage',event=>{
-    if(event.key==='ladenfluss.team.v1'){renderRoles();showPrivateState();}
-    if(event.key?.startsWith(privateStore?.PREFIX||'__never__'))showPrivateState();
+    if(event.key==='ladenfluss.team.v1'){renderRoles();showPrivateState();renderDetails();}
+    if(event.key?.startsWith(privateStore?.PREFIX||'__never__')){revealed=null;showPrivateState();renderDetails();}
   });
   $('openPrivateProfile')?.addEventListener('click',()=>{
     if(!selectedId||!privateStore?.available())return;
+    if(revealed){revealed=null;showPrivateState();renderDetails();return;}
     clearPrivate();
     const person=store.getTeam().find(p=>p.id===selectedId);
     $('privateEmployeeName').textContent=person?.name||'Mitarbeiter';
@@ -92,12 +157,15 @@ document.addEventListener('DOMContentLoaded',()=>{
     busy=true;$('unlockPrivate').disabled=true;
     try{
       const data=await privateStore.read(selectedId,pass.value);
+      $('privateEmail').value=data?.email||'';
+      $('privatePhone').value=data?.phone||'';
       $('privateAddress').value=data?.address||'';
       $('privateIban').value=data?.iban||'';
       $('privateNationality').value=data?.nationality||'';
       $('privateResidence').value=data?.residenceStatus||'';
       $('privateResidenceUntil').value=data?.residenceUntil||'';
       fields.hidden=false;unlocked=true;
+      revealed=data||null;renderDetails();showPrivateState();
       status.textContent=data?'Verschlüsselte Angaben geöffnet. Änderungen werden erst mit „Verschlüsselt speichern“ übernommen.':'Neue private Akte. Angaben eingeben und verschlüsselt speichern.';
     }catch(e){status.textContent=e.message;fields.hidden=true;unlocked=false;}
     finally{busy=false;$('unlockPrivate').disabled=false;}
@@ -109,16 +177,17 @@ document.addEventListener('DOMContentLoaded',()=>{
     busy=true;$('savePrivateDetails').disabled=true;
     try{
       const details={
+        email:$('privateEmail').value,phone:$('privatePhone').value,
         address:$('privateAddress').value,iban:$('privateIban').value,
         nationality:$('privateNationality').value,residenceStatus:$('privateResidence').value,
         residenceUntil:$('privateResidenceUntil').value
       };
       await privateStore.save(selectedId,pass.value,details);
-      closePrivate();showPrivateState();
+      closePrivate();revealed=null;showPrivateState();renderDetails();
       const mainStatus=$('staffStatus');
       if(mainStatus)mainStatus.textContent='Vertrauliche Angaben verschlüsselt gespeichert – nur auf diesem Gerät.';
     }catch(e){status.textContent=e.message;}
     finally{busy=false;$('savePrivateDetails').disabled=false;}
   });
-  renderRoles();showPrivateState();
+  renderRoles();showPrivateState();renderDetails();
 });
