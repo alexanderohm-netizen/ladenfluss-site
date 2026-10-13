@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded',()=> {
   const store=window.LadenflussTeamStore;
   const escape=store.escapeHtml;
-  const team=store.getTeam();
+  let team=store.getTeam();
   let weekStart=new Date();
   const day=weekStart.getDay()||7;
   weekStart.setDate(weekStart.getDate()-day+1);
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded',()=> {
       entry.start <= key && entry.end >= key) ? 'Urlaub' : null;
   }
 
-  const employees=team.map(p=>({
+  let employees=team.map(p=>({
     id:p.id,
     name:p.name,
     role:p.role,
@@ -679,5 +679,34 @@ document.addEventListener('DOMContentLoaded',()=> {
       employees.forEach(e=>{e.shifts=shifts[e.id];e.absences=absences[e.id]});
     }
   }
+  function refreshSharedTeam(){
+    try{
+      const next=store.getTeam();
+      if(!Array.isArray(next))throw Error('Ungültige Teamdaten');
+      const selected=employeeFilter?.value||'all';
+      team=next;
+      shifts=store.ensureEmployeeShiftRows(team,store.getShifts(weekKey));
+      absences=store.ensureEmployeeAbsenceRows(team,store.getAbsences(weekKey));
+      employees=team.map(p=>({
+        id:p.id,name:p.name,role:p.role,target:Number(p.hours||0),
+        shifts:shifts[p.id],absences:absences[p.id]
+      }));
+      refreshSecond();
+      if(employeeFilter){
+        employeeFilter.replaceChildren();
+        const all=document.createElement('option');all.value='all';all.textContent='Alle Mitarbeitenden';employeeFilter.append(all);
+        for(const person of team){
+          const option=document.createElement('option');option.value=person.id;option.textContent=person.name;employeeFilter.append(option);
+        }
+        employeeFilter.value=team.some(p=>p.id===selected)?selected:'all';
+      }
+      gridNotice('Personalfluss aktualisiert: Mitarbeiter, Positionen und Sollstunden sind abgeglichen.');
+      render();
+    }catch(e){gridNotice('Personalfluss konnte nicht aktualisiert werden: '+e.message,true);}
+  }
+  window.addEventListener('storage',event=>{
+    if(event.key==='ladenfluss.team.v1')refreshSharedTeam();
+    if(event.key===window.LadenflussVacation?.KEY)render();
+  });
   render();
 });
