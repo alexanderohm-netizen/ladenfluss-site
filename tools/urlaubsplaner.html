@@ -8,7 +8,7 @@
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/urlaubsplaner.css">
 <link rel="stylesheet" href="/assets/vacation-app.css">
-<link rel="stylesheet" href="/assets/vacation-v2.css"><link rel="stylesheet" href="/assets/team-sync.css"></head>
+<link rel="stylesheet" href="/assets/vacation-v2.css"><link rel="stylesheet" href="/assets/team-sync.css"><link rel="stylesheet" href="/assets/refinement.css?v=20261014"></head>
 <body class="vac-app-body">
 <a class="skip-link" href="#main">Zum Inhalt</a>
 <header class="site-header"><div class="container header-row">
@@ -21,19 +21,13 @@
 <div class="vac-v2-hero-copy">
 <div class="breadcrumbs"><a href="/">Start</a> / <a href="/tools">Tools</a> / Urlaubsplaner</div>
 <span class="eyebrow">Ladenfluss · kostenloses Planungstool</span>
-<h1>Freie Tage.<br><em>Klare Planung.</em></h1>
+<h1>Freie Tage. <em>Gut geplant.</em></h1>
 <p class="page-lead">Urlaub eintragen, Resttage sehen und Überschneidungen erkennen – verständlich und übersichtlich für dein Team.</p>
 <div class="vac-v2-hero-trust"><span><span aria-hidden="true">✓</span> Kostenlos</span><span><span aria-hidden="true">✓</span> Ohne Konto</span><span><span aria-hidden="true">✓</span> Auf diesem Gerät</span></div>
 </div>
-<div class="vac-v2-hero-aside" aria-label="So startest du mit der Urlaubsplanung">
-<span class="vac-v2-aside-eyebrow">SO FUNKTIONIERT'S</span>
-<div><span>01</span><strong>Team anlegen</strong><small>Mitarbeiter und Urlaubstage hinterlegen</small></div>
-<div><span>02</span><strong>Urlaub eintragen</strong><small>Zeitraum und Status auswählen</small></div>
-<div><span>03</span><strong>Übersicht behalten</strong><small>Resttage und Überschneidungen prüfen</small></div>
-</div>
 </div></section>
 <section class="vac-app container" aria-label="Urlaubsplaner">
-<div class="vac-v2-workspace-title"><div><span class="vac-v2-label">DEIN PLANUNGSBEREICH</span><h2>Urlaub im Blick.</h2><p>Vom Antrag bis zur Jahresübersicht – mit gemeinsamem Mitarbeiterstamm.</p></div><span class="vac-v2-device-status"><span aria-hidden="true">●</span> Lokaler Planungsstand</span></div>
+<div class="vac-v2-workspace-title"><div><span class="vac-v2-label">DEIN PLANUNGSBEREICH</span><h2>Urlaub im Blick.</h2><p>Dein Team aus Personalfluss ist bereits verbunden.</p></div><span class="vac-v2-device-status"><span aria-hidden="true">●</span> Lokaler Planungsstand</span></div>
 <details class="vac-storage-note"><summary>Nur in diesem Browser gespeichert · Hinweise zur Speicherung</summary><div class="vac-notice" role="note"><strong>Deine Daten bleiben auf diesem Gerät.</strong> Der Plan wird nur in deinem Browser gespeichert – nicht online übertragen. Der Mitarbeiterstamm wird automatisch mit Personalfluss und PEP auf diesem Browser abgeglichen; Urlaubseinträge und Urlaubsbudgets bleiben im Urlaubsplaner. Auf gemeinsam genutzten Geräten keine vertraulichen Personaldaten eintragen. Browserdaten löschen entfernt auch den Plan.</div></details>
 <div id="vacError" class="vac-error" role="alert" hidden=""></div>
 <nav class="vac-app-nav" aria-label="Urlaubsplanung"><button type="button" data-vac-view="calendar" aria-pressed="true">Kalender</button><button type="button" data-vac-view="team" aria-pressed="false">Team &amp; Resturlaub</button><button type="button" data-vac-view="settings" aria-pressed="false">Einstellungen</button><button type="button" data-vac-view="entry" aria-pressed="false" class="vac-new">+ Urlaub eintragen</button></nav><div class="vac-overview" aria-live="polite">
@@ -41,15 +35,10 @@
 <div class="vac-metric"><small>Einträge</small><strong id="vacEntryCount">0</strong><span>im gewählten Jahr</span></div>
 <div class="vac-metric"><small>Prüfen</small><strong id="vacConflictCount">0</strong><span>Zeiträume mit Konflikten</span></div>
 </div>
-<div class="vac-v2-shortcuts" aria-label="Schnelleinstieg zur Urlaubsplanung">
-  <button type="button" data-vac-shortcut="team"><span class="vac-v2-shortcut-icon" aria-hidden="true">♙</span><span><strong>1. Team vorbereiten</strong><small>Mitarbeiter &amp; Anspruch verwalten</small></span><span aria-hidden="true">↗</span></button>
-  <button type="button" data-vac-shortcut="entry"><span class="vac-v2-shortcut-icon" aria-hidden="true">＋</span><span><strong>2. Urlaub eintragen</strong><small>Zeitraum &amp; Status hinterlegen</small></span><span aria-hidden="true">↗</span></button>
-  <button type="button" data-vac-shortcut="calendar"><span class="vac-v2-shortcut-icon" aria-hidden="true">▦</span><span><strong>3. Kalender prüfen</strong><small>Freie Tage &amp; Überschneidungen sehen</small></span><span aria-hidden="true">↗</span></button>
-</div>
-
 <section class="vac-panel vac-v2-calendar-panel" data-vac-panel="calendar">
 <div class="vac-panel-head"><div><span class="eyebrow">Monatsübersicht</span><h2>Urlaub auf einen Blick</h2></div>
 <div class="vac-controls"><button type="button" id="vacPrevMonth" aria-label="Vorheriger Monat">←</button><strong id="vacMonthLabel"></strong><button type="button" id="vacNextMonth" aria-label="Nächster Monat">→</button><button type="button" id="vacToday">Heute</button></div></div>
+<div class="lf-planner-filters"><label for="vacJumpMonth">Monat auswählen<input id="vacJumpMonth" type="month" min="1900-01" max="2200-12"></label><label for="vacFilterPerson">Mitarbeiter<select id="vacFilterPerson"><option value="">Gesamtes Team</option></select></label><label for="vacFilterStatus">Status<select id="vacFilterStatus"><option value="">Alle Einträge</option><option value="planned">Geplant</option><option value="approved">Bestätigt</option></select></label><p>Filter gelten für Kalender und Liste. Konflikte berücksichtigen immer das gesamte Team.</p></div>
 <div class="vac-legend"><span><i class="vac-key planned"></i> Geplant</span><span><i class="vac-key approved"></i> Bestätigt</span><span><i class="vac-key collision"></i> Mehrere gleichzeitig</span></div>
 <div id="vacCalendar" class="vac-calendar" aria-label="Urlaubskalender"></div>
 <div class="vac-calendar-bottom">Feiertage werden nach Bundesland berücksichtigt, regionale Sonderregelungen können fehlen. Arbeitstage richten sich nach der eingestellten 5- oder 6-Tage-Woche.</div>

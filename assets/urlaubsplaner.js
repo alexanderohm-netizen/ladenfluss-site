@@ -60,6 +60,10 @@
     }
     function employeeName(id) { return data.employees.find(e => e.id === id)?.name || 'Entfernter Mitarbeiter'; }
     function rangeTouchesYear(entry, year) { return entry.start <= year + '-12-31' && entry.end >= year + '-01-01'; }
+    function visibleEntry(entry) {
+      return (!$('vacFilterPerson')?.value || entry.employeeId === $('vacFilterPerson').value) &&
+        (!$('vacFilterStatus')?.value || entry.status === $('vacFilterStatus').value);
+    }
     function renderTeam() {
       const select = $('vacPerson'); const chosen = select.value;
       select.replaceChildren(node('option', '', 'Bitte wählen'));
@@ -106,6 +110,10 @@
       if (!list.children.length) list.append(node('p', 'vac-empty', 'Noch kein Team angelegt.'));
       if (data.employees.some(e => e.id === chosen)) select.value = chosen;
       $('vacTeamCount').textContent = String(data.employees.length);
+      const filter=$('vacFilterPerson');
+      if(filter){const value=filter.value;filter.replaceChildren(new Option('Gesamtes Team',''));
+        data.employees.forEach(e=>filter.append(new Option(e.name,e.id)));filter.value=data.employees.some(e=>e.id===value)?value:'';}
+
     }
     function conflicts(entry) {
       try { return api.overCapacity(entry, data.entries, data.settings).length; }
@@ -132,7 +140,7 @@
       const entries = data.entries.filter(e => rangeTouchesYear(e, currentYear())).sort((a, b) => a.start.localeCompare(b.start));
       $('vacEntryCount').textContent = String(entries.length);
       $('vacConflictCount').textContent = String(entries.filter(e => conflicts(e) > 0).length);
-      for (const entry of entries) {
+      for (const entry of entries.filter(visibleEntry)) {
         const row = node('div', 'vac-entry'); const left = node('div');
         const total = api.countDays(entry, data.settings, currentYear());
         left.append(node('strong', '', employeeName(entry.employeeId)), node('small', '', format(entry.start) + ' – ' + format(entry.end) + ' · ' + total + ' Arbeitstage'));
@@ -161,10 +169,11 @@
         });
         buttons.append(edit, remove); row.append(left, buttons); rows.append(row);
       }
-      if (!entries.length) rows.append(node('p', 'vac-empty', 'Für dieses Jahr ist noch kein Urlaub eingetragen.'));
+      if (!rows.children.length) rows.append(node('p', 'vac-empty', entries.length ? 'Keine Einträge für diesen Filter. Wähle eine andere Person oder einen anderen Status.' : 'Für dieses Jahr ist noch kein Urlaub eingetragen.'));
     }
     function renderCalendar() {
       $('vacMonthLabel').textContent = month.toLocaleDateString('de-DE', {month: 'long', year: 'numeric'});
+      if($('vacJumpMonth')) $('vacJumpMonth').value=api.iso(month).slice(0,7);
       const calendar = $('vacCalendar'); calendar.replaceChildren();
       ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(w => calendar.append(node('div', 'vac-weekday', w)));
       const start = new Date(month);
@@ -186,12 +195,13 @@
         const cell = node('div', classes);
         cell.append(node('span', 'vac-day-num', String(day.getDate())));
         if (holiday) cell.append(node('small', 'vac-holiday', holiday));
-        vacationEntries.slice(0, 3).forEach(entry => {
+        const visible=vacationEntries.filter(visibleEntry);
+        visible.slice(0, 3).forEach(entry => {
           const tag = node('span', 'vac-tag' + (entry.status === 'approved' ? ' approved' : ''), employeeName(entry.employeeId));
           tag.title = employeeName(entry.employeeId) + ' · ' + (entry.status === 'approved' ? 'Bestätigt' : 'Geplant');
           cell.append(tag);
         });
-        if (vacationEntries.length > 3) cell.append(node('span', 'vac-holiday', '+' + (vacationEntries.length - 3) + ' weitere'));
+        if (visible.length > 3) cell.append(node('span', 'vac-holiday', '+' + (visible.length - 3) + ' weitere'));
         calendar.append(cell);
       }
     }
@@ -301,6 +311,14 @@
     $('vacPrevMonth').addEventListener('click', () => { month.setMonth(month.getMonth() - 1); render(); });
     $('vacNextMonth').addEventListener('click', () => { month.setMonth(month.getMonth() + 1); render(); });
     $('vacToday').addEventListener('click', () => { const now = new Date(); month = new Date(now.getFullYear(), now.getMonth(), 1, 12); render(); });
+    $('vacJumpMonth')?.addEventListener('change',()=>{
+      const value=$('vacJumpMonth').value;
+      if(!/^\d{4}-\d{2}$/.test(value))return;
+      const [year,num]=value.split('-').map(Number);
+      if(year<1900||year>2200||num<1||num>12)return;
+      month=new Date(year,num-1,1,12);render();
+    });
+    ['vacFilterPerson','vacFilterStatus'].forEach(id=>$(id)?.addEventListener('change',()=>{renderEntries();renderCalendar();}));
     $('vacPrint').addEventListener('click', () => window.print());
     // Cross-tab changes to Personalfluss are reflected without re-importing people.
     window.addEventListener('storage',event=>{
