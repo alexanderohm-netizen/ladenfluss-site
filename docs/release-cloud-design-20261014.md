@@ -24,7 +24,9 @@ Der Advisor markiert die drei bewusst aufrufbaren SECURITY DEFINER RPCs. Ihre ak
 
 143 Node-/JSDOM-Tests bestanden vor Übergabe an GitHub. Enthält neue Regressionen für Rabattgrenzen/Nullpreis, Kalenderfilter mit unveränderter Konflikterkennung und getrennte Rechenszenarien. Vorhandene fehleranfällige Assertions korrigiert: zufällige Base64-Zeichenfolge e1 ist kein Nachweis eines unverschlüsselten Mitarbeiterschlüssels; außerdem alte Bestätigungstexte und async DOM-Teardown.
 
-Die Browser-CI wurde an die beabsichtigten neuen Einstiege angepasst. Lokale visuelle Browserprüfung steht in dieser Arbeitsumgebung nicht zur Verfügung (kein control-browser); nicht als durchgeführt ausweisen.
+Die Browser-CI wurde an die beabsichtigten neuen Einstiege angepasst. Am 15.10. bestanden 143 Node-/JSDOM-Tests und alle 45 Browserprüfungen auf afb5597. Ein dabei zuvor entdeckter Überlauf der Startseitenkarten bei 390/320 px wurde behoben. CI-Screenshots von Startseite, Personalfluss, Urlaubsplaner und Rechner wurden in Desktop- und Mobilansicht visuell geprüft. Eine weitere kleine Anpassung hält die Startseiten-Schaltflächen auch im einspaltigen 320-px-Layout kompakt; dafür wird zusätzlich ein Screenshot erzeugt. Die abschließende Browser-CI prüft auch diesen Stand.
+
+Ein lokaler Browser steht in dieser Arbeitsumgebung nicht zur Verfügung (kein control-browser); die Browserprüfung läuft in GitHub Actions.
 
 Vercel API meldete 403 für Team warenfluss; Veröffentlichung erfolgt über bestehende Git-Anbindung. Live-Erfolg separat anhand Commit/Deployment und ausgeliefertem Inhalt prüfen.
 

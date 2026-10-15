@@ -224,6 +224,7 @@ for (const width of [1440, 768, 390, 320]) {
     assert.equal(styles.wine,'#7c101c');
     assert.match(styles.photo,/images\.pexels\.com/);
     const overflowing = styles.overflow > 2 ? await page.evaluate(() => Array.from(document.querySelectorAll('body *')).filter(el => el.getBoundingClientRect().right > innerWidth + 2).map(el => ({tag:el.tagName,classes:el.className,right:Math.round(el.getBoundingClientRect().right)})).slice(0,15)) : [];
+    if(width===320){const folder=path.join(root,'test-artifacts');fs.mkdirSync(folder,{recursive:true});await page.screenshot({path:path.join(folder,'homepage-320.png'),fullPage:true});}
     assert.ok(styles.overflow<=2,'Homepage horizontal overflow '+styles.overflow+' '+JSON.stringify(overflowing));
     assert.deepEqual(errors,[]);
     const cols=styles.grid.split(' ').length;
