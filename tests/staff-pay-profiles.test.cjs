@@ -126,7 +126,8 @@ test('Vergütungstresor v2: Aufschlag und Personalbudget sind verschlüsselt und
   await api.setPlanning({overheadPct:23.5,monthlyBudget:7500.75});
   const raw=db.getItem(api.key);
   assert.equal(JSON.parse(raw).version,2);
-  assert.doesNotMatch(raw,/19\.66|7500\.75|23\.5|e1/);
+  assert.deepEqual(Object.keys(JSON.parse(raw)).sort(),['ciphertext','iv','rounds','salt','version']);
+  assert.doesNotMatch(raw,/"e1"\s*:|19\.66|7500\.75|23\.5/);
   assert.equal(api.getPlanning().overheadPct,23.5);
   assert.equal(api.getPlanning().monthlyBudget,7500.75);
   assert.equal(api.get('e1'),19.66);

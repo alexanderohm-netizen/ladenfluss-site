@@ -172,11 +172,11 @@ test('Gemeinsamer Rechner: Menü, Dezimaltastatur und Formelergebnisse', async t
   await page.goto(base+'/rechner');
   await page.locator('#chooseMode').click();
   await page.locator('[data-mode=margenrechner]').click();
+  await page.locator('.pocket-calculator > summary').click();
   await page.locator('[data-field=m_cost]').click();
   for(const key of ['clear','1','2','.','5'])await page.locator('[data-key="'+key+'"]').click();
   assert.equal(await page.locator('#m_cost').inputValue(),'12.5');
   await page.locator('[data-key=calculate]').click();
-  await page.locator('#fullInputs > summary').click();
   assert.equal(await page.locator('#m_result').isVisible(),true);
   for(const mode of ['rabattrechner','break-even','kpi-dashboard','personalkosten-budget','rohertrag-wareneinsatz','lagerumschlag','personalbedarf']){
     await page.locator('#chooseMode').click();await page.locator('[data-mode='+mode+']').click();
@@ -188,6 +188,10 @@ test('Gemeinsamer Rechner: Menü, Dezimaltastatur und Formelergebnisse', async t
 for(const width of [390,1440])test('App-Ansichten als Bild prüfen ('+width+' px)',async t=>{
   const page=await session(t,{width,height:1000});
   const folder=path.join(root,'test-artifacts');fs.mkdirSync(folder,{recursive:true});
+  await page.goto(base+'/');
+  await page.screenshot({path:path.join(folder,'homepage-'+width+'.png'),fullPage:true});
+  await page.goto(base+'/mitarbeiter');
+  await page.screenshot({path:path.join(folder,'staff-'+width+'.png'),fullPage:true});
   await page.goto(base+'/rechner#margenrechner');
   await page.screenshot({path:path.join(folder,'calculator-'+width+'.png'),fullPage:true});
   await page.locator('#chooseMode').click();
@@ -207,7 +211,7 @@ for (const width of [1440, 768, 390, 320]) {
     await page.locator('.ref-hero').waitFor({state:'visible'});
     assert.match((await page.locator('#home-title').innerText()).replace(/\s+/g,' '),/Dein Laden\. Klar organisiert\./);
     assert.equal(await page.locator('.ref-module-card').count(),6);
-    assert.equal(await page.locator('.ref-module-soon').count(),3);
+    assert.equal(await page.locator('.ref-module-soon').count(),2);
     assert.equal(await page.locator('.ref-module-card[href="/pep"]').count(),1);
     const styles=await page.evaluate(()=>({
       hero:getComputedStyle(document.querySelector('.ref-hero')).display,
@@ -219,7 +223,9 @@ for (const width of [1440, 768, 390, 320]) {
     assert.equal(styles.hero,'block');
     assert.equal(styles.wine,'#7c101c');
     assert.match(styles.photo,/images\.pexels\.com/);
-    assert.ok(styles.overflow<=2,'Homepage horizontal overflow '+styles.overflow);
+    const overflowing = styles.overflow > 2 ? await page.evaluate(() => Array.from(document.querySelectorAll('body *')).filter(el => el.getBoundingClientRect().right > innerWidth + 2).map(el => ({tag:el.tagName,classes:el.className,right:Math.round(el.getBoundingClientRect().right)})).slice(0,15)) : [];
+    if(width===320){const folder=path.join(root,'test-artifacts');fs.mkdirSync(folder,{recursive:true});await page.screenshot({path:path.join(folder,'homepage-320.png'),fullPage:true});}
+    assert.ok(styles.overflow<=2,'Homepage horizontal overflow '+styles.overflow+' '+JSON.stringify(overflowing));
     assert.deepEqual(errors,[]);
     const cols=styles.grid.split(' ').length;
     if(width>=1280)assert.equal(cols,6);
@@ -242,7 +248,7 @@ for (const width of [1440, 390, 320]) {
     assert.equal(await page.locator('.ref-kpi-card').count(),6);
     assert.equal(await page.locator('.ref-panel').count(),6);
     assert.equal(await page.locator('.ref-pep-preview tbody tr').count(),3);
-    assert.equal(await page.locator('#refKpiCloud').innerText(),'Lokal');
+    assert.equal(await page.locator('#refKpiCloud').innerText(),'Beta');
     assert.equal(await page.locator('#refKpiSales').innerText(),'–');
     assert.equal(await page.locator('#refKpiStock').innerText(),'–');
     assert.equal(await page.locator('#refKpiApplicants').innerText(),'–');
@@ -306,15 +312,15 @@ for(const width of [1440,390,320]){
     page.on('pageerror',error=>errors.push(error.message));
     const response=await page.goto(base+'/tools/urlaubsplaner');
     assert.equal(response.status(),200);
-    assert.equal(await page.locator('.vac-v2-shortcuts button').count(),3);
-    await page.locator('[data-vac-shortcut=team]').click();
+    assert.equal(await page.locator('.vac-app-nav button').count(),4);
+    await page.locator('[data-vac-view=team]').click();
     assert.equal(await page.locator('[data-vac-panel=team]').first().isVisible(),true);
     assert.equal(await page.locator('[data-vac-panel=calendar]').first().isVisible(),false);
     await page.locator('#vacEmployeeName').fill('Design Test');
     await page.locator('#vacAllowance').fill('30');
     await page.locator('#vacEmployeeForm button[type=submit]').click();
     assert.match(await page.locator('#vacEmployees').innerText(),/Design Test/);
-    await page.locator('[data-vac-shortcut=entry]').click();
+    await page.locator('[data-vac-view=entry]').click();
     assert.equal(await page.locator('[data-vac-panel=entry]').isVisible(),true);
     await page.locator('#vacPerson').selectOption({label:'Design Test'});
     await page.locator('#vacFrom').fill('2026-11-02');
@@ -322,7 +328,7 @@ for(const width of [1440,390,320]){
     await page.locator('#vacStatus').selectOption('approved');
     assert.match(await page.locator('#vacPreview').innerText(),/5/);
     await page.locator('#vacSaveEntry').click();
-    await page.locator('[data-vac-shortcut=calendar]').click();
+    await page.locator('[data-vac-view=calendar]').click();
     assert.equal(await page.locator('[data-vac-panel=calendar]').first().isVisible(),true);
     assert.match(await page.locator('#vacEntries').innerText(),/Design Test/);
     await page.reload();
@@ -401,7 +407,7 @@ test('Referenz-Cockpit zeigt echte PEP-, Urlaubs- und Teamdaten statt fiktiver G
   assert.equal(await page.locator('#refKpiSales').innerText(),'–');
   assert.equal(await page.locator('#refKpiStock').innerText(),'–');
   assert.equal(await page.locator('#refKpiApplicants').innerText(),'–');
-  assert.equal(await page.locator('#refKpiCloud').innerText(),'Lokal');
+  assert.equal(await page.locator('#refKpiCloud').innerText(),'Beta');
   assert.match(await page.locator('#refPepBody').innerText(),/Anna Müller/);
   assert.equal(await page.locator('.ref-hour-col').count(),7);
   await page.locator('#refDashboardQuery').fill('Urlaub');

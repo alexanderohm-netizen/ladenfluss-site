@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="/assets/staff-v2.css">
 <link rel="stylesheet" href="/assets/staff-simplified.css">
 <link rel="stylesheet" href="/assets/staff-profile-modern.css">
-</head>
+<link rel="stylesheet" href="/assets/refinement.css?v=20261014"></head>
 <body class="staff-v2-body staff-v3-body">
 <a class="skip-link" href="#main">Zum Inhalt</a>
 <header class="site-header"><div class="container header-row">
@@ -30,18 +30,18 @@
   <span class="lf-staff-nav-label">WEITERE MODULE</span>
   <a href="/mein-laden"><span>◇</span> Zahlenfluss</a>
   <a href="/mein-laden"><span>▣</span> Warenfluss</a>
-  <div class="lf-staff-sidebar-foot"><span class="lf-staff-foot-avatar">L</span><div><strong>Dein Arbeitsbereich</strong><small>Personalfluss · Vorschau</small></div></div>
+  <div class="lf-staff-sidebar-foot"><span class="lf-staff-foot-avatar">L</span><div><strong>Dein Arbeitsbereich</strong><small>Personalfluss · Lokal</small></div></div>
 </aside>
 <main id="main" class="staff-shell">
-  <div class="lf-staff-topbar"><span>Arbeitsbereich <span aria-hidden="true">/</span> Personalfluss</span><div><span class="lf-staff-topbar-dot"></span> Lokale Vorschau <span class="lf-staff-topbar-avatar">LF</span></div></div>
+  <div class="lf-staff-topbar"><span>Arbeitsbereich <span aria-hidden="true">/</span> Personalfluss</span><div><span class="lf-staff-topbar-dot"></span> Auf diesem Gerät <span class="lf-staff-topbar-avatar">LF</span></div></div>
   <nav class="staff-breadcrumb" aria-label="Brotkrumennavigation"><a href="/mein-laden">Mein Laden</a><span aria-hidden="true">/</span><span>Personalfluss</span></nav>
 
   <section class="staff-head" aria-labelledby="staffTitle">
     <div>
       <span class="eyebrow">Ladenfluss · Personalfluss</span>
-      <h1 id="staffTitle">Menschen, die deinen<br><em>Laden bewegen.</em></h1>
+      <h1 id="staffTitle">Dein Team.<br><em>Alles an einem Ort.</em></h1>
       <p>Ein Team. Ein zentraler Personalstamm. Alle Informationen klar strukturiert – vom ersten Arbeitstag bis zur Dienstplanung.</p>
-      <div class="staff-hero-meta"><span>✓ Im PEP verwendbar</span><span>✓ Mit dem Urlaubsplaner verknüpfbar</span><span>✓ Lokal auf diesem Gerät</span></div>
+      <div class="staff-hero-meta"><span>✓ Im PEP verwendbar</span><span>✓ Im Urlaubsplaner verfügbar</span><span>✓ Lokal auf diesem Gerät</span></div>
     </div>
     <div class="staff-head-actions">
       <span class="staff-local-tag"><span aria-hidden="true">●</span> Lokaler Arbeitsbereich</span>
@@ -49,11 +49,11 @@
     </div>
   </section>
 
-  <div class="staff-storage-note" role="note">
+  <details class="staff-storage-note"><summary>Auf diesem Gerät gespeichert · Hinweise zu Personaldaten</summary><p>
     <strong>Bitte beachten:</strong> Diese Version speichert Teamdaten nur in diesem Browser.
     Stundenlöhne werden hier ohne zusätzliches Passwort direkt im Browser gespeichert. Verwende dafür nur ein persönliches, geschütztes Gerät – nicht gemeinsam genutzte Kassen-PCs.
     Persönliche Kontaktdaten und Bankverbindungen werden lokal verschlüsselt und ohne zusätzliches Passwort angezeigt. Auf diesem Gerät können andere Personen mit Browserzugriff die Angaben ebenfalls öffnen. Keine Cloud-Übertragung – bitte nur auf einem geschützten Gerät verwenden.
-  </div>
+  </p></details>
   <div id="staffError" class="staff-error" role="alert" hidden></div>
   <p id="staffStatus" class="staff-status" role="status" aria-live="polite"></p>
 
@@ -68,11 +68,6 @@
     <a href="/tools/urlaubsplaner"><span class="staff-quick-symbol" aria-hidden="true">◫</span><span><strong>Urlaubsplaner</strong><small>Urlaubszeiten und Resttage prüfen</small></span><span aria-hidden="true">↗</span></a>
   </nav>
 
-  <section class="staff-role-board" aria-labelledby="roleBoardTitle">
-    <div class="staff-role-head"><div><span class="eyebrow">DEINE STELLENPROFILE</span><h2 id="roleBoardTitle">Rollen. Klar definiert.</h2><p>Alle Tätigkeiten aus deinem Team – übersichtlich, ohne doppelte Stammdaten.</p></div><span class="staff-role-count" id="staffRoleCount"></span></div>
-    <div class="staff-role-grid" id="staffRoleGrid"></div>
-  </section>
-
   <section class="staff-list-wrap" aria-labelledby="staffListTitle">
     <div class="staff-toolbar">
       <div><span class="eyebrow">DEIN TEAM</span><h2 id="staffListTitle">Mitarbeiterübersicht</h2><p>Profil öffnen und Name, Stundenlohn oder Arbeitszeit direkt bearbeiten.</p></div>
@@ -80,12 +75,18 @@
     </div>
     <div class="staff-filters">
       <label for="staffSearch">Mitarbeiter suchen
-        <input type="search" id="staffSearch" autocomplete="off" placeholder="Name oder Einsatzort">
+        <input type="search" id="staffSearch" autocomplete="off" placeholder="Name, Tätigkeit oder Filiale">
       </label>
 
     </div>
+    <button type="button" class="lf-clear-filter" id="clearStaffSearch" hidden>Suche zurücksetzen ×</button>
     <div class="staff-list" id="staffList" aria-live="polite"></div>
   </section>
+
+  <details class="staff-role-board"><summary>Stellenprofile &amp; Aufgaben ansehen</summary>
+    <div class="staff-role-head"><div><span class="eyebrow">DEINE STELLENPROFILE</span><h2 id="roleBoardTitle">Rollen. Klar definiert.</h2><p>Alle Tätigkeiten aus deinem Team – übersichtlich, ohne doppelte Stammdaten.</p></div><span class="staff-role-count" id="staffRoleCount"></span></div>
+    <div class="staff-role-grid" id="staffRoleGrid"></div>
+  </details>
 
   <section class="staff-profile" id="staffProfile" aria-labelledby="staffProfileTitle" hidden>
     <div class="staff-profile-top">
@@ -173,5 +174,5 @@
 <script src="/assets/staff-modern.js" defer></script>
 
 
-</body>
+<script src="/assets/refinement.js" defer></script></body>
 </html>

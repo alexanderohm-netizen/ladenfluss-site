@@ -6,8 +6,8 @@
 <title>Mein Laden – Überblick & nächste Schritte | Ladenfluss</title>
 <meta name="description" content="Dein Laden im Blick: Besetzung prüfen, Prioritäten erkennen und lokale Daten sichern.">
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/cockpit.css"><link rel="stylesheet" href="/assets/cockpit-v2.css"><link rel="stylesheet" href="/assets/reference-dashboard.css">
-</head>
+<link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/cockpit.css"><link rel="stylesheet" href="/assets/cockpit-v2.css"><link rel="stylesheet" href="/assets/reference-dashboard.css"><link rel="stylesheet" href="/assets/cloud-beta-ui.css">
+<link rel="stylesheet" href="/assets/refinement.css?v=20261014"></head>
 <body class="workspace-body lf-reference-dashboard">
 <a class="skip-link" href="#main">Zum Inhalt</a>
 <header class="site-header"><div class="container header-row">
@@ -27,7 +27,7 @@
 <a href="/pep" class="ref-sidebar-link"><span aria-hidden="true">▦</span> PEP</a>
 <a href="/tools/urlaubsplaner" class="ref-sidebar-link"><span aria-hidden="true">▤</span> Urlaubsplaner</a>
 <a href="/mitarbeiter" class="ref-sidebar-link"><span aria-hidden="true">♧</span> Personalfluss</a>
-<a href="#modules" data-open-panel="modules" class="ref-sidebar-link"><span aria-hidden="true">☁</span> Cloud <small>In Vorbereitung</small></a>
+<a href="#backup" data-open-panel="backup" class="ref-sidebar-link"><span aria-hidden="true">☁</span> Cloud <small>Beta</small></a>
 <a href="/rechner" class="ref-sidebar-link"><span aria-hidden="true">⌗</span> Handelsrechner</a>
 <div class="workspace-nav-heading workspace-nav-heading-later">MEIN LADEN</div>
 <button type="button" data-cockpit-tab="targets" aria-pressed="false"><span aria-hidden="true">⌁</span> Richtwerte</button>
@@ -47,7 +47,7 @@
  <div class="ref-dash-top-actions"><a href="#overview" data-open-panel="overview" class="ref-dash-bell" aria-label="Hinweise anzeigen">♧ <span id="refAlertCount">0</span></a><span class="ref-top-avatar" aria-hidden="true">L</span><div class="ref-dash-account"><strong id="refTopShop">Mein Laden</strong><small>Auf diesem Gerät</small></div></div>
 </header>
 <div class="workspace-breadcrumb"><a href="/">Startseite</a><span aria-hidden="true">/</span><span>Mein Laden</span><span class="workspace-breadcrumb-state">Lokaler Arbeitsbereich</span></div>
-<div class="workspace-heading"><div><span class="eyebrow">DEIN LADEN AUF EINEN BLICK</span><h1><span id="refGreeting">Guten Morgen,</span> <span id="storeGreeting">Mein Laden</span>!</h1><p>Hier ist dein aktueller Überblick. Alles Wichtige an einem Ort. <span aria-hidden="true">❦</span></p></div><div class="workspace-date"><span id="cockpitDate"></span><small><span class="workspace-local-dot" aria-hidden="true"></span> Lokal gespeichert · Keine Cloud-Synchronisierung</small></div></div>
+<div class="workspace-heading"><div><span class="eyebrow">DEIN LADEN AUF EINEN BLICK</span><h1><span id="refGreeting">Guten Morgen,</span> <span id="storeGreeting">Mein Laden</span>!</h1><p>Hier ist dein aktueller Überblick. Alles Wichtige an einem Ort. <span aria-hidden="true">❦</span></p></div><div class="workspace-date"><span id="cockpitDate"></span><small><span class="workspace-local-dot" aria-hidden="true"></span> Planungsdaten lokal · Ladenprofil optional in der Cloud</small></div></div>
 <div id="cockpitError" class="workspace-alert" role="alert" hidden></div>
 <section data-cockpit-panel="overview" aria-label="Überblick">
 <div class="ref-kpi-grid" aria-label="Kennzahlen und Module"><article class="ref-kpi-card"><div><span class="ref-kpi-icon" aria-hidden="true">▥</span><span>Umsatz heute</span></div><strong id="refKpiSales">–</strong><small>Zahlenfluss folgt</small></article>
@@ -55,7 +55,7 @@
 <article class="ref-kpi-card"><div><span class="ref-kpi-icon" aria-hidden="true">♧</span><span>Personaleinsatz</span></div><strong id="refKpiTeam">–</strong><small>Für heute geplant</small></article>
 <article class="ref-kpi-card"><div><span class="ref-kpi-icon" aria-hidden="true">▤</span><span>Bewerbungen</span></div><strong id="refKpiApplicants">–</strong><small>In Vorbereitung</small></article>
 <article class="ref-kpi-card"><div><span class="ref-kpi-icon" aria-hidden="true">☼</span><span>Urlaubsplanung</span></div><strong id="refKpiVacation">–</strong><small>Gespeicherte Einträge</small></article>
-<article class="ref-kpi-card"><div><span class="ref-kpi-icon" aria-hidden="true">☁</span><span>Cloud-Status</span></div><strong id="refKpiCloud">Lokal</strong><small>Noch nicht aktiviert</small></article></div>
+<article class="ref-kpi-card"><div><span class="ref-kpi-icon" aria-hidden="true">☁</span><span>Cloud-Status</span></div><strong id="refKpiCloud">Lokal</strong><small>Ladenprofil · manueller Abgleich</small></article></div>
 <div class="ref-dashboard-cards">
  <section class="ref-panel ref-hours-panel" aria-labelledby="refHoursTitle">
    <div class="ref-panel-header"><h2 id="refHoursTitle"><span aria-hidden="true">▥</span> Personalstunden</h2><small>Diese Woche · aus dem PEP</small></div>
@@ -124,18 +124,33 @@
 <div class="form-actions"><button type="submit" class="btn btn-primary">Richtwerte speichern</button><span id="targetState" role="status"></span></div></form></section>
 <section data-cockpit-panel="backup" hidden><div class="section-line"><div><span class="eyebrow">Deine Daten</span><h2>Eine Kopie für dich</h2><p>Browserdaten können verloren gehen. Lade deinen Arbeitsstand als Datei herunter.</p></div></div>
 <div class="backup-card"><h3>Lokalen Arbeitsstand sichern</h3><p>Enthalten sind Ladenprofil, Richtwerte, Team, Dienstpläne, Abwesenheiten, Urlaubsplan und Rechenverlauf, soweit auf diesem Gerät vorhanden.</p><p class="workspace-note">Die Datei enthält unverschlüsselte Daten. Bewahre sie geschützt auf. Sie wird nicht an Ladenfluss übertragen.</p><button type="button" class="btn btn-primary" id="downloadBackup">Sicherung herunterladen</button><p id="backupStatus" role="status"></p><small>Exportformat JSON · Die Wiederherstellung über die Oberfläche ist noch nicht freigeschaltet.</small></div>
+<div class="backup-card cloud-profile-card" aria-labelledby="cloudCardTitle">
+<span class="eyebrow">CLOUD-BETA · LADENPROFIL</span>
+<h3 id="cloudCardTitle">Deine Daten auf mehreren Geräten.</h3>
+<p>Der erste Cloud-Abgleich speichert ausschließlich dein <strong>Ladenprofil und deine Richtwerte</strong>. Schichten, Mitarbeiter und Urlaub bleiben vorerst lokal. Es wird nichts automatisch hochgeladen oder überschrieben.</p>
+<p id="cloudProfileStatus" role="status" aria-live="polite">Cloud-Verbindung wird geprüft …</p>
+<div id="cloudProfileDiff" class="cloud-profile-diff" hidden aria-label="Vergleich deiner lokalen und Cloud-Profildaten"></div>
+<div class="cloud-profile-actions">
+<button class="btn btn-secondary" type="button" id="cloudProfileCheck" hidden>Cloud-Profil prüfen</button>
+<button class="btn btn-primary" type="button" id="cloudProfileUpload" hidden>Lokales Profil in Cloud speichern</button>
+<button class="btn btn-secondary" type="button" id="cloudProfileDownload" hidden>Cloud-Profil lokal übernehmen</button>
+<button class="btn btn-secondary" type="button" id="cloudProfileRestore" hidden>Lokale Sicherheitskopie wiederherstellen</button>
+<button class="btn btn-secondary" type="button" id="cloudProfileRecoverDraft" hidden>Gespeicherten Entwurf lokal übernehmen</button>
+</div>
+<p class="cloud-beta-privacy">Bei einer Übernahme wird die bisherige lokale Version gesichert. <a href="/konto">Zum Ladenfluss-Konto ↗</a></p>
+</div>
 </section>
 <section data-cockpit-panel="modules" hidden><div class="section-line"><div><span class="eyebrow">Heute & morgen</span><h2>Was du bereits nutzen kannst</h2><p>Ein klarer Stand für jeden Bereich.</p></div></div>
 <div class="module-grid">
 <article><span>Kostenlos verfügbar</span><h3>Werkzeuge</h3><p>Acht Handelsrechner für Personal, Preise und Waren.</p><a href="/tools">Werkzeuge öffnen →</a></article>
 <article><span>Dauerhaft kostenlos · lokal</span><h3>Urlaubsplaner</h3><p>Teamurlaub, Jahresbudgets und Überschneidungen.</p><a href="/tools/urlaubsplaner">Urlaub planen →</a></article>
 <article><span>Lokaler Prototyp</span><h3>Personalplanung</h3><p>Schichten, Abwesenheiten und Hinweise zur Besetzung.</p><a href="/pep">Dienstplan öffnen →</a></article>
-<article><span>In Entwicklung</span><h3>Kundenkonto</h3><p>Sichere Anmeldung, gemeinsame Unternehmensdaten und Benutzerrechte sind noch nicht freigeschaltet.</p></article>
+<article><span>Cloud-Beta · Jetzt verfügbar</span><h3>Konto &amp; Cloud</h3><p>Konto erstellen, Unternehmen einrichten und dein Ladenprofil bewusst zwischen Geräten abgleichen. Team und Pläne bleiben lokal.</p><a href="/konto">Zum Kundenkonto →</a></article>
 <article><span>Desktop-Prototyp</span><h3>Warenwirtschaft</h3><p>Artikel, Bestand und Einkauf für macOS und Windows. Eine getestete Installation steht noch aus.</p></article>
 <article><span>Geplant</span><h3>MHD & Zahlenfluss</h3><p>Ablaufdaten und tatsächliche Geschäftszahlen später gemeinsam auswerten.</p></article>
 </div></section>
 </div></div>
 <div class="workspace-footer">Daten nur in diesem Browser · keine Gerätesynchronisierung · <a href="#backup" data-open-panel="backup">Arbeitsstand sichern</a></div>
 </main>
-<script src="/assets/site.js" defer></script><script src="/assets/signals.js" defer></script><script src="/assets/planning-engine.js" defer></script><script src="/assets/team-store.js" defer></script><script src="/assets/de-holidays.js" defer></script><script src="/assets/urlaubsplaner-store.js" defer></script><script src="/assets/store-settings.js" defer></script><script src="/assets/pep-signals.js" defer></script><script src="/assets/business-signals.js" defer></script><script src="/assets/backup.js" defer></script><script src="/assets/cockpit.js" defer></script><script src="/assets/reference-dashboard.js" defer></script>
+<script src="/assets/site.js" defer></script><script src="/assets/signals.js" defer></script><script src="/assets/planning-engine.js" defer></script><script src="/assets/team-store.js" defer></script><script src="/assets/de-holidays.js" defer></script><script src="/assets/urlaubsplaner-store.js" defer></script><script src="/assets/store-settings.js" defer></script><script src="/assets/pep-signals.js" defer></script><script src="/assets/business-signals.js" defer></script><script src="/assets/backup.js" defer></script><script src="/assets/cockpit.js" defer></script><script src="/assets/reference-dashboard.js" defer></script><script src="/assets/cloud-config.js" defer></script><script src="/assets/supabase-browser.js" defer></script><script src="/assets/auth-core.js" defer></script><script src="/assets/cloud-sync-core.js" defer></script><script src="/assets/cloud-profile.js" defer></script>
 </body></html>

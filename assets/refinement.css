@@ -1,0 +1,135 @@
+/* Ladenfluss · October 2026: quieter surfaces, readable hierarchy, task-first workflows. */
+:root{--lf-paper:#fffdf9;--lf-canvas:#f6f1eb;--lf-line:#e2d7cd;--lf-text:#3e302b;--lf-muted:#73645b;--lf-accent:#7b1926}
+body{color:var(--lf-text)}
+*,*::before,*::after{box-sizing:border-box}
+:focus-visible{outline:3px solid #ab6875;outline-offset:3px}
+button,a,input,select,summary{-webkit-tap-highlight-color:transparent}
+button,summary{cursor:pointer}
+input,select,textarea{font-variant-numeric:tabular-nums}
+.btn{border-radius:5px!important}
+.site-header{border-bottom:1px solid var(--lf-line)}
+body .page-lead{color:var(--lf-muted);line-height:1.7}
+body .tool-card,body .side-box{box-shadow:none}
+body .ref-tool-choice{border-radius:5px;transition:background .15s,border-color .15s}
+body .ref-tool-choice:hover{background:#f6eae5;border-color:#b8898c}
+.lf-beta{font:700 10px/1.5 system-ui,sans-serif;vertical-align:middle;color:#7b1926;background:#f4e1df;padding:3px 6px;border-radius:3px;letter-spacing:.02em}
+/* Marketing: retain the approved photo and palette, give useful tasks more space. */
+.lf-reference-home .ref-header-inner{min-height:80px}
+.lf-reference-home .ref-nav a,.lf-reference-home .ref-login{font-size:13px}
+.lf-reference-home .ref-hero-copy p{max-width:490px;line-height:1.7}
+.lf-reference-home .ref-module-card{border-radius:5px;box-shadow:none;padding:21px 16px;min-height:218px}
+.lf-reference-home .ref-module-card p{font-size:12px;line-height:1.65}
+.lf-reference-home .ref-module-link{font-size:11px}
+.lf-reference-home .ref-modules-grid{border-radius:7px;box-shadow:0 12px 32px #5e372310}
+.lf-task-section{padding:64px 0;background:#fffaf5;border-bottom:1px solid var(--lf-line)}
+.lf-section-heading{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:26px}
+.lf-section-heading h2{font:500 clamp(28px,3vw,40px)/1.15 Georgia,serif;color:#721b25;letter-spacing:-.045em;margin:12px 0 0}
+.lf-section-heading p{font-size:13px;color:var(--lf-muted)}
+.lf-task-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.lf-task-grid>a{display:flex;flex-direction:column;padding:28px;background:#f7f0e8;border:1px solid #e5d5c8;border-radius:5px;text-decoration:none;min-height:230px;transition:background .2s,transform .2s}
+.lf-task-grid>a:hover{background:#f0e4d9;transform:translateY(-3px)}
+.lf-task-grid>a>span{color:#8b4a50;font:700 10px/1.5 system-ui;letter-spacing:.15em}
+.lf-task-grid h3{font:500 25px/1.25 Georgia,serif;color:#5c252c;margin:20px 0 12px;letter-spacing:-.025em}
+.lf-task-grid p{color:#75645a;font-size:13px;line-height:1.65;margin:0 0 24px}
+.lf-task-grid strong{margin-top:auto;color:#7b1926;font:700 12px/1.5 system-ui}
+.lf-reference-home .ref-benefit p{font-size:12px;line-height:1.65}
+.lf-reference-home .ref-story-content p,.lf-reference-home .ref-story-facts p{font-size:13px}
+/* Staff: working list first, optional role overview, one clear add action. */
+.staff-v3-body{background:var(--lf-canvas)}
+.staff-v3-body .staff-shell{max-width:1600px;margin:auto;padding-bottom:60px}
+.staff-v3-body .staff-head{background:transparent;border:0;padding:12px 0 20px;gap:24px}
+.staff-v3-body .staff-head h1{font-size:clamp(32px,3vw,44px);line-height:1.08;margin:10px 0 12px}
+.staff-v3-body .staff-head p{font-size:14px;color:var(--lf-muted);max-width:590px}
+.staff-v3-body .staff-local-tag{display:none}
+.staff-v3-body .staff-summary{margin:18px 0;gap:16px}
+.staff-v3-body .staff-summary>div{border:1px solid var(--lf-line);border-radius:5px;background:var(--lf-paper);box-shadow:none;padding:20px 23px}
+.staff-v3-body .staff-summary strong{font-size:30px;font-weight:600;color:#6d2331;font-variant-numeric:tabular-nums}
+.staff-v3-body .staff-summary small,.staff-v3-body .staff-summary span{color:var(--lf-muted);font-size:12px}
+.staff-v3-body .staff-storage-note{padding:11px 15px;background:#f0e9df;border:1px solid var(--lf-line);border-radius:4px;font-size:12px;line-height:1.65;color:#76604f;margin:0}
+.staff-storage-note summary{font-weight:600;color:#675247}
+.staff-storage-note p{margin:12px 0 2px}
+.staff-v3-body .staff-quick-actions{margin:17px 0;gap:16px}
+.staff-v3-body .staff-quick-actions a{box-shadow:none;border-radius:5px;background:#eee5da;padding:15px 20px;border:1px solid var(--lf-line)}
+.staff-v3-body .staff-list-wrap{margin-top:20px;border-radius:5px;border:1px solid var(--lf-line);background:var(--lf-paper);overflow:hidden}
+.staff-v3-body .staff-toolbar{padding:23px 25px 8px;background:transparent;border:0}
+.staff-v3-body .staff-toolbar h2{font-size:28px}
+.staff-v3-body .staff-filters{padding:12px 25px 20px;background:transparent;border:0}
+.staff-v3-body .staff-filters input{min-height:46px;border:1px solid #d5c4b8;border-radius:4px;background:#fbf8f3;font-size:14px}
+.staff-v3-body .staff-card{padding:20px 25px;border-color:#eee5dc;transition:background .15s}
+.staff-v3-body .staff-card:hover{background:#f9f2eb}
+.staff-v3-body .staff-name{font-size:15px}
+.staff-v3-body .staff-sub,.staff-v3-body .staff-hours strong,.staff-v3-body .staff-docs strong{font-size:12px;color:#6b554c}
+.staff-v3-body .staff-avatar{border-radius:5px;background:#f0e1d9;color:#76303b}
+.lf-clear-filter{margin:0 25px 14px;border:0;background:#f1e2df;color:#7b1926;padding:8px 12px;border-radius:3px;font-size:12px}
+.lf-clear-filter[hidden]{display:none}
+.staff-v3-body .staff-role-board{box-shadow:none;margin:18px 0;padding:18px 24px;border:1px solid var(--lf-line);border-radius:5px;background:#faf6f0}
+.staff-role-board>summary{font-size:13px;font-weight:700;color:#6e3b40}
+.staff-role-board[open]>.staff-role-head{margin-top:20px}
+.staff-v3-body .staff-role-card{min-height:175px;padding:20px;box-shadow:none;border-radius:4px;background:#fffdf9}
+.staff-v3-body .staff-profile{box-shadow:0 12px 35px #5c302512;border-radius:6px;border:1px solid #ccb4a6;padding:25px}
+.staff-v3-body .staff-profile-top{background:#f6eee6;margin:-25px -25px 0;padding:24px 25px;border-radius:5px 5px 0 0}
+.staff-v3-body .lf-detail-card{background:#fffdf9;border-radius:5px;box-shadow:none}
+.staff-v3-body .lf-detail-fact dd{font-size:13px;line-height:1.6}
+/* Planner: the calendar, not onboarding copy, is the primary working surface. */
+.vac-app-body{background:var(--lf-canvas)}
+.vac-app-body .vac-v2-hero{padding:24px 0 26px;background:#f4ece2;border-bottom:1px solid var(--lf-line)}
+.vac-v2-hero-layout{grid-template-columns:1fr;gap:0}
+.vac-app-body .vac-v2-hero h1{font-size:clamp(30px,3.7vw,44px);margin:10px 0;max-width:none}
+.vac-app-body .vac-v2-hero .breadcrumbs{margin-bottom:13px}
+.vac-app-body .vac-v2-hero .page-lead{font-size:14px;max-width:760px;margin-bottom:0}
+.vac-v2-hero-trust{margin-top:14px}
+.vac-app-body .vac-app{padding-top:24px}
+.vac-v2-workspace-title h2{font-size:25px}
+.vac-app-body .vac-app-nav{background:#fffdf9;border:1px solid var(--lf-line);border-radius:5px;box-shadow:none;padding:6px}
+.vac-app-body .vac-app-nav button{color:#6b5047;border-radius:3px;font-size:13px;min-height:44px}
+.vac-app-body .vac-app-nav button:hover{background:#eee1d5;color:#5b242c}
+.vac-app-body .vac-app-nav button[aria-pressed=true]{background:#eee1d5;color:#6e2331;border-color:#e2cbbb}
+.vac-app-body .vac-app-nav .vac-new,.vac-app-body .vac-app-nav .vac-new[aria-pressed=true]{background:#7b1926;color:#fff;border-color:#7b1926}
+.vac-app-body .vac-overview{margin:16px 0;gap:15px}
+.vac-app-body .vac-metric{padding:16px 22px;min-height:95px;border-radius:5px;box-shadow:none}
+.vac-app-body .vac-metric strong{font-size:28px}
+.vac-app-body .vac-panel{border-radius:5px;box-shadow:none;padding:25px}
+.lf-planner-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding:16px;background:#f8f2ea;border:1px solid #e8d9cd;border-radius:4px;margin:18px 0}
+.lf-planner-filters label{display:grid;gap:7px;font:600 12px/1.5 system-ui;color:#674f45;min-width:0}
+.lf-planner-filters input,.lf-planner-filters select{width:100%;min-width:0;border:1px solid #d8c7ba;border-radius:3px;background:#fffdf9;min-height:42px;padding:9px;font:400 14px system-ui;color:#48382f}
+.lf-planner-filters p{grid-column:1/-1;margin:0;font-size:11px;color:#786356;line-height:1.5}
+.vac-app-body .vac-calendar{border-radius:4px}
+.vac-app-body .vac-day{min-height:110px;padding:10px 8px}
+.vac-app-body .vac-day-num{font-weight:650;font-variant-numeric:tabular-nums;font-size:13px}
+.vac-app-body .vac-tag{border-radius:3px;font-size:11px;line-height:1.4}
+.vac-app-body .vac-entry,.vac-app-body .vac-person{border-radius:4px;padding:18px}
+.vac-app-body .vac-entry strong,.vac-app-body .vac-person strong{font-size:14px}
+.vac-app-body .vac-form{max-width:650px}
+.vac-app-body .vac-form input,.vac-app-body .vac-form select{font-size:16px;border-radius:4px}
+/* Calculator: a clear form and optional keypad, with a baseline scenario. */
+.calc-app-body .calc-title{background:#f4ebe0;border-radius:5px;padding:26px 30px}
+.calc-app-body .calc-title h1{font-size:clamp(31px,3.6vw,46px)}
+.calc-app-body .calc-workspace{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:24px;align-items:start}
+.calc-app-body .calc-inputs{border-radius:5px;border:1px solid var(--lf-line);box-shadow:none;background:var(--lf-paper)}
+.calc-app-body .pocket-calculator{position:sticky;top:100px;border:1px solid #d9c7b9;border-radius:5px;background:#eee3d7;padding:18px;box-shadow:none;display:block}
+.pocket-calculator>summary{font-size:13px;font-weight:700;color:#67463c;padding:4px 0;list-style:revert}
+.pocket-calculator[open]>summary{margin-bottom:18px}
+.calc-app-body .calculator .field small{font-size:12px!important;color:#736058!important}
+.calc-app-body .calculator .field label{font-size:13px!important}
+.calc-app-body .calc-inputs .calculator{padding:22px}
+.lf-calc-actions{display:flex;gap:10px;flex-wrap:wrap;padding:0 22px 22px}
+.lf-calc-actions .btn{font-size:13px;min-height:44px}
+.lf-scenario{margin:0 22px 22px;padding:16px 20px;background:#f1e5da;border-left:3px solid #7b1926;font-size:14px;line-height:1.6}
+.lf-scenario p{margin:5px 0}
+body .calculator .result-insight{font-size:13px!important;line-height:1.7!important}
+@media(min-width:1100px){.ref-tools-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1000px){.calc-app-body .calc-workspace{grid-template-columns:1fr}.calc-app-body .pocket-calculator{position:static;max-width:420px;width:100%}.lf-task-grid{gap:12px}.lf-task-grid>a{padding:21px}.staff-v3-body .staff-head{align-items:flex-start}}
+@media(max-width:700px){.lf-reference-home .container{width:calc(100% - 36px)}.lf-task-section{padding:36px 0}.lf-section-heading{display:block}.lf-task-grid{grid-template-columns:1fr}.lf-task-grid>a{min-height:180px}.lf-task-grid h3{margin-top:12px}.lf-section-heading p{margin-top:14px}.staff-v3-body .staff-head{display:block}.staff-v3-body .staff-head-actions{margin-top:20px}.staff-v3-body .staff-profile-top{display:block}.staff-profile-top-actions{margin-top:15px}.lf-planner-filters{grid-template-columns:1fr 1fr}.lf-planner-filters>label:first-child{grid-column:1/-1}.vac-app-body .vac-panel{padding:16px}.vac-app-body .vac-day{min-height:95px;padding:6px 3px}.vac-app-body .vac-tag{font-size:10px;padding:4px 3px;overflow-wrap:anywhere}.vac-v2-device-status{white-space:normal}.calc-app-body .calc-title{padding:22px}.calc-app-body .calc-inputs .calculator{padding:16px}.lf-calc-actions{padding:0 16px 20px}.lf-calc-actions .btn{width:100%}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+@media print{.lf-planner-filters,.lf-calc-actions,.pocket-calculator,.lf-clear-filter{display:none!important}.vac-app-body .vac-day{min-height:70px}.staff-v3-body .staff-profile-top{margin:0;padding:15px}.lf-task-section{break-inside:avoid}}
+.calc-app-body .calc-screen{background:#382a26;border-radius:4px;margin-top:12px;padding:18px;color:#fff8ed}
+.calc-app-body .calc-screen>span,.calc-app-body .calc-screen small{color:#e5cfc1}
+.calc-app-body .keypad-note{color:#6f5044}
+@media(max-width:760px){.calc-app-body .pocket-calculator{order:initial}}
+@media(max-width:650px){
+  .lf-reference-home .ref-module-card{min-height:112px;padding:16px 12px}
+  .lf-reference-home .ref-module-card h3,.lf-reference-home .ref-module-card p{min-width:0;overflow-wrap:break-word}
+  .lf-reference-home .ref-module-link{min-width:0;font-size:0}
+  .lf-reference-home .ref-hero-buttons{flex-wrap:wrap}
+  .lf-reference-home .ref-hero-buttons .btn{flex:1 1 auto;white-space:normal}
+}

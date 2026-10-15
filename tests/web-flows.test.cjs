@@ -31,6 +31,9 @@ async function load(file, initial = {}) {
     w.eval(fs.readFileSync(src,'utf8'));
   }
   w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
+  // Settle async initialization (including unavailable SDK imports) before closing a DOM.
+  await new Promise(resolve=>setImmediate(resolve));
+  await new Promise(resolve=>setImmediate(resolve));
   return {
     w, errors, close:() => w.close(),
     $:id => w.document.getElementById(id),
@@ -494,3 +497,54 @@ test('PEP und Urlaubsplaner aktualisieren den Personalstamm nach Änderungen in 
   assert.deepEqual(p.errors,[]);p.close();
 });
 
+
+test('Rabattcheck: gleicher Rohertrag braucht Mehrabsatz; Nullpreis bleibt verständlich',async()=>{
+  const p=await load('tools/rabattrechner.html');
+  try{
+    for(const [id,value] of Object.entries({d_price:119,d_cost:60,d_discount:20,d_vat:19}))p.$(id).value=value;
+    p.w.calcDiscount();
+    const rows=[...p.$('d_result').querySelectorAll('.metric')];
+    assert.match(rows.find(r=>r.textContent.includes('Mehr Stück')).textContent,/100\s*%/);
+    assert.match(rows.find(r=>r.textContent.includes('Rabattgrenze')).textContent,/40\s*%/);
+    p.$('d_discount').value=100;p.w.calcDiscount();
+    assert.match(p.$('d_result').textContent,/Nicht sinnvoll berechenbar/);
+    assert.doesNotMatch(p.$('d_result').textContent,/Infinity|NaN/);
+  }finally{p.close();}
+});
+
+test('Urlaubsfilter verbergen keine Teamkonflikte und ändern keine gespeicherten Anträge',async()=>{
+  const p=await load('tools/urlaubsplaner.html');
+  try{
+    p.$('vacImportPep').click();
+    for(const [id,status] of [['e1','approved'],['e2','planned']]){
+      p.$('vacPerson').value=id;p.$('vacFrom').value='2026-10-19';p.$('vacTo').value='2026-10-23';p.$('vacStatus').value=status;p.submit('vacEntryForm');
+    }
+    const before=JSON.stringify(p.saved());
+    p.change('vacFilterPerson','e1');p.change('vacFilterStatus','approved');
+    assert.equal(p.$('vacEntries').querySelectorAll('.vac-entry').length,1);
+    assert.ok(p.$('vacCalendar').querySelectorAll('.vac-day.alert').length>0);
+    assert.equal(p.$('vacConflictCount').textContent,'2');
+    p.change('vacJumpMonth','2027-07');
+    assert.match(p.$('vacMonthLabel').textContent,/Juli 2027/);
+    assert.equal(JSON.stringify(p.saved()),before);
+    assert.deepEqual(p.errors,[]);
+  }finally{p.close();}
+});
+
+test('Kombi-Rechner: Formular bleibt sichtbar, Vergleich bleibt je Rechenart getrennt',async()=>{
+  const p=await load('rechner.html');
+  try{
+    assert.equal(p.$('fullInputs').open,true);
+    p.w.location.hash='margenrechner';await new Promise(r=>setTimeout(r,10));
+    p.$('m_cost').value=10;p.$('m_margin').value=50;p.$('m_vat').value=19;
+    p.$('rememberScenario').click();
+    assert.match(p.$('scenarioComparison').textContent,/23,80/);
+    p.$('m_cost').value=20;p.$('m_cost').dispatchEvent(new p.w.Event('input',{bubbles:true}));
+    assert.equal(p.$('scenarioComparison').hidden,true);
+    p.$('calculateDirect').click();
+    assert.match(p.$('scenarioComparison').textContent,/23,80/);assert.match(p.$('scenarioComparison').textContent,/47,60/);
+    p.w.location.hash='rabattrechner';await new Promise(r=>setTimeout(r,10));
+    assert.equal(p.$('scenarioComparison').hidden,true);
+    assert.deepEqual(p.errors,[]);
+  }finally{p.close();}
+});

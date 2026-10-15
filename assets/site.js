@@ -115,8 +115,10 @@ function calcDiscount(){
   const newGross=gross*(1-discount/100), oldNet=gross/(1+vat/100), newNet=newGross/(1+vat/100), oldProfit=oldNet-cost, newProfit=newNet-cost, margin=newNet?newProfit/newNet*100:0, loss=oldProfit-newProfit;
   renderRows('d_result',[
     ['Neuer Preis für deine Kunden',euro(newGross)],['Dir bleiben nach dem Wareneinkauf',euro(newProfit)],['So viel kostet dich der Rabatt je Stück',euro(loss)],
-    ['Anteil, der dir danach bleibt',pct(margin)],['Preis ohne Umsatzsteuer',euro(newNet)]
-  ],newProfit<0?`<strong>Achtung:</strong> Mit diesem Rabatt verkaufst du rechnerisch unter deinem Einkaufspreis. Ändere Rabatt oder Verkaufspreis, bevor du die Aktion startest.`:`<strong>Dein nächster Schritt:</strong> Nach dem Rabatt bleiben ${euro(newProfit)} je Stück vor weiteren Kosten. Entscheide, ob dir das für die Aktion reicht.`);
+    ['Anteil, der dir danach bleibt',newNet>0?pct(margin):'Nicht berechenbar'],['Preis ohne Umsatzsteuer',euro(newNet)],
+    ['Mehr Stück für denselben Rohertrag',oldProfit>0&&newProfit>0?pct((oldProfit/newProfit-1)*100):'Nicht sinnvoll berechenbar'],
+    ['Rabattgrenze bis zum Einkaufspreis',oldNet>0&&oldProfit>=0?pct((1-cost/oldNet)*100):'Bereits ohne Rabatt nicht gedeckt']
+  ],newProfit<0?`<strong>Achtung:</strong> Mit diesem Rabatt verkaufst du rechnerisch unter deinem Einkaufspreis. Ändere Rabatt oder Verkaufspreis, bevor du die Aktion startest.`:`<strong>Dein nächster Schritt:</strong> Nach dem Rabatt bleiben ${euro(newProfit)} je Stück vor weiteren Kosten. Die Rabattgrenze deckt nur den Einkauf; Personal und Miete sind noch nicht bezahlt. Prüfe, ob der erforderliche Mehrverkauf realistisch ist.`);
 }
 function calcBreakEven(save=true){
   error('b_error');
