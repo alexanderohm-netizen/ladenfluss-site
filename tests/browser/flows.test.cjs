@@ -188,6 +188,10 @@ test('Gemeinsamer Rechner: Menü, Dezimaltastatur und Formelergebnisse', async t
 for(const width of [390,1440])test('App-Ansichten als Bild prüfen ('+width+' px)',async t=>{
   const page=await session(t,{width,height:1000});
   const folder=path.join(root,'test-artifacts');fs.mkdirSync(folder,{recursive:true});
+  await page.goto(base+'/');
+  await page.screenshot({path:path.join(folder,'homepage-'+width+'.png'),fullPage:true});
+  await page.goto(base+'/mitarbeiter');
+  await page.screenshot({path:path.join(folder,'staff-'+width+'.png'),fullPage:true});
   await page.goto(base+'/rechner#margenrechner');
   await page.screenshot({path:path.join(folder,'calculator-'+width+'.png'),fullPage:true});
   await page.locator('#chooseMode').click();
@@ -219,7 +223,8 @@ for (const width of [1440, 768, 390, 320]) {
     assert.equal(styles.hero,'block');
     assert.equal(styles.wine,'#7c101c');
     assert.match(styles.photo,/images\.pexels\.com/);
-    assert.ok(styles.overflow<=2,'Homepage horizontal overflow '+styles.overflow);
+    const overflowing = styles.overflow > 2 ? await page.evaluate(() => Array.from(document.querySelectorAll('body *')).filter(el => el.getBoundingClientRect().right > innerWidth + 2).map(el => ({tag:el.tagName,classes:el.className,right:Math.round(el.getBoundingClientRect().right)})).slice(0,15)) : [];
+    assert.ok(styles.overflow<=2,'Homepage horizontal overflow '+styles.overflow+' '+JSON.stringify(overflowing));
     assert.deepEqual(errors,[]);
     const cols=styles.grid.split(' ').length;
     if(width>=1280)assert.equal(cols,6);

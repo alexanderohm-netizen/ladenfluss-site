@@ -126,3 +126,10 @@ body .calculator .result-insight{font-size:13px!important;line-height:1.7!import
 .calc-app-body .calc-screen>span,.calc-app-body .calc-screen small{color:#e5cfc1}
 .calc-app-body .keypad-note{color:#6f5044}
 @media(max-width:760px){.calc-app-body .pocket-calculator{order:initial}}
+@media(max-width:650px){
+  .lf-reference-home .ref-module-card{min-height:112px;padding:16px 12px}
+  .lf-reference-home .ref-module-card h3,.lf-reference-home .ref-module-card p{min-width:0;overflow-wrap:break-word}
+  .lf-reference-home .ref-module-link{min-width:0;font-size:0}
+  .lf-reference-home .ref-hero-buttons{flex-wrap:wrap}
+  .lf-reference-home .ref-hero-buttons .btn{flex:1 1 130px;white-space:normal}
+}
